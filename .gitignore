@@ -41,3 +41,4 @@ replay_*.log
 
 # Local captures (may contain cookies/tokens)
 *.har
+lands.json

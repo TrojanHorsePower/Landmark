@@ -1,0 +1,222 @@
+[
+ {
+  "type": "poly",
+  "data": {
+   "key": "01AAAAAAAAAAAAAAAAAAAAAAAA_world_0",
+   "polylines": [
+    {
+     "key": "01AAAAAAAAAAAAAAAAAAAAAAAA_world_0_outer",
+     "points": [
+      {
+       "x": 0,
+       "z": 0
+      },
+      {
+       "x": 64,
+       "z": 0
+      },
+      {
+       "x": 64,
+       "z": 64
+      },
+      {
+       "x": 0,
+       "z": 64
+      }
+     ]
+    },
+    {
+     "key": "01AAAAAAAAAAAAAAAAAAAAAAAA_world_0_hole0",
+     "points": [
+      {
+       "x": 16,
+       "z": 16
+      },
+      {
+       "x": 32,
+       "z": 16
+      },
+      {
+       "x": 32,
+       "z": 32
+      },
+      {
+       "x": 16,
+       "z": 32
+      }
+     ]
+    }
+   ]
+  },
+  "options": {
+   "stroke": {
+    "weight": 2,
+    "color": -1
+   },
+   "fill": {
+    "type": 1,
+    "color": -1
+   },
+   "tooltip": {
+    "content": "<div class=\"\\&quot;infowindow\\&quot;\"><span style=\"font-size: 200%;\"><span style=\"color: {land_color};\">Sample Land</span><br /></span>of ExampleOwner.</div> <ul> <li class=\"\\&quot;infowindow\\&quot;\">Level: None</li> <li class=\"\\&quot;infowindow\\&quot;\">Balance: $0.00</li> <li class=\"\\&quot;infowindow\\&quot;\">Chunks: 12</li> <li class=\"\\&quot;infowindow\\&quot;\">Players (2): ExampleOwner, ExampleFriend</li> </ul>"
+   },
+   "popup": {
+    "content": "<div class=\"\\&quot;infowindow\\&quot;\"><span style=\"font-size: 200%;\"><span style=\"color: {land_color};\">Sample Land</span><br /></span>of ExampleOwner.</div> <ul> <li class=\"\\&quot;infowindow\\&quot;\">Level: None</li> <li class=\"\\&quot;infowindow\\&quot;\">Balance: $0.00</li> <li class=\"\\&quot;infowindow\\&quot;\">Chunks: 12</li> <li class=\"\\&quot;infowindow\\&quot;\">Players (2): ExampleOwner, ExampleFriend</li> </ul>"
+   }
+  }
+ },
+ {
+  "type": "poly",
+  "data": {
+   "key": "01AAAAAAAAAAAAAAAAAAAAAAAA_world_1",
+   "polylines": [
+    {
+     "key": "01AAAAAAAAAAAAAAAAAAAAAAAA_world_1_outer",
+     "points": [
+      {
+       "x": 160,
+       "z": 0
+      },
+      {
+       "x": 192,
+       "z": 0
+      },
+      {
+       "x": 192,
+       "z": 32
+      },
+      {
+       "x": 160,
+       "z": 32
+      }
+     ]
+    }
+   ]
+  },
+  "options": {
+   "stroke": {
+    "weight": 2,
+    "color": -1
+   },
+   "fill": {
+    "type": 1,
+    "color": -1
+   },
+   "tooltip": {
+    "content": "<div class=\"\\&quot;infowindow\\&quot;\"><span style=\"font-size: 200%;\"><span style=\"color: {land_color};\">Sample Land</span><br /></span>of ExampleOwner.</div> <ul> <li class=\"\\&quot;infowindow\\&quot;\">Level: None</li> <li class=\"\\&quot;infowindow\\&quot;\">Balance: $0.00</li> <li class=\"\\&quot;infowindow\\&quot;\">Chunks: 12</li> <li class=\"\\&quot;infowindow\\&quot;\">Players (2): ExampleOwner, ExampleFriend</li> </ul>"
+   },
+   "popup": {
+    "content": "<div class=\"\\&quot;infowindow\\&quot;\"><span style=\"font-size: 200%;\"><span style=\"color: {land_color};\">Sample Land</span><br /></span>of ExampleOwner.</div> <ul> <li class=\"\\&quot;infowindow\\&quot;\">Level: None</li> <li class=\"\\&quot;infowindow\\&quot;\">Balance: $0.00</li> <li class=\"\\&quot;infowindow\\&quot;\">Chunks: 12</li> <li class=\"\\&quot;infowindow\\&quot;\">Players (2): ExampleOwner, ExampleFriend</li> </ul>"
+   }
+  }
+ },
+ {
+  "type": "poly",
+  "data": {
+   "key": "01BBBBBBBBBBBBBBBBBBBBBBBB_world_0",
+   "polylines": [
+    {
+     "key": "01BBBBBBBBBBBBBBBBBBBBBBBB_world_0_outer",
+     "points": [
+      {
+       "x": -96,
+       "z": -48
+      },
+      {
+       "x": -80,
+       "z": -48
+      },
+      {
+       "x": -80,
+       "z": -32
+      },
+      {
+       "x": -96,
+       "z": -32
+      }
+     ]
+    }
+   ]
+  },
+  "options": {
+   "stroke": {
+    "weight": 2,
+    "color": -1
+   },
+   "fill": {
+    "type": 1,
+    "color": -1
+   },
+   "tooltip": {
+    "content": "<div class=\"\\&quot;infowindow\\&quot;\"><span style=\"font-size: 200%;\"><span style=\"color: {land_color};\">Fake_Farm</span><br /></span>Welcome to the farm!</div> <ul> <li class=\"\\&quot;infowindow\\&quot;\">Level: None</li> <li class=\"\\&quot;infowindow\\&quot;\">Balance: $0.00</li> <li class=\"\\&quot;infowindow\\&quot;\">Chunks: 1</li> <li class=\"\\&quot;infowindow\\&quot;\">Players (1): SomePlayer</li> </ul>"
+   },
+   "popup": {
+    "content": "<div class=\"\\&quot;infowindow\\&quot;\"><span style=\"font-size: 200%;\"><span style=\"color: {land_color};\">Fake_Farm</span><br /></span>Welcome to the farm!</div> <ul> <li class=\"\\&quot;infowindow\\&quot;\">Level: None</li> <li class=\"\\&quot;infowindow\\&quot;\">Balance: $0.00</li> <li class=\"\\&quot;infowindow\\&quot;\">Chunks: 1</li> <li class=\"\\&quot;infowindow\\&quot;\">Players (1): SomePlayer</li> </ul>"
+   }
+  }
+ },
+ {
+  "type": "poly",
+  "data": {
+   "key": "01CCCCCCCCCCCCCCCCCCCCCCCC_world_0",
+   "polylines": [
+    {
+     "key": "01CCCCCCCCCCCCCCCCCCCCCCCC_world_0_outer",
+     "points": [
+      {
+       "x": 320,
+       "z": 320
+      },
+      {
+       "x": 336,
+       "z": 320
+      },
+      {
+       "x": 336,
+       "z": 336
+      },
+      {
+       "x": 320,
+       "z": 336
+      }
+     ]
+    }
+   ]
+  },
+  "options": {
+   "stroke": {
+    "weight": 2,
+    "color": -1
+   },
+   "fill": {
+    "type": 1,
+    "color": -1
+   },
+   "tooltip": {
+    "content": "<div class=\"\\&quot;infowindow\\&quot;\"><span style=\"font-size: 200%;\"><span style=\"color: {land_color};\">Tom's &amp; Co</span><br /></span>of Tom.</div> <ul> <li class=\"\\&quot;infowindow\\&quot;\">Level: None</li> <li class=\"\\&quot;infowindow\\&quot;\">Balance: $0.00</li> <li class=\"\\&quot;infowindow\\&quot;\">Chunks: 1</li> <li class=\"\\&quot;infowindow\\&quot;\">Players (1): Tom</li> </ul>"
+   },
+   "popup": {
+    "content": "<div class=\"\\&quot;infowindow\\&quot;\"><span style=\"font-size: 200%;\"><span style=\"color: {land_color};\">Tom's &amp; Co</span><br /></span>of Tom.</div> <ul> <li class=\"\\&quot;infowindow\\&quot;\">Level: None</li> <li class=\"\\&quot;infowindow\\&quot;\">Balance: $0.00</li> <li class=\"\\&quot;infowindow\\&quot;\">Chunks: 1</li> <li class=\"\\&quot;infowindow\\&quot;\">Players (1): Tom</li> </ul>"
+   }
+  }
+ },
+ {
+  "type": "icon",
+  "data": {
+   "key": "x"
+  },
+  "options": {}
+ },
+ {
+  "type": "poly",
+  "data": {
+   "key": "01DDDDDDDDDDDDDDDDDDDDDDDD_world_0",
+   "polylines": []
+  },
+  "options": {
+   "tooltip": {
+    "content": "<span>no name</span>"
+   }
+  }
+ }
+]
