@@ -46,6 +46,7 @@ public class MapScreen extends Screen {
 	private Button refreshButton;
 	private Button fitButton;
 	private Button teleportButton;
+	private Button helpButton;
 	private List<Entry> entries = List.of();
 	private int listScroll;
 	private @Nullable String selectedName;
@@ -85,6 +86,8 @@ public class MapScreen extends Screen {
 			.bounds(99, 24, 87, 18).build());
 		teleportButton = addRenderableWidget(Button.builder(Component.translatable("landmark.teleport"), b -> teleportToSelection())
 			.bounds(4, height - 22, PANEL_W - 8, 18).build());
+		helpButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.button"),
+			b -> minecraft.setScreenAndShow(new HelpScreen(this))).bounds(width - 102, 4, 98, 16).build());
 		setInitialFocus(search);
 		if (state.config.refreshOnOpen && state.openSpawns == null) {
 			refresh();
@@ -361,6 +364,14 @@ public class MapScreen extends Screen {
 			}
 		}
 
+		for (var sp : state.learned.all(dimension)) {
+			if (isOpen(sp.land()) || sp.land().equalsIgnoreCase(selectedName)) {
+				int px = mapX + (int) view.worldToScreenX(sp.x() + 0.5);
+				int pz = (int) view.worldToScreenZ(sp.z() + 0.5);
+				g.fill(px - 3, pz - 3, px + 4, pz + 4, 0xFF000000);
+				g.fill(px - 2, pz - 2, px + 3, pz + 3, 0xFF40E0FF);
+			}
+		}
 		var p = minecraft.player;
 		if (p != null) {
 			int px = mapX + (int) view.worldToScreenX(p.getX());
@@ -465,6 +476,7 @@ public class MapScreen extends Screen {
 		lines.add(l.owner() != null ? I18n.tr("landmark.tip.owner", l.owner()) : I18n.tr("landmark.tip.members", String.join(", ", l.members())));
 		lines.add(I18n.tr("landmark.tip.chunks", l.chunks()));
 		lines.add(openIdx.contains(hi) ? I18n.tr("landmark.tip.open") : I18n.tr("landmark.tip.closed"));
+		state.learned.get(l.name(), dimension).ifPresent(sp -> lines.add(I18n.tr("landmark.tip.learned", sp.x(), sp.y(), sp.z())));
 		int w = 0;
 		for (String s : lines) {
 			w = Math.max(w, font.width(s));
@@ -582,6 +594,12 @@ public class MapScreen extends Screen {
 
 	private void select(Entry en) {
 		selectedName = en.name();
+		if (en.land() == null) {
+			state.learned.get(en.name(), dimension).ifPresent(sp -> {
+				view.centerOn(sp.x(), sp.z());
+				view.setScale(Math.max(view.scale(), 1.0 / 2));
+			});
+		}
 		if (en.land() != null && map != null) {
 			int[] b = en.land().bounds();
 			if (b != null) {
@@ -649,6 +667,7 @@ public class MapScreen extends Screen {
 	}
 
 	private void go(String name) {
+		state.beginWatching(name);
 		minecraft.setScreenAndShow(null);
 		var connection = minecraft.getConnection();
 		if (connection != null) {

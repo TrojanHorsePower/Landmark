@@ -15,6 +15,8 @@ public final class LandmarkConfig {
 	public boolean confirmTeleport = true;
 	/** Request the open-spawn list whenever the map opens. */
 	public boolean refreshOnOpen = true;
+	/** The web map players export from; opened by the in-game help screen. Change it for another server. */
+	public String mapUrl = "https://map.chillzone.cc/";
 	/** Maximum number of map tiles kept as GPU textures at once. */
 	public int tileCacheSize = 48;
 
@@ -25,6 +27,9 @@ public final class LandmarkConfig {
 				return new LandmarkConfig();
 			}
 			c.tileCacheSize = Math.max(8, Math.min(512, c.tileCacheSize));
+			if (c.mapUrl == null || !c.mapUrl.startsWith("https://")) {
+				c.mapUrl = new LandmarkConfig().mapUrl;
+			}
 			return c;
 		} catch (IOException | RuntimeException e) {
 			return new LandmarkConfig();

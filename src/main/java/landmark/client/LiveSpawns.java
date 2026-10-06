@@ -2,7 +2,6 @@ package landmark.client;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.suggestion.Suggestion;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import landmark.data.OpenSpawns;
@@ -35,12 +34,5 @@ public final class LiveSpawns {
 			.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
 			.thenApply(s -> OpenSpawns.fromSuggestionTexts(
 				s.getList().stream().map(Suggestion::getText).toList(), System.currentTimeMillis()));
-	}
-
-	/** Test helper for the debug command: how the request behaved. */
-	public static String describe(OpenSpawns s, long millis) {
-		List<String> names = s.names();
-		return names.size() + " open-spawn lands in " + millis + " ms"
-			+ (names.isEmpty() ? "" : ": " + String.join(", ", names.subList(0, Math.min(8, names.size()))) + (names.size() > 8 ? ", ..." : ""));
 	}
 }

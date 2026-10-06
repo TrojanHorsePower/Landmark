@@ -12,6 +12,8 @@ import java.util.concurrent.Executors;
 import landmark.LandmarkClient;
 import landmark.data.DataStore;
 import landmark.data.LandmarkConfig;
+import landmark.data.LearnedSpawns;
+import landmark.data.TeleportDetector;
 import landmark.data.OpenSpawns;
 import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.Nullable;
@@ -22,6 +24,9 @@ public final class LandmarkState {
 
 	public final DataStore store;
 	public final LandmarkConfig config;
+	public final LearnedSpawns learned;
+	private final Path learnedFile;
+	private @Nullable TeleportDetector watching;
 	private final Path configFile;
 	private final Map<String, @Nullable DimensionMap> maps = new HashMap<>();
 	private final ExecutorService io = Executors.newSingleThreadExecutor(r -> {
@@ -42,6 +47,8 @@ public final class LandmarkState {
 		this.store = new DataStore(gameDir.resolve("landmark"));
 		this.configFile = configDir.resolve("landmark.json");
 		this.config = LandmarkConfig.load(configFile);
+		this.learnedFile = gameDir.resolve("landmark").resolve("learned-spawns.json");
+		this.learned = LearnedSpawns.load(learnedFile);
 	}
 
 	public static LandmarkState get() {
@@ -75,6 +82,35 @@ public final class LandmarkState {
 	public void setNotice(@Nullable String text, boolean error) {
 		notice = text;
 		noticeIsError = error;
+	}
+
+	/** Called when a {@code /lands spawn} command is sent: watch for the teleport that follows. */
+	public void beginWatching(String land) {
+		watching = new TeleportDetector(land);
+	}
+
+	/** Called every client tick. */
+	public void tickWatcher(Minecraft mc) {
+		TeleportDetector w = watching;
+		if (w == null || mc.player == null || mc.level == null) {
+			return;
+		}
+		var arrival = w.tick(mc.level.dimension().identifier().toString(), mc.player.getX(), mc.player.getY(), mc.player.getZ());
+		if (arrival != null) {
+			learned.record(new LearnedSpawns.Spawn(arrival.land(), arrival.dimension(), arrival.x(), arrival.y(), arrival.z(),
+				System.currentTimeMillis()));
+			io.execute(() -> {
+				try {
+					learned.save(learnedFile);
+				} catch (IOException e) {
+					LandmarkClient.LOGGER.warn("Could not save learned spawns", e);
+				}
+			});
+			spawnsVersion++;
+		}
+		if (w.finished()) {
+			watching = null;
+		}
 	}
 
 	public void saveConfig() {

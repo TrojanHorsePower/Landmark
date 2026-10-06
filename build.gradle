@@ -21,6 +21,10 @@ dependencies {
 }
 
 processResources {
+	// The in-game help screen copies this script to the clipboard; tools/export.js stays the single source.
+	from('tools/export.js') {
+		into 'assets/landmark'
+	}
 	def v = project.version
 	inputs.property "version", v
 	filesMatching("fabric.mod.json") {

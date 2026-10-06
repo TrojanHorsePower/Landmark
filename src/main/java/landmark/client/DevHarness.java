@@ -42,6 +42,12 @@ final class DevHarness {
 						names.add(lands.get(i).name());
 					}
 					state.openSpawns = new OpenSpawns(names, System.currentTimeMillis() - 90_000);
+					for (int i = 0; i < lands.size() && i < 120; i += 12) {
+						int[] b = lands.get(i).bounds();
+						if (b != null) {
+							state.learned.record(new landmark.data.LearnedSpawns.Spawn(lands.get(i).name(), DEMO_DIMENSION, (b[0] + b[2]) / 2, 70, (b[1] + b[3]) / 2, 0));
+						}
+					}
 					state.spawnsVersion++;
 				}
 				mc.setScreenAndShow(new MapScreen());
@@ -50,6 +56,9 @@ final class DevHarness {
 				framesOpen++;
 				if (framesOpen == 120) {
 					Screenshot.grab(mc, false);
+				}
+				if (framesOpen == 140) {
+					mc.setScreenAndShow(new HelpScreen(mc.gui.screen()));
 				}
 				if (framesOpen == 170) {
 					Screenshot.grab(mc, false);
