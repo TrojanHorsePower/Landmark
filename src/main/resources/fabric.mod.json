@@ -10,6 +10,7 @@
 		"issues": "https://github.com/TrojanHorsePower/Landmark/issues"
 	},
 	"license": "MIT",
+	"icon": "assets/landmark/icon.png",
 	"environment": "client",
 	"entrypoints": {
 		"client": ["landmark.LandmarkClient"]

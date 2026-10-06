@@ -71,6 +71,18 @@ public class MapScreen extends Screen {
 		return view;
 	}
 
+	/** Dev harness: types into the search box. */
+	void devSearch(String query) {
+		search.setValue(query);
+	}
+
+	/** Dev harness: selects the first list entry, as a click would. */
+	void devSelectFirst() {
+		if (!entries.isEmpty()) {
+			select(entries.get(0));
+		}
+	}
+
 	private double pressX;
 	private double pressY;
 	private boolean pressedInMap;
@@ -650,7 +662,7 @@ public class MapScreen extends Screen {
 			int[] b = en.land().bounds();
 			if (b != null) {
 				view.fit(b[0], b[1], b[2], b[3], 0.55);
-				view.setScale(Math.min(view.scale(), 1.0));
+				view.setScale(Math.min(view.scale(), 0.5));
 			}
 		}
 	}

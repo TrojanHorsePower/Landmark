@@ -27,8 +27,10 @@ final class DevHarness {
 
 	private DevHarness() {}
 
-	/** Zooms onto a land that has a known owner and other members and parks the cursor over it, to check the tooltip. */
-	private static void hoverLandWithOwnerAndMembers(net.minecraft.client.Minecraft mc) {
+	private static String searchQuery = "";
+
+	/** Zooms onto an open-spawn land with an owner and other members and parks the cursor over it. */
+	private static void hoverOpenLand(net.minecraft.client.Minecraft mc) {
 		if (!(mc.gui.screen() instanceof MapScreen ms)) {
 			return;
 		}
@@ -36,13 +38,29 @@ final class DevHarness {
 		if (map == null) {
 			return;
 		}
-		for (Land l : map.grid.lands()) {
+		List<Land> lands = map.grid.lands();
+		for (int i = 0; i < lands.size(); i += 5) {
+			Land l = lands.get(i);
 			int[] b = l.bounds();
-			if (b != null && l.owner() != null && l.members().stream().anyMatch(m -> !m.equalsIgnoreCase(l.owner())) && l.chunks() > 20) {
-				ms.view().setScale(0.25);
-				ms.view().centerOn((b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0);
+			if (b != null && l.owner() != null && l.members().stream().anyMatch(m -> !m.equalsIgnoreCase(l.owner())) && l.chunks() >= 12) {
+				searchQuery = l.owner().replaceAll("\\d+$", "");
+				// aim at a chunk that really belongs to the land (a bounding-box centre can be a hole or notch)
+				int ax = (b[0] + b[2]) / 2, az = (b[1] + b[3]) / 2;
+				outer:
+				for (int x = b[0]; x < b[2]; x += 16) {
+					for (int z = b[1]; z < b[3]; z += 16) {
+						if (map.grid.landIndexAt(x + 8, z + 8) == i) {
+							ax = x + 8;
+							az = z + 8;
+							if (Math.abs(x - (b[0] + b[2]) / 2) < 48 && Math.abs(z - (b[1] + b[3]) / 2) < 48) {
+								break outer;
+							}
+						}
+					}
+				}
+				ms.view().setScale(0.5);
+				ms.view().centerOn(ax, az);
 				var w = mc.getWindow();
-				// the map area is x >= 190 (GUI px), y < height - 34; its centre is where the land now is
 				double gx = 190 + (w.getGuiScaledWidth() - 190) / 2.0;
 				double gy = (w.getGuiScaledHeight() - 34) / 2.0;
 				org.lwjgl.glfw.GLFW.glfwSetCursorPos(w.handle(), gx * w.getGuiScale(), gy * w.getGuiScale());
@@ -65,11 +83,11 @@ final class DevHarness {
 				if (map != null) {
 					List<String> names = new ArrayList<>();
 					List<Land> lands = map.grid.lands();
-					for (int i = 0; i < lands.size(); i += 12) {
+					for (int i = 0; i < lands.size(); i += 5) {
 						names.add(lands.get(i).name());
 					}
 					state.openSpawns = new OpenSpawns(names, System.currentTimeMillis() - 90_000);
-					for (int i = 0; i < lands.size() && i < 120; i += 12) {
+					for (int i = 0; i < lands.size() && i < 30; i += 15) {
 						int[] b = lands.get(i).bounds();
 						if (b != null) {
 							state.learned.record(new landmark.data.LearnedSpawns.Spawn(lands.get(i).name(), DEMO_DIMENSION, (b[0] + b[2]) / 2, 70, (b[1] + b[3]) / 2, 0));
@@ -101,26 +119,30 @@ final class DevHarness {
 						}
 					}
 				}
-				if (framesOpen == 240) {
+				// Screenshot script (saved in order to run/screenshots): overview, hover tooltip, search by owner, help.
+				if (framesOpen == 100) {
 					Screenshot.grab(mc, false);
 				}
-				if (framesOpen == 250) {
+				if (framesOpen == 110) {
+					hoverOpenLand(mc);
+				}
+				if (framesOpen == 140) {
+					Screenshot.grab(mc, false);
+				}
+				if (framesOpen == 150 && mc.gui.screen() instanceof MapScreen ms) {
+					ms.devSearch(searchQuery);
+					ms.devSelectFirst();
+				}
+				if (framesOpen == 180) {
+					Screenshot.grab(mc, false);
+				}
+				if (framesOpen == 190) {
 					mc.setScreenAndShow(new HelpScreen(mc.gui.screen()));
 				}
-				if (framesOpen == 270) {
+				if (framesOpen == 215) {
 					Screenshot.grab(mc, false);
 				}
-				if (framesOpen == 280) {
-					mc.gui.screen().onClose(); // Back: must return to a working map
-				}
-				if (framesOpen == 300) {
-					Screenshot.grab(mc, false);
-					hoverLandWithOwnerAndMembers(mc);
-				}
-				if (framesOpen == 320) {
-					Screenshot.grab(mc, false);
-				}
-				if (framesOpen == 340) {
+				if (framesOpen == 235) {
 					mc.stop();
 				}
 			}
