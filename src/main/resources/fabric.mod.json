@@ -6,8 +6,10 @@
 	"description": "In-game map for fast /lands spawn teleporting.",
 	"authors": ["TrojanHorsePower"],
 	"contact": {
-		"sources": "https://github.com/TrojanHorsePower/Landmark"
+		"sources": "https://github.com/TrojanHorsePower/Landmark",
+		"issues": "https://github.com/TrojanHorsePower/Landmark/issues"
 	},
+	"license": "MIT",
 	"environment": "client",
 	"entrypoints": {
 		"client": ["landmark.LandmarkClient"]

@@ -84,4 +84,5 @@ How the export zip is laid out: [docs/export-format.md](docs/export-format.md).
 
 ## License
 
-Not chosen yet.
+[MIT](LICENSE). Not affiliated with or endorsed by Chillzone or the Lands plugin; no game assets, server data or third-party
+code is bundled.

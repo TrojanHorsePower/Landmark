@@ -42,6 +42,13 @@ java {
 	targetCompatibility = JavaVersion.VERSION_25
 }
 
+jar {
+	def projectName = project.base.archivesName.get()
+	from('LICENSE') {
+		rename { "${it}_${projectName}" }
+	}
+}
+
 test {
 	useJUnitPlatform()
 }
