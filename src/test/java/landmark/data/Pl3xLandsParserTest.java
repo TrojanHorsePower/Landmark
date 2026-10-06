@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
-class Pl3xLandsParserTest {
-	static String sample() throws IOException {
+public class Pl3xLandsParserTest {
+	public static String sample() throws IOException {
 		try (var in = Pl3xLandsParserTest.class.getResourceAsStream("/pl3x-lands-sample.json")) {
 			return new String(in.readAllBytes(), StandardCharsets.UTF_8);
 		}
