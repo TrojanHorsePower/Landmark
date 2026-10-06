@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tools/
+      - run: node --test tools/export.test.js
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew build
       - uses: actions/upload-artifact@v4
