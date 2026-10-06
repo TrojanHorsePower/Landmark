@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "landmark",
+	"version": "${version}",
+	"name": "Landmark",
+	"description": "In-game map for fast /lands spawn teleporting.",
+	"authors": ["TrojanHorsePower"],
+	"contact": {
+		"sources": "https://github.com/TrojanHorsePower/Landmark"
+	},
+	"environment": "client",
+	"entrypoints": {
+		"client": ["landmark.LandmarkClient"]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
