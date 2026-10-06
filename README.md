@@ -10,8 +10,6 @@ An in-game map of land claims for fast `/lands spawn <land>` teleporting. A clie
 Press `M` (rebindable) in a world to open the map. Lands that currently have a public spawn are highlighted. Click one,
 confirm, and the mod runs `/lands spawn <name>` for you. That is all it does.
 
-**Demo video:** https://youtu.be/brjEf3SfYg0
-
 ![The map with open-spawn lands highlighted in amber](docs/images/overview.png)
 
 The screenshots in this README use synthetic data (fake lands, fake owners, generated terrain), made with
