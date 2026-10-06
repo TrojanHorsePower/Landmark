@@ -35,6 +35,8 @@ public class MapScreen extends Screen {
 	private static final int PANEL_W = 190;
 	private static final int ROW_H = 11;
 	private static final int STATUS_H = 34;
+	/** Below this on-screen tile width the small overview copies are drawn instead of full tiles. */
+	private static final int OVERVIEW_BELOW_PX = 200;
 
 	private record Entry(String name, @Nullable Land land, boolean open, boolean typed) {}
 
@@ -52,6 +54,7 @@ public class MapScreen extends Screen {
 	private @Nullable DimensionMap map;
 	private @Nullable ClaimLayer claims;
 	private @Nullable TileTextures tiles;
+	private @Nullable TileOverview overview;
 	private int builtDataVersion = -1;
 	private int builtSpawnsVersion = -1;
 	private Set<Integer> openIdx = Set.of();
@@ -110,6 +113,8 @@ public class MapScreen extends Screen {
 				claims = new ClaimLayer(minecraft, map, "claims/" + prefix);
 				if (map.stored.tiles() != null) {
 					tiles = new TileTextures(minecraft, map.stored.tileDir(), "tiles/" + prefix, state.config.tileCacheSize);
+					overview = new TileOverview(minecraft, map.stored.tileDir(), "overview/" + prefix);
+					overview.start();
 				}
 			}
 			viewInitialised = false;
@@ -147,6 +152,10 @@ public class MapScreen extends Screen {
 		if (tiles != null) {
 			tiles.close();
 			tiles = null;
+		}
+		if (overview != null) {
+			overview.close();
+			overview = null;
 		}
 	}
 
@@ -291,12 +300,24 @@ public class MapScreen extends Screen {
 		double maxWZ = view.screenToWorldZ(mapHeight());
 
 		if (tiles != null && map != null && map.stored.tiles() != null) {
-			tiles.newFrame();
 			int bpt = map.stored.tiles().blocksPerTile();
 			GpuSampler linear = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-			for (int tx = Math.floorDiv((int) minWX, bpt); tx <= Math.floorDiv((int) maxWX, bpt); tx++) {
-				for (int tz = Math.floorDiv((int) minWZ, bpt); tz <= Math.floorDiv((int) maxWZ, bpt); tz++) {
-					DynamicTexture t = tiles.get(tx, tz);
+			int tx0 = Math.floorDiv((int) minWX, bpt);
+			int tx1 = Math.floorDiv((int) maxWX, bpt);
+			int tz0 = Math.floorDiv((int) minWZ, bpt);
+			int tz1 = Math.floorDiv((int) maxWZ, bpt);
+			// Far out, a tile is only a few hundred pixels wide: use the small preloaded copies instead of
+			// full-size tiles, which would be too many to keep cached and would be reloaded every frame.
+			boolean far = bpt * view.scale() <= OVERVIEW_BELOW_PX && overview != null;
+			if (far) {
+				overview.pump();
+			} else {
+				tiles.ensureCapacity((tx1 - tx0 + 1) * (tz1 - tz0 + 1));
+				tiles.newFrame();
+			}
+			for (int tx = tx0; tx <= tx1; tx++) {
+				for (int tz = tz0; tz <= tz1; tz++) {
+					DynamicTexture t = far ? overview.get(tx, tz) : tiles.get(tx, tz);
 					if (t != null) {
 						int sx0 = mapX + (int) Math.floor(view.worldToScreenX((double) tx * bpt));
 						int sz0 = (int) Math.floor(view.worldToScreenZ((double) tz * bpt));

@@ -2,7 +2,7 @@ package landmark.map;
 
 /** Pan/zoom state: which world position is at the middle of the viewport, and how many screen pixels one block is. */
 public final class MapView {
-	public static final double MIN_SCALE = 1.0 / 32;
+	public static final double MIN_SCALE = 1.0 / 128;
 	public static final double MAX_SCALE = 4.0;
 
 	private double centerX;

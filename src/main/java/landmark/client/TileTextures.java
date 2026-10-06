@@ -17,14 +17,14 @@ import org.jspecify.annotations.Nullable;
 
 /** Lazily loads imported map tiles (PNG or JPEG) as GPU textures, keeping at most {@code maxEntries} of them. */
 public final class TileTextures implements AutoCloseable {
-	private static final int LOADS_PER_FRAME = 2;
+	private static final int LOADS_PER_FRAME = 4;
 
 	private record Entry(Identifier id, DynamicTexture texture) {}
 
 	private final Minecraft mc;
 	private final Path dir;
 	private final String idPrefix;
-	private final int maxEntries;
+	private int maxEntries;
 	private final LinkedHashMap<Long, Entry> cache = new LinkedHashMap<>(16, 0.75f, true);
 	private final Set<Long> missing = new HashSet<>();
 	private int loadedThisFrame;
@@ -35,6 +35,11 @@ public final class TileTextures implements AutoCloseable {
 		this.dir = dir;
 		this.idPrefix = idPrefix;
 		this.maxEntries = maxEntries;
+	}
+
+	/** Grows the cache so everything currently visible fits; shrinking is left to normal eviction. */
+	public void ensureCapacity(int visible) {
+		maxEntries = Math.max(maxEntries, Math.min(256, visible + 4));
 	}
 
 	public void newFrame() {

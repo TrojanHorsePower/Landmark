@@ -51,7 +51,10 @@ final class DevHarness {
 				if (framesOpen == 120) {
 					Screenshot.grab(mc, false);
 				}
-				if (framesOpen == 180) {
+				if (framesOpen == 170) {
+					Screenshot.grab(mc, false);
+				}
+				if (framesOpen == 220) {
 					mc.stop();
 				}
 			}
