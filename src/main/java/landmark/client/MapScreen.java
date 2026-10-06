@@ -37,6 +37,8 @@ public class MapScreen extends Screen {
 	private static final int STATUS_H = 34;
 	/** Below this on-screen tile width the small overview copies are drawn instead of full tiles. */
 	private static final int OVERVIEW_BELOW_PX = 200;
+	/** Lands smaller than this on screen (both ways) are outlined as a dot or box instead of edge by edge. */
+	private static final int SMALL_LAND_PX = 12;
 
 	private record Entry(String name, @Nullable Land land, boolean open, boolean typed) {}
 
@@ -60,6 +62,14 @@ public class MapScreen extends Screen {
 	private int builtSpawnsVersion = -1;
 	private Set<Integer> openIdx = Set.of();
 	private boolean viewInitialised;
+	private boolean layersBuilt;
+
+	/** Nanoseconds spent building the last frame's draw commands; read by the dev harness. */
+	long lastExtractNanos;
+
+	MapView view() {
+		return view;
+	}
 
 	private double pressX;
 	private double pressY;
@@ -105,8 +115,11 @@ public class MapScreen extends Screen {
 		var level = minecraft.level;
 		String dim = level == null ? DevHarness.devDimension : level.dimension().identifier().toString();
 		boolean dimChanged = !dim.equals(dimension);
-		if (dimChanged || builtDataVersion != state.dataVersion) {
+		boolean dataChanged = builtDataVersion != state.dataVersion;
+		// Layers are freed whenever another screen replaces this one (help, confirm), so rebuild them on return too.
+		if (!layersBuilt || dimChanged || dataChanged) {
 			closeLayers();
+			layersBuilt = true;
 			dimension = dim;
 			map = dim.isEmpty() ? null : state.map(dim);
 			builtDataVersion = state.dataVersion;
@@ -120,7 +133,9 @@ public class MapScreen extends Screen {
 					overview.start();
 				}
 			}
-			viewInitialised = false;
+			if (dimChanged || dataChanged) {
+				viewInitialised = false;
+			}
 		}
 		if (builtSpawnsVersion != state.spawnsVersion) {
 			builtSpawnsVersion = state.spawnsVersion;
@@ -148,6 +163,7 @@ public class MapScreen extends Screen {
 	}
 
 	private void closeLayers() {
+		layersBuilt = false;
 		if (claims != null) {
 			claims.close();
 			claims = null;
@@ -252,6 +268,7 @@ public class MapScreen extends Screen {
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float partial) {
+		long t0 = System.nanoTime();
 		syncData();
 		view.setViewport(mapWidth(), mapHeight());
 		extractBackground(g, mx, my, partial);
@@ -269,6 +286,7 @@ public class MapScreen extends Screen {
 		if (map != null && inMap(mx, my)) {
 			drawHoverTooltip(g, mx, my);
 		}
+		lastExtractNanos = System.nanoTime() - t0;
 	}
 
 	private void updateButtons() {
@@ -390,6 +408,24 @@ public class MapScreen extends Screen {
 		}
 		int lo = thickness / 2;
 		int hi = thickness - lo;
+		int bx0 = mapX + (int) Math.round(view.worldToScreenX(b[0]));
+		int bz0 = (int) Math.round(view.worldToScreenZ(b[1]));
+		int bx1 = mapX + (int) Math.round(view.worldToScreenX(b[2]));
+		int bz1 = (int) Math.round(view.worldToScreenZ(b[3]));
+		// Level of detail: every edge of every visible land is a draw call, which is far too many when zoomed out.
+		if (bx1 - bx0 < SMALL_LAND_PX && bz1 - bz0 < SMALL_LAND_PX) {
+			if (bx1 - bx0 < 4 && bz1 - bz0 < 4) {
+				int cx = (bx0 + bx1) / 2;
+				int cz = (bz0 + bz1) / 2;
+				g.fill(cx - 1 - lo, cz - 1 - lo, cx + 2 + hi, cz + 2 + hi, color);
+			} else {
+				g.fill(bx0 - lo, bz0 - lo, bx1 + hi, bz0 + hi, color);
+				g.fill(bx0 - lo, bz1 - lo, bx1 + hi, bz1 + hi, color);
+				g.fill(bx0 - lo, bz0 - lo, bx0 + hi, bz1 + hi, color);
+				g.fill(bx1 - lo, bz0 - lo, bx1 + hi, bz1 + hi, color);
+			}
+			return;
+		}
 		for (Polygon poly : land.polygons()) {
 			for (int[] ring : poly.rings()) {
 				int n = ring.length / 2;
@@ -399,6 +435,9 @@ public class MapScreen extends Screen {
 					int az = (int) Math.round(view.worldToScreenZ(ring[2 * i + 1]));
 					int bx = mapX + (int) Math.round(view.worldToScreenX(ring[2 * j]));
 					int bz = (int) Math.round(view.worldToScreenZ(ring[2 * j + 1]));
+					if (ax == bx && az == bz) {
+						continue;
+					}
 					if (az == bz) {
 						g.fill(Math.min(ax, bx) - lo, az - lo, Math.max(ax, bx) + hi, az + hi, color);
 					} else if (ax == bx) {
@@ -473,7 +512,14 @@ public class MapScreen extends Screen {
 		Land l = map.land(hi);
 		List<String> lines = new ArrayList<>();
 		lines.add(l.name());
-		lines.add(l.owner() != null ? I18n.tr("landmark.tip.owner", l.owner()) : I18n.tr("landmark.tip.members", String.join(", ", l.members())));
+		if (l.owner() != null) {
+			lines.add(I18n.tr("landmark.tip.owner", l.owner()));
+		}
+		List<String> others = l.members().stream().filter(m -> !m.equalsIgnoreCase(l.owner())).toList();
+		if (!others.isEmpty()) {
+			String shown = String.join(", ", others.subList(0, Math.min(6, others.size())));
+			lines.add(I18n.tr("landmark.tip.members", others.size() > 6 ? shown + " +" + (others.size() - 6) : shown));
+		}
 		lines.add(I18n.tr("landmark.tip.chunks", l.chunks()));
 		lines.add(openIdx.contains(hi) ? I18n.tr("landmark.tip.open") : I18n.tr("landmark.tip.closed"));
 		state.learned.get(l.name(), dimension).ifPresent(sp -> lines.add(I18n.tr("landmark.tip.learned", sp.x(), sp.y(), sp.z())));
@@ -485,7 +531,7 @@ public class MapScreen extends Screen {
 		int y = Math.min(my + 10, height - lines.size() * 10 - 12);
 		g.fill(x - 3, y - 3, x + w + 3, y + lines.size() * 10 + 1, 0xE0000000);
 		for (int i = 0; i < lines.size(); i++) {
-			g.text(font, lines.get(i), x, y + i * 10, i == 0 ? 0xFFFFFFFF : i == 3 && openIdx.contains(hi) ? 0xFFFFD34D : 0xFFB8C0C8, false);
+			g.text(font, lines.get(i), x, y + i * 10, i == 0 ? 0xFFFFFFFF : lines.get(i).equals(I18n.tr("landmark.tip.open")) ? 0xFFFFD34D : 0xFFB8C0C8, false);
 		}
 	}
 
