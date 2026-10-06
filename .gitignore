@@ -43,3 +43,4 @@ replay_*.log
 *.har
 lands.json
 *:Zone.Identifier
+*.log
