@@ -44,3 +44,4 @@ replay_*.log
 lands.json
 *:Zone.Identifier
 *.log
+landmark-export*.zip

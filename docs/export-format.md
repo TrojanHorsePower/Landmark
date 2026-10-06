@@ -21,8 +21,11 @@ landmark-export.zip
 | `exportedAt` | export time, epoch milliseconds |
 | `tiles` | optional: `blocksPerTile` (power of two) and `pixelSize` |
 
-Tile `x_z` covers blocks `[x * blocksPerTile, (x + 1) * blocksPerTile)` on each axis.
-(Inferred from the map's own requests; verify against a known claim when first using real data.)
+Tile `x_z` covers blocks `[x * blocksPerTile, (x + 1) * blocksPerTile)` on each axis; `x` runs along image columns
+and `z` along image rows, with no flipping. With the default `tileFolder` 3 this is 4096 blocks (8 blocks per pixel).
+
+This was checked against a real export: the explored area's edges land on the expected world-border blocks, and claim
+centres fall on water far less often than chance only under this orientation.
 
 The importer treats the zip as untrusted: names are matched against fixed patterns and never used as paths,
 sizes are enforced while reading, and an import that fails leaves the previous data untouched.
