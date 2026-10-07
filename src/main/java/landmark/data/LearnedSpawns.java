@@ -53,6 +53,10 @@ public final class LearnedSpawns {
 		return spawns.size();
 	}
 
+	public void clear() {
+		spawns.clear();
+	}
+
 	public static LearnedSpawns load(Path file) {
 		LearnedSpawns r = new LearnedSpawns();
 		try {

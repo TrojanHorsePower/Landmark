@@ -28,6 +28,21 @@ class LearnedSpawnsTest {
 	}
 
 	@Test
+	void clearForgetsEverythingAndStaysForgottenOnDisk() throws IOException {
+		var l = new LearnedSpawns();
+		l.record(new LearnedSpawns.Spawn("A", "minecraft:overworld", 1, 64, 2, 10));
+		l.record(new LearnedSpawns.Spawn("B", "minecraft:the_nether", 3, 64, 4, 20));
+		Path f = dir.resolve("clear.json");
+		l.save(f);
+		assertEquals(2, LearnedSpawns.load(f).size());
+		l.clear();
+		assertEquals(0, l.size());
+		assertTrue(l.all("minecraft:overworld").isEmpty());
+		l.save(f);
+		assertEquals(0, LearnedSpawns.load(f).size(), "the saved file must be emptied too");
+	}
+
+	@Test
 	void persistsAndSurvivesBrokenFiles() throws IOException {
 		Path f = dir.resolve("x/learned.json");
 		var l = new LearnedSpawns();

@@ -111,5 +111,9 @@
 	"landmark.color.tooltip_text": "Tooltip text",
 	"landmark.color.other_lands": "Other lands",
 	"landmark.color.other_outline": "Other lands outline",
-	"landmark.config.outlineother": "Outline other lands (can slow the map)"
+	"landmark.config.outlineother": "Outline other lands (can slow the map)",
+	"landmark.config.savedspawns": "Saved spawn locations: %s",
+	"landmark.config.savedspawns.delete": "Delete all",
+	"landmark.config.savedspawns.confirm.title": "Delete saved spawn locations?",
+	"landmark.config.savedspawns.confirm.message": "This deletes all %s saved spawn locations. It cannot be undone."
 }

@@ -89,6 +89,28 @@ public final class LandmarkState {
 		noticeIsError = error;
 	}
 
+	/** Saved spawn locations to show on the map: none while remembering them is switched off (they stay on disk, just hidden). */
+	public List<LearnedSpawns.Spawn> visibleSpawns(String dimension) {
+		return config.saveSpawns ? learned.all(dimension) : List.of();
+	}
+
+	public java.util.Optional<LearnedSpawns.Spawn> visibleSpawn(String land, String dimension) {
+		return config.saveSpawns ? learned.get(land, dimension) : java.util.Optional.empty();
+	}
+
+	/** Forgets every saved spawn location, in memory and on disk. */
+	public void deleteSavedSpawns() {
+		learned.clear();
+		spawnsVersion++;
+		io.execute(() -> {
+			try {
+				learned.save(learnedFile);
+			} catch (IOException e) {
+				LandmarkClient.LOGGER.warn("Could not save learned spawns", e);
+			}
+		});
+	}
+
 	/** Called when a {@code /lands spawn} command is sent: watch for the teleport that follows. */
 	public void beginWatching(String land) {
 		watching = config.saveSpawns ? new TeleportDetector(land) : null;

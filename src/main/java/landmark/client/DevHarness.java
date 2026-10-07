@@ -24,6 +24,7 @@ final class DevHarness {
 	private static final boolean PERF = System.getProperty("landmark.dev.perf") != null;
 	private static final boolean SETTINGS = System.getProperty("landmark.dev.settings") != null;
 	private static final boolean LAYOUT = System.getProperty("landmark.dev.layout") != null;
+	private static final boolean SPAWNS = System.getProperty("landmark.dev.spawns") != null;
 	/** Every Nth land is pretended to have an open spawn (the real server has roughly 1 in 12). */
 	private static final int OPEN_EVERY = Integer.getInteger("landmark.dev.openEvery", 5);
 	private static long perfSum;
@@ -182,6 +183,53 @@ final class DevHarness {
 		}
 	}
 
+	/** Saved spawn locations: hidden when saving is switched off, and removable from the settings. */
+	private static void spawnsScenario(net.minecraft.client.Minecraft mc, int f) {
+		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		LandmarkState state = LandmarkState.get();
+		java.nio.file.Path file = mc.gameDirectory.toPath().resolve("landmark").resolve("learned-spawns.json");
+		if (f == 95) {
+			mapScreen = mc.gui.screen();
+			LandmarkClient.LOGGER.info("SPAWNS saved={} saveSpawns={} visibleOnMap={}", state.learned.size(), state.config.saveSpawns, state.visibleSpawns(DEMO_DIMENSION).size());
+		} else if (f == 100) {
+			shot.run(); // 1: pins visible
+		} else if (f == 105) {
+			state.config.saveSpawns = false;
+			LandmarkClient.LOGGER.info("SPAWNS after switching saving OFF: saved={} visibleOnMap={}", state.learned.size(), state.visibleSpawns(DEMO_DIMENSION).size());
+		} else if (f == 130) {
+			shot.run(); // 2: pins gone, data kept
+		} else if (f == 135) {
+			state.config.saveSpawns = true;
+			LandmarkClient.LOGGER.info("SPAWNS after switching saving back ON: visibleOnMap={}", state.visibleSpawns(DEMO_DIMENSION).size());
+		} else if (f == 140) {
+			configScreen = new ConfigScreen(mapScreen);
+			mc.setScreenAndShow(configScreen);
+			configScreen.devScrollTo(70);
+		} else if (f == 165) {
+			shot.run(); // 3: settings row with the count and the Delete button
+		} else if (f == 170) {
+			configScreen.devDeleteSaved();
+		} else if (f == 195) {
+			LandmarkClient.LOGGER.info("SPAWNS after Delete all: saved={} visibleOnMap={} fileContent={}", state.learned.size(), state.visibleSpawns(DEMO_DIMENSION).size(),
+				java.nio.file.Files.exists(file) ? readSmall(file) : "(no file)");
+			shot.run(); // 4: count 0, button disabled
+		} else if (f == 200) {
+			mc.setScreenAndShow(mapScreen);
+		} else if (f == 225) {
+			shot.run(); // 5: map without pins
+		} else if (f == 235) {
+			mc.stop();
+		}
+	}
+
+	private static String readSmall(java.nio.file.Path p) {
+		try {
+			return java.nio.file.Files.readString(p).replaceAll("\\s+", "");
+		} catch (java.io.IOException e) {
+			return "(unreadable)";
+		}
+	}
+
 	private static HelpScreen helpScreen;
 	private static ColorPickerScreen picker;
 	private static String searchQuery = "";
@@ -290,6 +338,10 @@ final class DevHarness {
 				}
 				if (LAYOUT) {
 					layoutScenario(mc, framesOpen);
+					return;
+				}
+				if (SPAWNS) {
+					spawnsScenario(mc, framesOpen);
 					return;
 				}
 				if (PERF) {

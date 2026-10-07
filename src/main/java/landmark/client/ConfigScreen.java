@@ -68,6 +68,7 @@ public class ConfigScreen extends Screen {
 		list.add(new HeaderRow(Component.translatable("landmark.config.features")));
 		list.add(new ToggleRow(Component.translatable("landmark.config.teleportwarning"), () -> state.config.confirmTeleport, v -> state.config.confirmTeleport = v));
 		list.add(new ToggleRow(Component.translatable("landmark.config.savespawns"), () -> state.config.saveSpawns, v -> state.config.saveSpawns = v));
+		list.add(new SavedSpawnsRow());
 		list.add(new ToggleRow(Component.translatable("landmark.config.outlineother"), () -> state.config.outlineOtherLands, v -> state.config.outlineOtherLands = v));
 		list.add(new ToggleRow(Component.translatable("landmark.config.playermarker"), () -> state.config.showPlayerMarker, v -> state.config.showPlayerMarker = v));
 		list.add(new ToggleRow(Component.translatable("landmark.config.refreshonopen"), () -> state.config.refreshOnOpen, v -> state.config.refreshOnOpen = v));
@@ -92,6 +93,11 @@ public class ConfigScreen extends Screen {
 	}
 
 	/** Dev harness hooks. */
+	void devDeleteSaved() {
+		state.deleteSavedSpawns();
+		rebuild();
+	}
+
 	void devSetPreset(ExportPreset preset) {
 		state.config.setExportPreset(preset);
 		rebuild();
@@ -142,6 +148,17 @@ public class ConfigScreen extends Screen {
 	private void rebuild() {
 		populate();
 		list.setScrollAmount(savedScroll);
+	}
+
+	private void confirmDeleteSaved() {
+		minecraft.setScreenAndShow(new ConfirmScreen(yes -> {
+			if (yes) {
+				state.deleteSavedSpawns();
+			}
+			minecraft.setScreenAndShow(this);
+			rebuild();
+		}, Component.translatable("landmark.config.savedspawns.confirm.title"),
+			Component.translatable("landmark.config.savedspawns.confirm.message", state.learned.size())));
 	}
 
 	private void confirmResetAll() {
@@ -354,6 +371,26 @@ public class ConfigScreen extends Screen {
 			resetButton.active = !mapping.isDefault();
 			keyButton.extractRenderState(g, mx, my, partial);
 			resetButton.extractRenderState(g, mx, my, partial);
+		}
+	}
+
+	/** Shows how many spawn locations are saved, with a button to delete them all. */
+	private final class SavedSpawnsRow extends Row {
+		private final Button delete;
+
+		SavedSpawnsRow() {
+			delete = add(Button.builder(Component.translatable("landmark.config.savedspawns.delete"), b -> confirmDeleteSaved())
+				.bounds(0, 0, 70, 20).build());
+		}
+
+		@Override
+		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+			delete.setX(getContentRight() - 70);
+			delete.setY(getContentY() + 2);
+			delete.active = state.learned.size() > 0;
+			String label = Component.translatable("landmark.config.savedspawns", state.learned.size()).getString();
+			g.text(font, fit(label, delete.getX() - getContentX() - 8), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
+			delete.extractRenderState(g, mx, my, partial);
 		}
 	}
 

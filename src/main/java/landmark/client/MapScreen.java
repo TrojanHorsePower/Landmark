@@ -454,7 +454,7 @@ public class MapScreen extends Screen {
 			}
 		}
 
-		for (var sp : showClaims ? state.learned.all(dimension) : List.<landmark.data.LearnedSpawns.Spawn>of()) {
+		for (var sp : showClaims ? state.visibleSpawns(dimension) : List.<landmark.data.LearnedSpawns.Spawn>of()) {
 			if (isOpen(sp.land()) || sp.land().equalsIgnoreCase(selectedName)) {
 				int px = mapX + (int) view.worldToScreenX(sp.x() + 0.5);
 				int pz = (int) view.worldToScreenZ(sp.z() + 0.5);
@@ -602,7 +602,7 @@ public class MapScreen extends Screen {
 		}
 		lines.add(I18n.tr("landmark.tip.chunks", l.chunks()));
 		lines.add(openIdx.contains(hi) ? I18n.tr("landmark.tip.open") : I18n.tr("landmark.tip.closed"));
-		state.learned.get(l.name(), dimension).ifPresent(sp -> lines.add(I18n.tr("landmark.tip.learned", sp.x(), sp.y(), sp.z())));
+		state.visibleSpawn(l.name(), dimension).ifPresent(sp -> lines.add(I18n.tr("landmark.tip.learned", sp.x(), sp.y(), sp.z())));
 		int w = 0;
 		for (String s : lines) {
 			w = Math.max(w, font.width(s));
@@ -729,7 +729,7 @@ public class MapScreen extends Screen {
 	private void select(Entry en) {
 		selectedName = en.name();
 		if (en.land() == null) {
-			state.learned.get(en.name(), dimension).ifPresent(sp -> {
+			state.visibleSpawn(en.name(), dimension).ifPresent(sp -> {
 				view.centerOn(sp.x(), sp.z());
 				view.setScale(Math.max(view.scale(), 1.0 / 2));
 			});
