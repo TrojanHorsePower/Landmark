@@ -25,6 +25,11 @@ final class DevHarness {
 	private static final boolean SETTINGS = System.getProperty("landmark.dev.settings") != null;
 	private static final boolean LAYOUT = System.getProperty("landmark.dev.layout") != null;
 	private static final boolean SPAWNS = System.getProperty("landmark.dev.spawns") != null;
+	private static final boolean WAYPOINTS = System.getProperty("landmark.dev.waypoints") != null;
+	private static final boolean JM_TEST = System.getProperty("landmark.dev.jmtest") != null;
+	private static final boolean JM_WORLD = System.getProperty("landmark.dev.jmworld") != null;
+	private static int worldStage;
+	private static int worldTicks;
 	/** Every Nth land is pretended to have an open spawn (the real server has roughly 1 in 12). */
 	private static final int OPEN_EVERY = Integer.getInteger("landmark.dev.openEvery", 5);
 	private static long perfSum;
@@ -230,6 +235,161 @@ final class DevHarness {
 		}
 	}
 
+	/** Writes Xaero-format waypoint files for a made-up server, then checks they show on the map (and that decoys do not). */
+	private static void waypointsScenario(net.minecraft.client.Minecraft mc, int f) {
+		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		LandmarkState state = LandmarkState.get();
+		if (f == 60) {
+			try {
+				java.nio.file.Path root = mc.gameDirectory.toPath().resolve("xaero/minimap");
+				java.nio.file.Path mine = root.resolve("Multiplayer_play.example.invalid");
+				java.nio.file.Files.createDirectories(mine.resolve("dim%0"));
+				java.nio.file.Files.createDirectories(mine.resolve("dim%-1"));
+				java.nio.file.Files.createDirectories(root.resolve("Multiplayer_other.example.invalid/dim%0"));
+				java.nio.file.Files.write(mine.resolve("dim%0/mw$default_1.txt"), java.util.List.of(
+					"#", "#waypoint:name:initials:x:y:z:color:disabled:type:set:rotate_on_tp:tp_yaw:visibility_type:destination", "#",
+					"sets:gui.xaero_default",
+					"waypoint:Home Base:H:0:70:0:12:false:0:gui.xaero_default:false:0:0:false",
+					"waypoint:Iron Mine:I:900:~:-700:6:false:0:gui.xaero_default:false:0:0:false",
+					"waypoint:Farm:F:-1500:64:1100:10:false:0:gui.xaero_default:false:0:0:false",
+					"waypoint:Old Camp:O:2400:64:2200:1:false:0:gui.xaero_default:false:0:0:false",
+					"waypoint:Switched Off:X:300:64:300:15:true:0:gui.xaero_default:false:0:0:false",
+					"waypoint:gui.xaero_deathpoint:D:-600:70:-900:0:false:1:gui.xaero_default:false:0:0:false"));
+				java.nio.file.Files.write(mine.resolve("dim%-1/mw$default_1.txt"), java.util.List.of("waypoint:Nether Portal:P:10:70:10:9:false:0:gui.xaero_default:false:0:0:false"));
+				java.nio.file.Files.write(root.resolve("Multiplayer_other.example.invalid/dim%0/mw$default_1.txt"), java.util.List.of("waypoint:Someone Elses:E:100:64:100:14:false:0:gui.xaero_default:false:0:0:false"));
+			} catch (java.io.IOException e) {
+				LandmarkClient.LOGGER.warn("fixture failed", e);
+			}
+			state.reloadWaypoints(mc); // the map was opened before these files existed, so read them now
+		} else if (f == 95) {
+			mapScreen = mc.gui.screen();
+		} else if (f == 120) {
+			var wps = state.external.forDimension(DEMO_DIMENSION);
+			LandmarkClient.LOGGER.info("WAYPOINTS loaded {} for the overworld: {}", wps.size(), wps.stream().map(w -> w.name()).sorted().toList());
+			shot.run(); // 1: markers on the map
+		} else if (f == 125 && mapScreen instanceof MapScreen ms) {
+			var home = state.external.forDimension(DEMO_DIMENSION).stream().filter(w -> w.name().equals("Home Base")).findFirst().orElseThrow();
+			ms.view().setScale(0.3);
+			ms.view().centerOn(home.x() + 0.5, home.z() + 0.5);
+			var win = mc.getWindow();
+			int pw = Math.max(150, Math.min(190, win.getGuiScaledWidth() / 3 + 24)); // the map screen's adaptive panel width
+			ms.devMouseX = (int) (pw + (win.getGuiScaledWidth() - pw) / 2.0);
+			ms.devMouseY = (int) ((win.getGuiScaledHeight() - 34) / 2.0);
+		} else if (f == 150) {
+			shot.run(); // 2: tooltip on a waypoint
+		} else if (f == 155) {
+			state.config.showExternalWaypoints = false;
+			if (mapScreen instanceof MapScreen ms) {
+				ms.devMouseX = -1;
+			}
+		} else if (f == 175) {
+			LandmarkClient.LOGGER.info("WAYPOINTS drawn while switched off: toggle={}", state.config.showExternalWaypoints);
+			shot.run(); // 3: switched off
+		} else if (f == 180) {
+			state.config.showExternalWaypoints = true;
+			configScreen = new ConfigScreen(mapScreen);
+			mc.setScreenAndShow(configScreen);
+			configScreen.devScrollTo(140);
+		} else if (f == 205) {
+			shot.run(); // 4: settings toggle with the 'found' line
+		} else if (f == 215) {
+			mc.stop();
+		}
+	}
+
+	/** Creates and joins a real singleplayer world, then tests JourneyMap's waypoints and the map screen inside it. */
+	private static void jmWorldTick(net.minecraft.client.Minecraft mc) {
+		LandmarkState state = LandmarkState.get();
+		worldTicks++;
+		switch (worldStage) {
+			case 0 -> {
+				if (mc.gui.screen() instanceof TitleScreen && ticks > 80) {
+					LandmarkClient.LOGGER.info("JMWORLD creating a singleplayer world");
+					var settings = new net.minecraft.world.level.LevelSettings("landmark-dev", net.minecraft.world.level.GameType.CREATIVE,
+						net.minecraft.world.level.LevelSettings.DifficultySettings.DEFAULT, true, net.minecraft.world.level.WorldDataConfiguration.DEFAULT);
+					mc.createWorldOpenFlows().createFreshLevel("landmark-dev", settings, net.minecraft.world.level.levelgen.WorldOptions.defaultWithRandomSeed(),
+						net.minecraft.world.level.levelgen.presets.WorldPresets::createNormalWorldDimensions, mc.gui.screen());
+					worldStage = 1;
+					worldTicks = 0;
+				}
+			}
+			case 1 -> {
+				if (mc.level != null && mc.player != null && worldTicks > 200) {
+					LandmarkClient.LOGGER.info("JMWORLD joined: dimension={} player at {},{}", mc.level.dimension().identifier(), (int) mc.player.getX(), (int) mc.player.getZ());
+					String zip = System.getProperty("landmark.dev.importzip");
+					if (zip != null) {
+						try {
+							state.store.importZip(java.nio.file.Path.of(zip));
+						} catch (java.io.IOException e) {
+							LandmarkClient.LOGGER.warn("dev import failed", e);
+						}
+					}
+					Object api = ExternalWaypoints.journeyMapApi;
+					LandmarkClient.LOGGER.info("JMWORLD plugin initialised (api present): {}", api != null);
+					if (api != null) {
+						try {
+							DevJourneyMap.addTestWaypoints(api, "landmark");
+						} catch (Throwable t) {
+							LandmarkClient.LOGGER.warn("JMWORLD could not add waypoints through the API", t);
+						}
+					}
+					worldStage = 2;
+					worldTicks = 0;
+				}
+			}
+			case 2 -> {
+				if (worldTicks == 40) {
+					state.reloadWaypoints(mc);
+				}
+				if (worldTicks == 100) {
+					var wps = state.external.forDimension("minecraft:overworld");
+					LandmarkClient.LOGGER.info("JMWORLD read {} waypoints: {}", wps.size(), wps.stream().map(w -> w.source() + ":" + w.name() + "@" + w.x() + "," + w.y() + "," + w.z() + " #" + Integer.toHexString(w.argb())).toList());
+					mc.setScreenAndShow(new MapScreen());
+					worldStage = 3;
+					worldTicks = 0;
+				}
+			}
+			case 3 -> {
+				if (worldTicks == 40 && mc.gui.screen() instanceof MapScreen ms) {
+					ms.view().setScale(1.0 / 8);
+					ms.view().centerOn(-300, 150);
+				}
+				if (worldTicks == 80) {
+					Screenshot.grab(mc, false);
+				}
+				if (worldTicks == 110) {
+					mc.stop();
+				}
+			}
+			default -> { }
+		}
+	}
+
+	/** JourneyMap integration: is the plugin initialised, and are waypoints created through its API read back? */
+	private static void jmScenario(net.minecraft.client.Minecraft mc, int f) {
+		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		LandmarkState state = LandmarkState.get();
+		if (f == 60) {
+			Object api = ExternalWaypoints.journeyMapApi;
+			LandmarkClient.LOGGER.info("JMTEST plugin initialised (api present): {} | journeymap loaded: {}", api != null, net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("journeymap"));
+			if (api != null) {
+				try {
+					DevJourneyMap.addTestWaypoints(api, "landmark");
+				} catch (Throwable t) {
+					LandmarkClient.LOGGER.warn("JMTEST could not add waypoints through the API", t);
+				}
+			}
+			state.reloadWaypoints(mc);
+		} else if (f == 100) {
+			var wps = state.external.forDimension(DEMO_DIMENSION);
+			LandmarkClient.LOGGER.info("JMTEST read {} waypoints for the overworld: {}", wps.size(), wps.stream().map(w -> w.source() + ":" + w.name() + "@" + w.x() + "," + w.z()).toList());
+			mapScreen = mc.gui.screen();
+			shot.run();
+		} else if (f == 110) {
+			mc.stop();
+		}
+	}
+
 	private static HelpScreen helpScreen;
 	private static ColorPickerScreen picker;
 	private static String searchQuery = "";
@@ -266,7 +426,8 @@ final class DevHarness {
 				ms.view().setScale(0.5);
 				ms.view().centerOn(ax, az);
 				var w = mc.getWindow();
-				double gx = 190 + (w.getGuiScaledWidth() - 190) / 2.0;
+				int pw = Math.max(150, Math.min(190, w.getGuiScaledWidth() / 3 + 24));
+				double gx = pw + (w.getGuiScaledWidth() - pw) / 2.0;
 				double gy = (w.getGuiScaledHeight() - 34) / 2.0;
 				org.lwjgl.glfw.GLFW.glfwSetCursorPos(w.handle(), gx * w.getGuiScale(), gy * w.getGuiScale());
 				return;
@@ -281,6 +442,10 @@ final class DevHarness {
 		LandmarkClient.LOGGER.info("Dev demo enabled");
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			ticks++;
+			if (JM_WORLD) {
+				jmWorldTick(mc);
+				return;
+			}
 			if (framesOpen < 0 && mc.gui.screen() instanceof TitleScreen && ticks > 60) {
 				devDimension = DEMO_DIMENSION;
 				LandmarkState state = LandmarkState.get();
@@ -342,6 +507,14 @@ final class DevHarness {
 				}
 				if (SPAWNS) {
 					spawnsScenario(mc, framesOpen);
+					return;
+				}
+				if (WAYPOINTS) {
+					waypointsScenario(mc, framesOpen);
+					return;
+				}
+				if (JM_TEST) {
+					jmScenario(mc, framesOpen);
 					return;
 				}
 				if (PERF) {

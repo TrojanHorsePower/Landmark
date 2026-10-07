@@ -13,6 +13,7 @@ import landmark.data.ColorKey;
 import landmark.data.Land;
 import landmark.data.OpenSpawns;
 import landmark.data.Polygon;
+import landmark.waypoints.ExternalWaypoint;
 import landmark.map.ChunkOwnerGrid;
 import landmark.map.MapView;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -92,6 +93,10 @@ public class MapScreen extends Screen {
 		search.setValue(query);
 	}
 
+	/** Dev harness: pretends the cursor is here (-1 = use the real cursor), so tests do not depend on window focus. */
+	int devMouseX = -1;
+	int devMouseY = -1;
+
 	/** Dev harness: presses the Hide claims button. */
 	void devToggleClaims() {
 		toggleClaims();
@@ -144,10 +149,12 @@ public class MapScreen extends Screen {
 			refresh();
 		}
 		rebuildEntries();
+		state.reloadWaypoints(minecraft);
 	}
 
 	private void refresh() {
 		state.refreshSpawns(minecraft);
+		state.reloadWaypoints(minecraft);
 	}
 
 	// ---- data ----
@@ -313,6 +320,10 @@ public class MapScreen extends Screen {
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float partial) {
+		if (devMouseX >= 0) {
+			mx = devMouseX;
+			my = devMouseY;
+		}
 		long t0 = System.nanoTime();
 		syncData();
 		view.setViewport(mapWidth(), mapHeight());
@@ -329,7 +340,12 @@ public class MapScreen extends Screen {
 		super.extractRenderState(g, mx, my, partial);
 		drawStatus(g);
 		if (map != null && inMap(mx, my)) {
-			drawHoverTooltip(g, mx, my);
+			ExternalWaypoint wp = waypointAt(mx, my);
+			if (wp != null) {
+				drawWaypointTooltip(g, mx, my, wp);
+			} else {
+				drawHoverTooltip(g, mx, my);
+			}
 		}
 		lastExtractNanos = System.nanoTime() - t0;
 	}
@@ -462,6 +478,19 @@ public class MapScreen extends Screen {
 				g.fill(px - 2, pz - 2, px + 3, pz + 3, col(ColorKey.PIN));
 			}
 		}
+		if (state.config.showExternalWaypoints) {
+			int border = col(ColorKey.WAYPOINT_BORDER);
+			int drawn = 0;
+			for (ExternalWaypoint wp : state.external.forDimension(dimension)) {
+				int wx = mapX + (int) view.worldToScreenX(wp.x() + 0.5);
+				int wz = (int) view.worldToScreenZ(wp.z() + 0.5);
+				if (wx < mapX - 6 || wx > width + 6 || wz < -6 || wz > mapHeight() + 6 || drawn++ > 600) {
+					continue;
+				}
+				diamond(g, wx, wz, 4, border);
+				diamond(g, wx, wz, 3, wp.argb());
+			}
+		}
 		var p = minecraft.player;
 		if (p != null && state.config.showPlayerMarker) {
 			int px = mapX + (int) view.worldToScreenX(p.getX());
@@ -581,6 +610,51 @@ public class MapScreen extends Screen {
 			g.text(font, fit(note, room), panelW + 4, y + 23, state.noticeIsError ? col(ColorKey.TEXT_ERROR) : col(ColorKey.TEXT_INFO), false);
 		} else {
 			g.text(font, fit(I18n.tr("landmark.status.dropHint"), room), panelW + 4, y + 23, col(ColorKey.TEXT_DIM), false);
+		}
+	}
+
+	private static void diamond(GuiGraphicsExtractor g, int cx, int cz, int r, int color) {
+		for (int dz = -r; dz <= r; dz++) {
+			int half = r - Math.abs(dz);
+			g.fill(cx - half, cz + dz, cx + half + 1, cz + dz + 1, color);
+		}
+	}
+
+	/** The waypoint marker under the cursor, if any (within a few pixels). */
+	private @Nullable ExternalWaypoint waypointAt(int mx, int my) {
+		if (!state.config.showExternalWaypoints) {
+			return null;
+		}
+		ExternalWaypoint best = null;
+		int bestDist = 7;
+		for (ExternalWaypoint wp : state.external.forDimension(dimension)) {
+			int dx = Math.abs(panelW + (int) view.worldToScreenX(wp.x() + 0.5) - mx);
+			int dz = Math.abs((int) view.worldToScreenZ(wp.z() + 0.5) - my);
+			if (Math.max(dx, dz) < bestDist) {
+				bestDist = Math.max(dx, dz);
+				best = wp;
+			}
+		}
+		return best;
+	}
+
+	private void drawWaypointTooltip(GuiGraphicsExtractor g, int mx, int my, ExternalWaypoint wp) {
+		String name = ExternalWaypoints.displayName(wp.name());
+		List<String> lines = new ArrayList<>();
+		lines.add(name);
+		lines.add(I18n.tr("landmark.tip.waypoint", wp.source().displayName));
+		lines.add(wp.y() == null ? wp.x() + ", " + wp.z() : wp.x() + ", " + wp.y() + ", " + wp.z());
+		int w = 0;
+		for (String line : lines) {
+			w = Math.max(w, font.width(line));
+		}
+		w = Math.min(w, width - 16);
+		lines.replaceAll(text -> font.plainSubstrByWidth(text, width - 16));
+		int x = Math.max(4, Math.min(mx + 10, width - w - 8));
+		int y = Math.min(my + 10, height - lines.size() * 10 - 12);
+		g.fill(x - 3, y - 3, x + w + 3, y + lines.size() * 10 + 1, col(ColorKey.TOOLTIP_BACKGROUND));
+		for (int i = 0; i < lines.size(); i++) {
+			g.text(font, lines.get(i), x, y + i * 10, i == 0 ? col(ColorKey.TEXT_PRIMARY) : col(ColorKey.TOOLTIP_TEXT), false);
 		}
 	}
 

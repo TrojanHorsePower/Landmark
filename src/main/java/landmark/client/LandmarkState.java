@@ -37,6 +37,7 @@ public final class LandmarkState {
 		return t;
 	});
 
+	public final ExternalWaypoints external = new ExternalWaypoints();
 	public @Nullable OpenSpawns openSpawns;
 	public boolean refreshing;
 	/** Session-only: hide claims (and their spawn pins) so the bare map is visible. */
@@ -96,6 +97,13 @@ public final class LandmarkState {
 
 	public java.util.Optional<LearnedSpawns.Spawn> visibleSpawn(String land, String dimension) {
 		return config.saveSpawns ? learned.get(land, dimension) : java.util.Optional.empty();
+	}
+
+	/** Re-reads waypoints from Xaero's Minimap and JourneyMap, if showing them is switched on. */
+	public void reloadWaypoints(Minecraft mc) {
+		if (config.showExternalWaypoints) {
+			external.reload(mc, io);
+		}
 	}
 
 	/** Forgets every saved spawn location, in memory and on disk. */

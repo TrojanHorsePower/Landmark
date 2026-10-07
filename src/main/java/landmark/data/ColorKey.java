@@ -17,6 +17,8 @@ public enum ColorKey {
 	OTHER_OUTLINE("other_outline", Group.MAP, 0xB3B4C2D4, true),
 	PIN("pin", Group.MAP, 0xFF40E0FF, false),
 	PIN_BORDER("pin_border", Group.MAP, 0xFF000000, false),
+	/** Outline of waypoint markers from Xaero's Minimap / JourneyMap; the marker itself keeps the colour the waypoint has there. */
+	WAYPOINT_BORDER("waypoint_border", Group.MAP, 0xFF000000, false),
 	PLAYER("player", Group.MAP, 0xFFFF3B30, false),
 	PLAYER_BORDER("player_border", Group.MAP, 0xFF000000, false),
 	// Side panel and list

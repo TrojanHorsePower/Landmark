@@ -20,6 +20,8 @@ public final class LandmarkConfig {
 	public boolean saveSpawns = true;
 	/** Outline every land that is not open-spawn. Off by default: with thousands of lands it can slow the map down. */
 	public boolean outlineOtherLands = false;
+	/** Show waypoints made in Xaero's Minimap and JourneyMap (if installed) on the map. */
+	public boolean showExternalWaypoints = true;
 	/** Show your own position on the map. */
 	public boolean showPlayerMarker = true;
 	/** Request the open-spawn list whenever the map opens. */

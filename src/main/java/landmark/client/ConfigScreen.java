@@ -70,6 +70,15 @@ public class ConfigScreen extends Screen {
 		list.add(new ToggleRow(Component.translatable("landmark.config.savespawns"), () -> state.config.saveSpawns, v -> state.config.saveSpawns = v));
 		list.add(new SavedSpawnsRow());
 		list.add(new ToggleRow(Component.translatable("landmark.config.outlineother"), () -> state.config.outlineOtherLands, v -> state.config.outlineOtherLands = v));
+		list.add(new ToggleRow(Component.translatable("landmark.config.waypoints"), () -> state.config.showExternalWaypoints, v -> {
+			state.config.showExternalWaypoints = v;
+			state.reloadWaypoints(minecraft); // no-op when switched off
+			rebuild();
+		}));
+		if (state.config.showExternalWaypoints) {
+			note(Component.literal(state.external.summary(Component.translatable("landmark.waypoints.notinstalled").getString(),
+				Component.translatable("landmark.waypoints.found").getString())), Palette.get(ColorKey.TEXT_STATUS));
+		}
 		list.add(new ToggleRow(Component.translatable("landmark.config.playermarker"), () -> state.config.showPlayerMarker, v -> state.config.showPlayerMarker = v));
 		list.add(new ToggleRow(Component.translatable("landmark.config.refreshonopen"), () -> state.config.refreshOnOpen, v -> state.config.refreshOnOpen = v));
 

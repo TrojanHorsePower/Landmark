@@ -25,7 +25,9 @@ The screenshots in this README use synthetic data (fake lands, fake owners, gene
 - Click an amber land (or select one in the list and press Teleport), confirm, and you are on your way.
 - **Hide claims** (button in the side panel) shows the bare terrain; it hides the claims and their spawn pins, and brings both back when you click it again.
 - After you teleport, the mod remembers where you arrived and shows a cyan pin there, even for lands newer than your map
-  data.
+  data. Turn that off in Settings and the pins are hidden (and you can delete all of them there).
+- Waypoints you made in **Xaero's Minimap** or **JourneyMap** show up as small diamonds in their own colour (hover for the name
+  and position). On by default and optional; see below.
 - It always tells you where its data comes from and how old it is.
 
 ![Hovering a land shows its owner, members, size and spawn status](docs/images/tooltip.png)
@@ -81,8 +83,9 @@ have it (it is optional). Everything applies immediately.
 
 - **Keybinds.** Click the key, press the new one (Esc cancels); if the key is already used the mod asks before binding it. It
   is the same setting as in Options > Controls, so it changes in both places.
-- **Features.** Teleport confirmation, remembering spawn locations after you teleport, showing your own position on the map,
-  refreshing the open-spawn list when the map opens, and an optional outline around every non-open land. That outline is off
+- **Features.** Teleport confirmation, remembering spawn locations after you teleport (with a count and a Delete all button),
+  showing Xaero's / JourneyMap waypoints, showing your own position on the map, refreshing the open-spawn list when the map
+  opens, and an optional outline around every non-open land. That outline is off
   by default because with thousands of lands it can slow the map down (it cost about 3-6 ms per frame at some zoom levels on the
   real map, against under 1.5 ms without it); its colour is editable once you turn it on.
 - **Export quality.** Decides what the copied export script fetches:
@@ -107,6 +110,7 @@ have it (it is optional). Everything applies immediately.
 |---|---|---|
 | `confirmTeleport` | `true` | Ask before running `/lands spawn` |
 | `saveSpawns` | `true` | Remember where you arrive after a teleport and show a pin there |
+| `showExternalWaypoints` | `true` | Show waypoints from Xaero's Minimap and JourneyMap |
 | `showPlayerMarker` | `true` | Show your own position on the map |
 | `outlineOtherLands` | `false` | Outline lands that are not open-spawn (can slow the map down) |
 | `refreshOnOpen` | `true` | Request the open-spawn list when the map opens |
@@ -115,10 +119,25 @@ have it (it is optional). Everything applies immediately.
 | `mapUrl` | `https://map.chillzone.cc/` | The web map the help screen opens (https only) |
 | `tileCacheSize` | `48` | Detail map tiles kept in memory (8 to 512; grows to fit what is on screen) |
 
+## Waypoints from Xaero's Minimap and JourneyMap
+
+If you use either mod, the waypoints you made there appear on Landmark's map. Nothing to set up:
+
+- **JourneyMap** is read through JourneyMap's own plugin API, so it needs no files and works with the version you have.
+- **Xaero's Minimap** has no API, so Landmark reads its waypoint files from your game folder
+  (`xaero/minimap/Multiplayer_<server>/`). Only the folder for the server you are connected to is read, and only waypoints
+  that are switched on in Xaero's. The server folder is matched by address, so if you joined with an unusual address and no
+  waypoints appear, that is the first thing to check.
+- Waypoints stay visible when you hide claims, because they are not claims. Colours come from the other mod. Settings shows how
+  many were found from each source, and you can turn the whole thing off there.
+
+Both are read-only: Landmark never changes or uploads your waypoints. Neither mod is required, and none of their code is
+included in Landmark.
+
 ## Privacy
 
 Everything stays on your computer: imported data (`landmark/` in the game folder), learned spawn points
-(`landmark/learned-spawns.json`) and settings. The mod makes no network requests of its own. The only thing it sends to the
+(`landmark/learned-spawns.json`) and settings. Your Xaero's / JourneyMap waypoints are only read, never changed or sent anywhere. The mod makes no network requests of its own. The only thing it sends to the
 server is the `/lands spawn` command you confirm, plus the same suggestion request the chat box makes when you type
 `/lands spawn `.
 
@@ -143,6 +162,10 @@ How the export zip is laid out: [docs/export-format.md](docs/export-format.md).
   built-in `GITHUB_TOKEN`; no secrets or personal accounts are involved.
 - **Updating when Minecraft updates.** Bump the versions in `gradle.properties` (see https://fabricmc.net/develop) and fix
   whatever the compiler reports; the client code uses Mojang's real names.
+- **Waypoint integrations.** `XaeroWaypoints` (pure, tested) parses Xaero's files; `LandmarkJourneyMapPlugin` is loaded by
+  JourneyMap through the `journeymap` entrypoint and `JourneyMapReader` uses its API. The JourneyMap API is a `compileOnly`
+  dependency and is never bundled (its licence allows using it as a dependency, not shipping it). Neither mod is bundled or
+  required.
 - **Settings and Mod Menu.** `ConfigScreen` is the settings screen; `LandmarkModMenu` registers it with Mod Menu, which is an
   optional, compile-time-only dependency (the mod runs without it). Colors are defined once in `ColorKey` and read through
   `Palette`; to add a color, add it to `ColorKey` and give it a label in `lang/en_us.json` (a test fails if one is missing).

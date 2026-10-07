@@ -14,7 +14,8 @@
 	"environment": "client",
 	"entrypoints": {
 		"client": ["landmark.LandmarkClient"],
-		"modmenu": ["landmark.client.LandmarkModMenu"]
+		"modmenu": ["landmark.client.LandmarkModMenu"],
+		"journeymap": ["landmark.client.LandmarkJourneyMapPlugin"]
 	},
 	"suggests": {
 		"modmenu": "*"

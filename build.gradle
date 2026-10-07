@@ -16,12 +16,23 @@ repositories {
 			includeGroup 'com.terraformersmc'
 		}
 	}
+	// JourneyMap API: optional integration only (compile-time API, never bundled), see LandmarkJourneyMapPlugin
+	maven {
+		name = 'JourneyMap'
+		url = 'https://maven.blamejared.com'
+		content {
+			includeGroup 'info.journeymap'
+		}
+	}
 }
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Optional: Landmark runs without JourneyMap. compileOnly is never packaged into the jar.
+	compileOnly "info.journeymap:journeymap-api-fabric:${project.journeymap_api_version}"
 
 	// Optional: Landmark runs without Mod Menu. compileOnly is not packaged; runtimeOnly only affects the dev client.
 	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"

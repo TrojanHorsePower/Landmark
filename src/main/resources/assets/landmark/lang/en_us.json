@@ -115,5 +115,10 @@
 	"landmark.config.savedspawns": "Saved spawn locations: %s",
 	"landmark.config.savedspawns.delete": "Delete all",
 	"landmark.config.savedspawns.confirm.title": "Delete saved spawn locations?",
-	"landmark.config.savedspawns.confirm.message": "This deletes all %s saved spawn locations. It cannot be undone."
+	"landmark.config.savedspawns.confirm.message": "This deletes all %s saved spawn locations. It cannot be undone.",
+	"landmark.config.waypoints": "Show Xaero's / JourneyMap waypoints",
+	"landmark.waypoints.found": "Waypoints found: Xaero's Minimap %s, JourneyMap %s",
+	"landmark.waypoints.notinstalled": "not installed",
+	"landmark.tip.waypoint": "%s waypoint",
+	"landmark.color.waypoint_border": "Waypoint marker border"
 }
