@@ -53,20 +53,28 @@ public final class XaeroWaypoints {
 	}
 
 	private static void loadContainer(Path container, List<ExternalWaypoint> out) {
-		try (Stream<Path> dims = Files.list(container)) {
-			for (Path dimDir : dims.filter(Files::isDirectory).toList()) {
-				String dimension = dimensionOf(dimDir.getFileName().toString());
-				if (dimension == null) {
-					continue;
-				}
-				try (Stream<Path> files = Files.list(dimDir)) {
-					for (Path file : files.filter(f -> f.getFileName().toString().endsWith(".txt")).toList()) {
-						out.addAll(parse(Files.readAllLines(file, StandardCharsets.UTF_8), dimension));
-					}
+		for (Path dimDir : listSorted(container, Files::isDirectory)) {
+			String dimension = dimensionOf(dimDir.getFileName().toString());
+			if (dimension == null) {
+				continue;
+			}
+			for (Path file : listSorted(dimDir, f -> f.getFileName().toString().endsWith(".txt"))) {
+				// Each file stands alone: a broken or half-written one must never hide the others.
+				try {
+					out.addAll(parse(Files.readAllLines(file, StandardCharsets.UTF_8), dimension));
+				} catch (IOException | RuntimeException e) {
+					// skip this file
 				}
 			}
-		} catch (IOException | RuntimeException e) {
-			// a broken or half-written file must never break the map
+		}
+	}
+
+	/** The matching entries of a folder in a fixed order (directory listing order is not guaranteed); empty if unreadable. */
+	private static List<Path> listSorted(Path dir, java.util.function.Predicate<Path> filter) {
+		try (Stream<Path> entries = Files.list(dir)) {
+			return entries.filter(filter).sorted().toList();
+		} catch (IOException e) {
+			return List.of();
 		}
 	}
 
