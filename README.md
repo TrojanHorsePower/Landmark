@@ -23,6 +23,7 @@ The screenshots in this README use synthetic data (fake lands, fake owners, gene
 - Hover a land for its owner, members, size and whether it has an open spawn.
 - Search by land name, owner or member. Press **Refresh** to re-request the live open-spawn list.
 - Click an amber land (or select one in the list and press Teleport), confirm, and you are on your way.
+- **Hide claims** (button in the side panel) shows the bare terrain; it hides the claims and their spawn pins, and brings both back when you click it again.
 - After you teleport, the mod remembers where you arrived and shows a cyan pin there, even for lands newer than your map
   data.
 - It always tells you where its data comes from and how old it is.
@@ -30,6 +31,8 @@ The screenshots in this README use synthetic data (fake lands, fake owners, gene
 ![Hovering a land shows its owner, members, size and spawn status](docs/images/tooltip.png)
 
 ![Searching by player name](docs/images/search.png)
+
+![Hide claims shows the plain map](docs/images/hide-claims.png)
 
 ## Install
 
@@ -47,7 +50,10 @@ so you export it once from your own browser:
 1. In the mod, open the map and press **Get map data**. It walks you through the steps and has buttons to open the web map
    and to copy the export script.
 2. Run the script in the browser console on the map page. It saves `landmark-export.zip`.
-3. Drag the zip onto the Minecraft window. The data is stored in your game folder (`landmark/`) and reused next time.
+3. Drag the zip onto the Minecraft window. You can do this right on the help page; there is no need to go back to the map
+   first. The data is stored in your game folder (`landmark/`) and reused next time.
+
+The copied script uses the **export quality** you chose in the settings (see below).
 
 ![The in-game instructions](docs/images/help.png)
 
@@ -68,12 +74,41 @@ nothing is drawn in a dimension without data.
 
 ## Settings
 
-`config/landmark.json` (created on first save):
+Open them with the **Settings** button on the map, or from the mod's entry in [Mod Menu](https://modrinth.com/mod/modmenu) if you
+have it (it is optional). Everything applies immediately.
+
+![The settings screen](docs/images/settings.png)
+
+- **Keybinds.** Click the key, press the new one (Esc cancels); if the key is already used the mod asks before binding it. It
+  is the same setting as in Options > Controls, so it changes in both places.
+- **Features.** Teleport confirmation, remembering spawn locations after you teleport, showing your own position on the map,
+  and refreshing the open-spawn list when the map opens.
+- **Export quality.** Decides what the copied export script fetches:
+
+  | Preset | Map detail | Tile format | Roughly, on the Chillzone map |
+  |---|---|---|---|
+  | Low (default) | zoomed out | small JPEG | 8 MB |
+  | Medium | zoomed out | full-quality PNG | 50 MB |
+  | High | 2x the detail | full-quality PNG | 170 MB |
+  | Ultra | 4x the detail | full-quality PNG | 600 MB or more (estimated) |
+
+  Higher quality means larger file sizes on disk and longer export times. Only the tile detail and format change; the claims
+  are identical in every preset. The mod picks the preset's values when it copies the script, so change it before copying.
+- **Colors.** Every color the mod draws with: a picker plus a hex box that always match (`#RRGGBB`, or `#RRGGBBAA` for colors
+  with opacity), a Reset for each color, and a Reset all.
+
+![Picking a color](docs/images/picker.png)
+
+`config/landmark.json` holds the same settings (created on first save):
 
 | Key | Default | Meaning |
 |---|---|---|
 | `confirmTeleport` | `true` | Ask before running `/lands spawn` |
+| `saveSpawns` | `true` | Remember where you arrive after a teleport and show a pin there |
+| `showPlayerMarker` | `true` | Show your own position on the map |
 | `refreshOnOpen` | `true` | Request the open-spawn list when the map opens |
+| `exportQuality` | `low` | `low`, `medium`, `high` or `ultra` (see above) |
+| `colors` | `{}` | Colors you changed, by name, as hex; anything not listed uses its default |
 | `mapUrl` | `https://map.chillzone.cc/` | The web map the help screen opens (https only) |
 | `tileCacheSize` | `48` | Detail map tiles kept in memory (8 to 512; grows to fit what is on screen) |
 
@@ -105,6 +140,9 @@ How the export zip is laid out: [docs/export-format.md](docs/export-format.md).
   built-in `GITHUB_TOKEN`; no secrets or personal accounts are involved.
 - **Updating when Minecraft updates.** Bump the versions in `gradle.properties` (see https://fabricmc.net/develop) and fix
   whatever the compiler reports; the client code uses Mojang's real names.
+- **Settings and Mod Menu.** `ConfigScreen` is the settings screen; `LandmarkModMenu` registers it with Mod Menu, which is an
+  optional, compile-time-only dependency (the mod runs without it). Colors are defined once in `ColorKey` and read through
+  `Palette`; to add a color, add it to `ColorKey` and give it a label in `lang/en_us.json` (a test fails if one is missing).
 - **The export script** is `tools/export.js`. It is bundled into the jar and copied to the clipboard by the help screen, so
   there is one copy. If the web map's data format ever changes, update it and `Pl3xLandsParser`.
 - **Demo data and screenshots.** `node tools/make-demo-zip.js demo.zip` builds a fake export. In a Fabric dev environment,

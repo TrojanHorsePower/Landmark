@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import landmark.data.Ages;
+import landmark.data.ColorKey;
 import landmark.data.Land;
 import landmark.data.OpenSpawns;
 import landmark.data.Polygon;
 import landmark.map.ChunkOwnerGrid;
-import landmark.map.ClaimColors;
 import landmark.map.MapView;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -35,10 +35,12 @@ public class MapScreen extends Screen {
 	private static final int PANEL_W = 190;
 	private static final int ROW_H = 11;
 	private static final int STATUS_H = 34;
-	/** Below this on-screen tile width the small overview copies are drawn instead of full tiles. */
-	private static final int OVERVIEW_BELOW_PX = 200;
 	/** Lands smaller than this on screen (both ways) are outlined as a dot or box instead of edge by edge. */
 	private static final int SMALL_LAND_PX = 12;
+
+	private static int col(ColorKey key) {
+		return Palette.get(key);
+	}
 
 	private record Entry(String name, @Nullable Land land, boolean open, boolean typed) {}
 
@@ -49,6 +51,8 @@ public class MapScreen extends Screen {
 	private Button fitButton;
 	private Button teleportButton;
 	private Button helpButton;
+	private Button claimsButton;
+	private Button settingsButton;
 	private List<Entry> entries = List.of();
 	private int listScroll;
 	private @Nullable String selectedName;
@@ -60,6 +64,7 @@ public class MapScreen extends Screen {
 	private @Nullable TileOverview overview;
 	private int builtDataVersion = -1;
 	private int builtSpawnsVersion = -1;
+	private int builtPaletteVersion = -1;
 	private Set<Integer> openIdx = Set.of();
 	private boolean viewInitialised;
 	private boolean layersBuilt;
@@ -74,6 +79,11 @@ public class MapScreen extends Screen {
 	/** Dev harness: types into the search box. */
 	void devSearch(String query) {
 		search.setValue(query);
+	}
+
+	/** Dev harness: presses the Hide claims button. */
+	void devToggleClaims() {
+		toggleClaims();
 	}
 
 	/** Dev harness: selects the first list entry, as a click would. */
@@ -106,6 +116,10 @@ public class MapScreen extends Screen {
 			.bounds(4, 24, 91, 18).build());
 		fitButton = addRenderableWidget(Button.builder(Component.translatable("landmark.fit"), b -> fitToSpawns())
 			.bounds(99, 24, 87, 18).build());
+		claimsButton = addRenderableWidget(Button.builder(Component.translatable("landmark.claims.hide"), b -> toggleClaims())
+			.bounds(4, 46, 91, 18).build());
+		settingsButton = addRenderableWidget(Button.builder(Component.translatable("landmark.settings"),
+			b -> minecraft.setScreenAndShow(new ConfigScreen(this))).bounds(99, 46, 87, 18).build());
 		teleportButton = addRenderableWidget(Button.builder(Component.translatable("landmark.teleport"), b -> teleportToSelection())
 			.bounds(4, height - 22, PANEL_W - 8, 18).build());
 		helpButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.button"),
@@ -148,6 +162,10 @@ public class MapScreen extends Screen {
 			if (dimChanged || dataChanged) {
 				viewInitialised = false;
 			}
+		}
+		if (builtPaletteVersion != Palette.version) {
+			builtPaletteVersion = Palette.version;
+			builtSpawnsVersion = -1; // repaint the claim textures with the new colours
 		}
 		if (builtSpawnsVersion != state.spawnsVersion) {
 			builtSpawnsVersion = state.spawnsVersion;
@@ -260,7 +278,7 @@ public class MapScreen extends Screen {
 	}
 
 	private int listTop() {
-		return 48;
+		return 70;
 	}
 
 	private int listBottom() {
@@ -275,7 +293,7 @@ public class MapScreen extends Screen {
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float partial) {
-		g.fill(0, 0, width, height, 0xFF101418);
+		g.fill(0, 0, width, height, col(ColorKey.MAP_BACKGROUND));
 	}
 
 	@Override
@@ -289,8 +307,8 @@ public class MapScreen extends Screen {
 		} else {
 			drawNoMap(g);
 		}
-		g.fill(0, 0, PANEL_W, height, 0xFF1B2128);
-		g.fill(PANEL_W - 1, 0, PANEL_W, height, 0xFF000000);
+		g.fill(0, 0, PANEL_W, height, col(ColorKey.PANEL_BACKGROUND));
+		g.fill(PANEL_W - 1, 0, PANEL_W, height, col(ColorKey.PANEL_BORDER));
 		drawList(g, mx, my);
 		updateButtons();
 		super.extractRenderState(g, mx, my, partial);
@@ -305,6 +323,8 @@ public class MapScreen extends Screen {
 		refreshButton.setMessage(Component.translatable(state.refreshing ? "landmark.refreshing" : "landmark.refresh"));
 		refreshButton.active = !state.refreshing;
 		fitButton.active = map != null;
+		claimsButton.active = map != null;
+		claimsButton.setMessage(Component.translatable(state.hideClaims ? "landmark.claims.show" : "landmark.claims.hide"));
 		String target = teleportTarget();
 		teleportButton.active = target != null;
 		teleportButton.setMessage(target == null ? Component.translatable("landmark.teleport")
@@ -315,8 +335,8 @@ public class MapScreen extends Screen {
 		int cx = PANEL_W + mapWidth() / 2;
 		int cy = mapHeight() / 2;
 		String dim = dimension.isEmpty() ? "" : dimension;
-		g.centeredText(font, Component.translatable(dim.equals("minecraft:overworld") || dim.isEmpty() ? "landmark.nomap" : "landmark.nomap.dimension", dim), cx, cy - 12, 0xFFFFFFFF);
-		g.centeredText(font, Component.translatable("landmark.nomap.hint"), cx, cy + 2, 0xFFAAAAAA);
+		g.centeredText(font, Component.translatable(dim.equals("minecraft:overworld") || dim.isEmpty() ? "landmark.nomap" : "landmark.nomap.dimension", dim), cx, cy - 12, col(ColorKey.TEXT_PRIMARY));
+		g.centeredText(font, Component.translatable("landmark.nomap.hint"), cx, cy + 2, col(ColorKey.TEXT_MUTED));
 	}
 
 	private void drawMap(GuiGraphicsExtractor g, int mx, int my) {
@@ -341,7 +361,7 @@ public class MapScreen extends Screen {
 			int tz1 = Math.floorDiv((int) maxWZ, bpt);
 			// Far out, a tile is only a few hundred pixels wide: use the small preloaded copies instead of
 			// full-size tiles, which would be too many to keep cached and would be reloaded every frame.
-			boolean far = bpt * view.scale() <= OVERVIEW_BELOW_PX && overview != null;
+			boolean far = overview != null && bpt * view.scale() <= overview.size() * 1.5;
 			if (far) {
 				overview.pump();
 			} else {
@@ -362,7 +382,8 @@ public class MapScreen extends Screen {
 			}
 		}
 
-		if (claims != null) {
+		boolean showClaims = !state.hideClaims;
+		if (claims != null && showClaims) {
 			int span = ChunkOwnerGrid.TILE_CELLS * ChunkOwnerGrid.CELL;
 			for (ClaimLayer.Tile t : claims.tiles) {
 				double wx0 = (double) t.tx() * span;
@@ -378,36 +399,37 @@ public class MapScreen extends Screen {
 			}
 		}
 
-		if (map != null) {
+		if (map != null && showClaims) {
+			int openOutline = col(ColorKey.OPEN_OUTLINE);
 			for (int i : openIdx) {
-				drawOutline(g, map.land(i), ClaimColors.OPEN_OUTLINE, 1, mapX, minWX, maxWX, minWZ, maxWZ);
+				drawOutline(g, map.land(i), openOutline, 1, mapX, minWX, maxWX, minWZ, maxWZ);
 			}
 			Land selected = selectedName == null ? null : map.index.byName(selectedName).orElse(null);
 			if (selected != null) {
-				drawOutline(g, selected, ClaimColors.SELECTED_OUTLINE, 2, mapX, minWX, maxWX, minWZ, maxWZ);
+				drawOutline(g, selected, col(ColorKey.SELECTED_OUTLINE), 2, mapX, minWX, maxWX, minWZ, maxWZ);
 			}
 			if (inMap(mx, my)) {
-				int hi = map.grid.landIndexAt((int) Math.floor(view.screenToWorldX(mx - mapX)), (int) Math.floor(view.screenToWorldZ(my)));
+				int hi = landAt(mx, my);
 				if (hi >= 0) {
-					drawOutline(g, map.land(hi), ClaimColors.HOVER_OUTLINE, 2, mapX, minWX, maxWX, minWZ, maxWZ);
+					drawOutline(g, map.land(hi), col(ColorKey.HOVER_OUTLINE), 2, mapX, minWX, maxWX, minWZ, maxWZ);
 				}
 			}
 		}
 
-		for (var sp : state.learned.all(dimension)) {
+		for (var sp : showClaims ? state.learned.all(dimension) : List.<landmark.data.LearnedSpawns.Spawn>of()) {
 			if (isOpen(sp.land()) || sp.land().equalsIgnoreCase(selectedName)) {
 				int px = mapX + (int) view.worldToScreenX(sp.x() + 0.5);
 				int pz = (int) view.worldToScreenZ(sp.z() + 0.5);
-				g.fill(px - 3, pz - 3, px + 4, pz + 4, 0xFF000000);
-				g.fill(px - 2, pz - 2, px + 3, pz + 3, 0xFF40E0FF);
+				g.fill(px - 3, pz - 3, px + 4, pz + 4, col(ColorKey.PIN_BORDER));
+				g.fill(px - 2, pz - 2, px + 3, pz + 3, col(ColorKey.PIN));
 			}
 		}
 		var p = minecraft.player;
-		if (p != null) {
+		if (p != null && state.config.showPlayerMarker) {
 			int px = mapX + (int) view.worldToScreenX(p.getX());
 			int pz = (int) view.worldToScreenZ(p.getZ());
-			g.fill(px - 3, pz - 3, px + 4, pz + 4, 0xFF000000);
-			g.fill(px - 2, pz - 2, px + 3, pz + 3, 0xFFFF3B30);
+			g.fill(px - 3, pz - 3, px + 4, pz + 4, col(ColorKey.PLAYER_BORDER));
+			g.fill(px - 2, pz - 2, px + 3, pz + 3, col(ColorKey.PLAYER));
 		}
 		g.disableScissor();
 	}
@@ -465,7 +487,7 @@ public class MapScreen extends Screen {
 		int rows = visibleRows();
 		if (entries.isEmpty()) {
 			String key = state.openSpawns == null ? (state.refreshing ? "landmark.list.loading" : "landmark.list.none") : "landmark.list.empty";
-			g.textWithWordWrap(font, Component.translatable(key), 6, top + 4, PANEL_W - 12, 0xFFAAAAAA);
+			g.textWithWordWrap(font, Component.translatable(key), 6, top + 4, PANEL_W - 12, col(ColorKey.TEXT_MUTED));
 			return;
 		}
 		listScroll = Math.max(0, Math.min(listScroll, Math.max(0, entries.size() - rows)));
@@ -475,22 +497,22 @@ public class MapScreen extends Screen {
 			boolean hover = mx >= 2 && mx < PANEL_W - 2 && my >= y && my < y + ROW_H;
 			boolean selected = e.name().equalsIgnoreCase(selectedName);
 			if (selected) {
-				g.fill(2, y, PANEL_W - 2, y + ROW_H, 0xFF2C4A5C);
+				g.fill(2, y, PANEL_W - 2, y + ROW_H, col(ColorKey.ROW_SELECTED));
 			} else if (hover) {
-				g.fill(2, y, PANEL_W - 2, y + ROW_H, 0xFF2A323B);
+				g.fill(2, y, PANEL_W - 2, y + ROW_H, col(ColorKey.ROW_HOVER));
 			}
-			int color = e.typed() ? 0xFF9AD0FF : e.open() ? 0xFFFFD34D : 0xFF8C96A0;
+			int color = e.typed() ? col(ColorKey.TEXT_INFO) : e.open() ? col(ColorKey.LIST_OPEN) : col(ColorKey.LIST_CLOSED);
 			String label = e.typed() ? "> " + e.name() : e.name();
 			g.text(font, font.plainSubstrByWidth(label, PANEL_W - 14), 6, y + 2, color, false);
 		}
 		if (entries.size() > rows) {
-			g.text(font, (listScroll + 1) + "-" + Math.min(entries.size(), listScroll + rows) + "/" + entries.size(), 6, listBottom() + 2, 0xFF6E7781, false);
+			g.text(font, (listScroll + 1) + "-" + Math.min(entries.size(), listScroll + rows) + "/" + entries.size(), 6, listBottom() + 2, col(ColorKey.TEXT_DIM), false);
 		}
 	}
 
 	private void drawStatus(GuiGraphicsExtractor g) {
 		int y = height - STATUS_H;
-		g.fill(PANEL_W, y, width, height, 0xE0101418);
+		g.fill(PANEL_W, y, width, height, col(ColorKey.STATUS_BACKGROUND));
 		long now = System.currentTimeMillis();
 		int room = mapWidth() - 8;
 		String claimsText;
@@ -503,21 +525,21 @@ public class MapScreen extends Screen {
 		OpenSpawns s = state.openSpawns;
 		String spawnText = s == null ? I18n.tr("landmark.status.nospawns")
 			: I18n.tr("landmark.status.spawns", s.names().size(), Ages.format(s.fetchedAtMillis(), now));
-		g.text(font, font.plainSubstrByWidth(claimsText, room), PANEL_W + 4, y + 3, 0xFF9AA5B0, false);
-		g.text(font, font.plainSubstrByWidth(spawnText, room), PANEL_W + 4, y + 13, 0xFF9AA5B0, false);
+		g.text(font, font.plainSubstrByWidth(claimsText, room), PANEL_W + 4, y + 3, col(ColorKey.TEXT_STATUS), false);
+		g.text(font, font.plainSubstrByWidth(spawnText, room), PANEL_W + 4, y + 13, col(ColorKey.TEXT_STATUS), false);
 		String note = state.notice;
 		if (note == null && tiles != null && tiles.decodeFailures > 0) {
 			note = I18n.tr("landmark.status.tilefail", tiles.decodeFailures);
 		}
 		if (note != null) {
-			g.text(font, font.plainSubstrByWidth(note, room), PANEL_W + 4, y + 23, state.noticeIsError ? 0xFFFF6B6B : 0xFF9AD0FF, false);
+			g.text(font, font.plainSubstrByWidth(note, room), PANEL_W + 4, y + 23, state.noticeIsError ? col(ColorKey.TEXT_ERROR) : col(ColorKey.TEXT_INFO), false);
 		} else {
-			g.text(font, font.plainSubstrByWidth(I18n.tr("landmark.status.dropHint"), room), PANEL_W + 4, y + 23, 0xFF6E7781, false);
+			g.text(font, font.plainSubstrByWidth(I18n.tr("landmark.status.dropHint"), room), PANEL_W + 4, y + 23, col(ColorKey.TEXT_DIM), false);
 		}
 	}
 
 	private void drawHoverTooltip(GuiGraphicsExtractor g, int mx, int my) {
-		int hi = map.grid.landIndexAt((int) Math.floor(view.screenToWorldX(mx - PANEL_W)), (int) Math.floor(view.screenToWorldZ(my)));
+		int hi = landAt(mx, my);
 		if (hi < 0) {
 			return;
 		}
@@ -541,9 +563,9 @@ public class MapScreen extends Screen {
 		}
 		int x = Math.min(mx + 10, width - w - 8);
 		int y = Math.min(my + 10, height - lines.size() * 10 - 12);
-		g.fill(x - 3, y - 3, x + w + 3, y + lines.size() * 10 + 1, 0xE0000000);
+		g.fill(x - 3, y - 3, x + w + 3, y + lines.size() * 10 + 1, col(ColorKey.TOOLTIP_BACKGROUND));
 		for (int i = 0; i < lines.size(); i++) {
-			g.text(font, lines.get(i), x, y + i * 10, i == 0 ? 0xFFFFFFFF : lines.get(i).equals(I18n.tr("landmark.tip.open")) ? 0xFFFFD34D : 0xFFB8C0C8, false);
+			g.text(font, lines.get(i), x, y + i * 10, i == 0 ? col(ColorKey.TEXT_PRIMARY) : lines.get(i).equals(I18n.tr("landmark.tip.open")) ? col(ColorKey.LIST_OPEN) : col(ColorKey.TOOLTIP_TEXT), false);
 		}
 	}
 
@@ -593,7 +615,7 @@ public class MapScreen extends Screen {
 		if (pressedInMap) {
 			pressedInMap = false;
 			if (dragged < 4 && map != null) {
-				int hi = map.grid.landIndexAt((int) Math.floor(view.screenToWorldX(e.x() - PANEL_W)), (int) Math.floor(view.screenToWorldZ(e.y())));
+				int hi = landAt(e.x(), e.y());
 				if (hi >= 0) {
 					Land l = map.land(hi);
 					boolean open = openIdx.contains(hi);
@@ -634,13 +656,7 @@ public class MapScreen extends Screen {
 
 	@Override
 	public void onFilesDrop(List<Path> paths) {
-		for (Path p : paths) {
-			if (p.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".zip")) {
-				state.importZip(minecraft, p);
-				return;
-			}
-		}
-		state.setNotice(I18n.tr("landmark.import.notzip"), true);
+		state.handleDrop(minecraft, paths);
 	}
 
 	@Override
@@ -649,6 +665,18 @@ public class MapScreen extends Screen {
 	}
 
 	// ---- actions ----
+
+	private void toggleClaims() {
+		state.hideClaims = !state.hideClaims;
+	}
+
+	/** Index of the land under the screen position, or -1; nothing is under the cursor while claims are hidden. */
+	private int landAt(double sx, double sy) {
+		if (map == null || state.hideClaims) {
+			return -1;
+		}
+		return map.grid.landIndexAt((int) Math.floor(view.screenToWorldX(sx - PANEL_W)), (int) Math.floor(view.screenToWorldZ(sy)));
+	}
 
 	private void select(Entry en) {
 		selectedName = en.name();

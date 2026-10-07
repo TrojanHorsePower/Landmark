@@ -29,3 +29,21 @@ centres fall on water far less often than chance only under this orientation.
 
 The importer treats the zip as untrusted: names are matched against fixed patterns and never used as paths,
 sizes are enforced while reading, and an import that fails leaves the previous data untouched.
+
+## Export quality presets
+
+The script has two settings in its `CONFIG` block that decide the tiles: `tileFolder` (how zoomed out they are; each step down
+doubles the detail and quadruples the tile count) and `tileMode` (`small` = JPEG re-encoded in the browser, `full` = PNG as
+served). The mod's settings choose one of four presets and write those two values into the script when it is copied:
+
+| Preset | `tileFolder` | `tileMode` | `blocksPerTile` in the manifest |
+|---|---|---|---|
+| Low | 3 | `small` | 4096 |
+| Medium | 3 | `full` | 4096 |
+| High | 2 | `full` | 2048 |
+| Ultra | 1 | `full` | 1024 |
+
+On the Chillzone map the measured sizes were about 8 MB (Low), 52 MB (Medium) and 172 MB (High); Ultra (about 1,600 tiles) is
+extrapolated at 600 MB or more. The script builds the zip from browser Blobs rather than one big buffer, and the importer
+allows up to 5,000 files and 3 GB, so every preset can be imported. When there are many tiles (more than 800) the map uses
+smaller overview copies of them to keep memory use down.

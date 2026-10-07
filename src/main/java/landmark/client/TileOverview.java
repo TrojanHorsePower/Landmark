@@ -22,11 +22,13 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Small ({@value #SIZE}px) copies of every imported tile, decoded once in the background. Used when zoomed far out,
- * where full-size tiles would be both wasteful and too numerous to keep cached at once.
+ * Small copies of every imported tile (128px, or 64px when there are very many tiles, as with the Ultra export preset), decoded
+ * once in the background. Used when zoomed far out, where full-size tiles would be both wasteful and too numerous to keep cached
+ * at once.
  */
 public final class TileOverview implements AutoCloseable {
-	public static final int SIZE = 128;
+	/** More tiles than this get the smaller copies, to bound memory. */
+	private static final int MANY_TILES = 800;
 	private static final int UPLOADS_PER_FRAME = 4;
 	private static final Pattern NAME = Pattern.compile("(-?\\d+)_(-?\\d+)\\.(png|jpg)");
 
@@ -46,6 +48,7 @@ public final class TileOverview implements AutoCloseable {
 	});
 	private volatile boolean closed;
 	private int total;
+	private volatile int size = 128;
 
 	public TileOverview(Minecraft mc, Path dir, String idPrefix) {
 		this.mc = mc;
@@ -61,6 +64,8 @@ public final class TileOverview implements AutoCloseable {
 			return;
 		}
 		total = files.size();
+		size = total > MANY_TILES ? 64 : 128;
+		final int copySize = size;
 		for (Path p : files) {
 			worker.submit(() -> {
 				if (closed) {
@@ -73,7 +78,7 @@ public final class TileOverview implements AutoCloseable {
 				try {
 					NativeImage image = TileDecoder.decode(Files.readAllBytes(p));
 					try {
-						done.add(new Ready(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), downscale(image)));
+						done.add(new Ready(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), downscale(image, copySize)));
 					} finally {
 						image.close();
 					}
@@ -84,20 +89,30 @@ public final class TileOverview implements AutoCloseable {
 		}
 	}
 
-	/** Box-filters the image down to {@value #SIZE}x{@value #SIZE}. Pixels are ABGR ints. */
-	static int[] downscale(NativeImage image) {
+	/** Pixel size of the copies: tiles on screen smaller than about 1.5 times this are drawn from them. */
+	public int size() {
+		return size;
+	}
+
+	/** Box-filters the image down (or, for a small image, up) to {@code size} x {@code size}. Pixels are ABGR ints. */
+	static int[] downscale(NativeImage image, int size) {
 		int w = image.getWidth();
 		int h = image.getHeight();
 		int[] src = image.getPixelsABGR();
-		int[] out = new int[SIZE * SIZE];
-		int bx = Math.max(1, w / SIZE);
-		int by = Math.max(1, h / SIZE);
-		for (int y = 0; y < SIZE; y++) {
-			for (int x = 0; x < SIZE; x++) {
-				long a = 0, b = 0, g = 0, r = 0;
+		int[] out = new int[size * size];
+		for (int y = 0; y < size; y++) {
+			int y0 = y * h / size;
+			int y1 = Math.max(y0 + 1, (y + 1) * h / size);
+			for (int x = 0; x < size; x++) {
+				int x0 = x * w / size;
+				int x1 = Math.max(x0 + 1, (x + 1) * w / size);
+				long a = 0;
+				long b = 0;
+				long g = 0;
+				long r = 0;
 				int n = 0;
-				for (int yy = y * by; yy < Math.min(h, (y + 1) * by); yy++) {
-					for (int xx = x * bx; xx < Math.min(w, (x + 1) * bx); xx++) {
+				for (int yy = y0; yy < Math.min(h, y1); yy++) {
+					for (int xx = x0; xx < Math.min(w, x1); xx++) {
 						int p = src[yy * w + xx];
 						a += p >>> 24;
 						b += (p >> 16) & 255;
@@ -106,7 +121,7 @@ public final class TileOverview implements AutoCloseable {
 						n++;
 					}
 				}
-				out[y * SIZE + x] = n == 0 ? 0 : (int) (a / n) << 24 | (int) (b / n) << 16 | (int) (g / n) << 8 | (int) (r / n);
+				out[y * size + x] = n == 0 ? 0 : (int) (a / n) << 24 | (int) (b / n) << 16 | (int) (g / n) << 8 | (int) (r / n);
 			}
 		}
 		return out;
@@ -119,10 +134,11 @@ public final class TileOverview implements AutoCloseable {
 			if (r == null) {
 				return;
 			}
-			NativeImage image = new NativeImage(SIZE, SIZE, false);
-			for (int y = 0; y < SIZE; y++) {
-				for (int x = 0; x < SIZE; x++) {
-					image.setPixelABGR(x, y, r.abgr()[y * SIZE + x]);
+			int n = size;
+			NativeImage image = new NativeImage(n, n, false);
+			for (int y = 0; y < n; y++) {
+				for (int x = 0; x < n; x++) {
+					image.setPixelABGR(x, y, r.abgr()[y * n + x]);
 				}
 			}
 			Identifier id = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, idPrefix + "/" + r.tx() + "_" + r.tz());

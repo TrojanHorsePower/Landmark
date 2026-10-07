@@ -8,12 +8,27 @@ base.archivesName = project.archives_base_name
 
 repositories {
 	mavenCentral()
+	// Mod Menu: optional integration only (compile-time API), see LandmarkModMenu
+	maven {
+		name = 'TerraformersMC'
+		url = 'https://maven.terraformersmc.com/releases/'
+		content {
+			includeGroup 'com.terraformersmc'
+		}
+	}
 }
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Optional: Landmark runs without Mod Menu. compileOnly is not packaged; runtimeOnly only affects the dev client.
+	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+	// ./gradlew runClient -PnoModMenu starts the dev client without Mod Menu, to check the mod works without it
+	if (!project.hasProperty("noModMenu")) {
+		runtimeOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+	}
 
 	testImplementation platform("org.junit:junit-bom:5.12.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"

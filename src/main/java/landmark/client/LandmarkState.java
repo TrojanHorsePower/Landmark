@@ -10,7 +10,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import landmark.LandmarkClient;
+import java.util.List;
 import landmark.data.DataStore;
+import landmark.data.ImportFiles;
 import landmark.data.LandmarkConfig;
 import landmark.data.LearnedSpawns;
 import landmark.data.TeleportDetector;
@@ -37,6 +39,8 @@ public final class LandmarkState {
 
 	public @Nullable OpenSpawns openSpawns;
 	public boolean refreshing;
+	/** Session-only: hide claims (and their spawn pins) so the bare map is visible. */
+	public boolean hideClaims;
 	public @Nullable String notice;
 	public boolean noticeIsError;
 	/** Bumped whenever stored claim data changes or open spawns change, so cached textures know to rebuild. */
@@ -47,6 +51,7 @@ public final class LandmarkState {
 		this.store = new DataStore(gameDir.resolve("landmark"));
 		this.configFile = configDir.resolve("landmark.json");
 		this.config = LandmarkConfig.load(configFile);
+		Palette.reload(config);
 		this.learnedFile = gameDir.resolve("landmark").resolve("learned-spawns.json");
 		this.learned = LearnedSpawns.load(learnedFile);
 	}
@@ -86,7 +91,7 @@ public final class LandmarkState {
 
 	/** Called when a {@code /lands spawn} command is sent: watch for the teleport that follows. */
 	public void beginWatching(String land) {
-		watching = new TeleportDetector(land);
+		watching = config.saveSpawns ? new TeleportDetector(land) : null;
 	}
 
 	/** Called every client tick. */
@@ -138,6 +143,12 @@ public final class LandmarkState {
 				setNotice(null, false);
 			}
 		}, mc);
+	}
+
+	/** Handles files dropped on the window (from any of our screens): imports the first zip, or says there was none. */
+	public void handleDrop(Minecraft mc, List<Path> dropped) {
+		ImportFiles.firstZip(dropped).ifPresentOrElse(zip -> importZip(mc, zip),
+			() -> setNotice(net.minecraft.network.chat.Component.translatable("landmark.import.notzip").getString(), true));
 	}
 
 	/** Imports an export zip off-thread, then updates state on the client thread. */

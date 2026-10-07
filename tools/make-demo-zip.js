@@ -1,7 +1,7 @@
 // Builds a synthetic export zip (fake lands, fake owners, procedural terrain) in the real export format.
 // It contains no data from any real server, so it is safe for screenshots, demos and development.
 //
-//   node tools/make-demo-zip.js demo-export.zip
+//   node tools/make-demo-zip.js demo-export.zip [tileFolder 3|2|1]
 //
 // Then drop the zip onto the map screen, or import it into a dev run folder.
 const fs = require('fs');
@@ -64,7 +64,9 @@ function png(w, h, rgba) {
 	return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), pngChunk('IHDR', ihdr), pngChunk('IDAT', zlib.deflateSync(raw, { level: 6 })), pngChunk('IEND', Buffer.alloc(0))]);
 }
 
-const BPT = 4096, PX = 512, HALF = 4096, BPP = BPT / PX;
+// tile folder (detail level) 3, 2 or 1 as in the export presets: tiles cover 4096, 2048 or 1024 blocks
+const FOLDER = parseInt(process.argv[3] || '3', 10);
+const PX = 512, BPT = PX * Math.pow(2, FOLDER), HALF = 4096, BPP = BPT / PX;
 const files = [];
 const tileCount = (() => {
 	let n = 0;

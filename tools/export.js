@@ -40,18 +40,25 @@
 		return (c ^ 0xFFFFFFFF) >>> 0;
 	}
 
-	/** files: [{name: string, data: Uint8Array}] -> Uint8Array of the zip. */
-	function buildZip(files, date) {
+	function fileSize(f) { return f.size !== undefined ? f.size : f.data.length; }
+	function fileCrc(f) { return f.crc !== undefined ? f.crc : crc32(f.data); }
+
+	/**
+	 * files: [{name, data: Uint8Array | Blob, size?, crc?}] (give size and crc for a Blob) -> array of Uint8Array/Blob parts that
+	 * make up the zip. Large exports stay as Blobs, so they are never copied into one huge buffer.
+	 */
+	function zipParts(files, date) {
 		date = date || new Date();
 		var dosTime = (date.getHours() << 11) | (date.getMinutes() << 5) | (date.getSeconds() >> 1);
 		var dosDate = ((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
 		var enc = new TextEncoder();
-		var chunks = [];
+		var parts = [];
 		var central = [];
 		var offset = 0;
 		files.forEach(function (f) {
 			var name = enc.encode(f.name);
-			var crc = crc32(f.data);
+			var crc = fileCrc(f);
+			var size = fileSize(f);
 			var local = new DataView(new ArrayBuffer(30));
 			local.setUint32(0, 0x04034B50, true);
 			local.setUint16(4, 20, true);
@@ -60,11 +67,11 @@
 			local.setUint16(10, dosTime, true);
 			local.setUint16(12, dosDate, true);
 			local.setUint32(14, crc, true);
-			local.setUint32(18, f.data.length, true);
-			local.setUint32(22, f.data.length, true);
+			local.setUint32(18, size, true);
+			local.setUint32(22, size, true);
 			local.setUint16(26, name.length, true);
 			local.setUint16(28, 0, true);
-			chunks.push(new Uint8Array(local.buffer), name, f.data);
+			parts.push(new Uint8Array(local.buffer), name, f.data);
 			var cd = new DataView(new ArrayBuffer(46));
 			cd.setUint32(0, 0x02014B50, true);
 			cd.setUint16(4, 20, true);
@@ -74,22 +81,30 @@
 			cd.setUint16(12, dosTime, true);
 			cd.setUint16(14, dosDate, true);
 			cd.setUint32(16, crc, true);
-			cd.setUint32(20, f.data.length, true);
-			cd.setUint32(24, f.data.length, true);
+			cd.setUint32(20, size, true);
+			cd.setUint32(24, size, true);
 			cd.setUint16(28, name.length, true);
 			cd.setUint32(42, offset, true);
 			central.push(new Uint8Array(cd.buffer), name);
-			offset += 30 + name.length + f.data.length;
+			offset += 30 + name.length + size;
 		});
 		var cdSize = 0;
 		central.forEach(function (c) { cdSize += c.length; });
+		if (offset + cdSize > 0xFFFFFFF0 || files.length > 0xFFFE) {
+			throw new Error('This export is too large for a zip file (limit 4 GB). Pick a lower export quality in the mod settings.');
+		}
 		var end = new DataView(new ArrayBuffer(22));
 		end.setUint32(0, 0x06054B50, true);
 		end.setUint16(8, files.length, true);
 		end.setUint16(10, files.length, true);
 		end.setUint32(12, cdSize, true);
 		end.setUint32(16, offset, true);
-		var all = chunks.concat(central, [new Uint8Array(end.buffer)]);
+		return parts.concat(central, [new Uint8Array(end.buffer)]);
+	}
+
+	/** files: [{name: string, data: Uint8Array}] -> Uint8Array of the zip. */
+	function buildZip(files, date) {
+		var all = zipParts(files, date);
 		var total = 0;
 		all.forEach(function (c) { total += c.length; });
 		var out = new Uint8Array(total);
@@ -135,7 +150,8 @@
 		if (!r.ok || (r.headers.get('content-type') || '').indexOf('image/png') < 0) return null;
 		var blob = await r.blob();
 		if (CONFIG.tileMode === 'small') blob = await toJpeg(blob, CONFIG.jpegQuality);
-		return new Uint8Array(await blob.arrayBuffer());
+		// keep the Blob (the browser may hold it outside memory) and only remember its checksum
+		return { data: blob, size: blob.size, crc: crc32(new Uint8Array(await blob.arrayBuffer())) };
 	}
 
 	async function run() {
@@ -166,8 +182,9 @@
 					var data = await fetchTile(job[0], job[1]);
 					done++;
 					if (data) {
-						files.push({ name: 'tiles/' + job[0] + '_' + job[1] + '.' + ext, data: data });
-						count++; bytes += data.length;
+						data.name = 'tiles/' + job[0] + '_' + job[1] + '.' + ext;
+						files.push(data);
+						count++; bytes += data.size;
 					}
 					if (done % 25 === 0) console.log('Landmark export: ' + done + ' tiles checked, ' + count + ' kept');
 				}
@@ -176,18 +193,18 @@
 			console.log('Landmark export: ' + count + ' tiles, ' + (bytes / 1048576).toFixed(1) + ' MB');
 		}
 		files.unshift({ name: 'manifest.json', data: enc.encode(JSON.stringify(manifest, null, 1)) });
-		var zip = buildZip(files);
+		var zip = new Blob(zipParts(files), { type: 'application/zip' });
 		var a = document.createElement('a');
-		a.href = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
+		a.href = URL.createObjectURL(zip);
 		a.download = 'landmark-export.zip';
 		document.body.appendChild(a);
 		a.click();
 		a.remove();
-		console.log('Landmark export: done, ' + (zip.length / 1048576).toFixed(1) + ' MB. Drop landmark-export.zip onto the map in Minecraft.');
+		console.log('Landmark export: done, ' + (zip.size / 1048576).toFixed(1) + ' MB. Drop landmark-export.zip onto the Minecraft window.');
 	}
 
 	if (typeof module !== 'undefined' && module.exports) {
-		module.exports = { buildZip: buildZip, crc32: crc32, tileRange: tileRange };
+		module.exports = { buildZip: buildZip, zipParts: zipParts, crc32: crc32, tileRange: tileRange };
 	} else {
 		run().catch(function (e) { console.error('Landmark export failed:', e); });
 	}

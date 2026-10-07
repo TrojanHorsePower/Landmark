@@ -22,10 +22,106 @@ final class DevHarness {
 	private static int ticks;
 	private static int framesOpen = -1;
 	private static final boolean PERF = System.getProperty("landmark.dev.perf") != null;
+	private static final boolean SETTINGS = System.getProperty("landmark.dev.settings") != null;
 	private static long perfSum;
 	private static int perfN;
 
 	private DevHarness() {}
+
+	private static net.minecraft.client.gui.screens.Screen mapScreen;
+	private static ConfigScreen configScreen;
+
+	/** Exercises the settings screens, the hide-claims toggle, key rebinding and the help-page import; logs results as SCENARIO lines. */
+	private static void settingsScenario(net.minecraft.client.Minecraft mc, int f) {
+		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		LandmarkState state = LandmarkState.get();
+		if (f == 100) {
+			mapScreen = mc.gui.screen();
+			shot.run();
+		} else if (f == 110 && mapScreen instanceof MapScreen ms) {
+			ms.devToggleClaims();
+			LandmarkClient.LOGGER.info("SCENARIO claims hidden={}", state.hideClaims);
+		} else if (f == 135) {
+			shot.run();
+		} else if (f == 140 && mapScreen instanceof MapScreen ms) {
+			ms.devToggleClaims();
+			LandmarkClient.LOGGER.info("SCENARIO claims hidden={}", state.hideClaims);
+		} else if (f == 150) {
+			configScreen = new ConfigScreen(mapScreen);
+			mc.setScreenAndShow(configScreen);
+		} else if (f == 175) {
+			shot.run();
+		} else if (f == 180) {
+			configScreen.devSetPreset(landmark.data.ExportPreset.HIGH);
+			configScreen.devScrollTo(170);
+		} else if (f == 200) {
+			shot.run();
+		} else if (f == 205) {
+			configScreen.devScrollTo(560);
+		} else if (f == 230) {
+			shot.run();
+		} else if (f == 235) {
+			mc.setScreenAndShow(new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL));
+		} else if (f == 260) {
+			shot.run();
+		} else if (f == 265) {
+			mc.setScreenAndShow(configScreen);
+		} else if (f == 270) {
+			var key = LandmarkClient.openKey;
+			String before = key.saveString();
+			int free = configScreen.devFreeKey();
+			LandmarkClient.LOGGER.info("SCENARIO free key chosen: {}", configScreen.devConflicts(free));
+			LandmarkClient.LOGGER.info("SCENARIO screen before rebind: {}", mc.gui.screen().getClass().getSimpleName());
+			configScreen.devRebind(free);
+			LandmarkClient.LOGGER.info("SCENARIO screen after rebind: {}", mc.gui.screen().getClass().getSimpleName());
+			LandmarkClient.LOGGER.info("SCENARIO rebind from M to a free key: before={} after={} sameObjectAsControlsScreen={}", before, key.saveString(),
+				java.util.Arrays.asList(mc.options.keyMappings).contains(key));
+		} else if (f == 275) {
+			configScreen.devRebind(org.lwjgl.glfw.GLFW.GLFW_KEY_W); // already used by "forward": must ask first
+			LandmarkClient.LOGGER.info("SCENARIO conflict dialog shown={} key still={}", mc.gui.screen() instanceof net.minecraft.client.gui.screens.ConfirmScreen, LandmarkClient.openKey.saveString());
+		} else if (f == 290) {
+			shot.run();
+		} else if (f == 295) {
+			mc.setScreenAndShow(configScreen);
+			LandmarkClient.openKey.setKey(LandmarkClient.openKey.getDefaultKey());
+			net.minecraft.client.KeyMapping.resetMapping();
+			LandmarkClient.LOGGER.info("SCENARIO key restored to {}", LandmarkClient.openKey.saveString());
+		} else if (f == 300) {
+			state.setNotice(null, false);
+			var help = new HelpScreen(mapScreen);
+			mc.setScreenAndShow(help);
+			String clip = help.devCopy();
+			LandmarkClient.LOGGER.info("SCENARIO copied script ({} chars) has tileFolder: 2 = {}, tileMode: 'full' = {}, is the real script = {}", clip.length(),
+				clip.contains("tileFolder: 2"), clip.contains("tileMode: 'full'"), clip.contains("buildZip"));
+			String zip = System.getProperty("landmark.dev.zip");
+			if (zip != null) {
+				help.onFilesDrop(java.util.List.of(java.nio.file.Path.of(zip)));
+			}
+		} else if (f == 340) {
+			LandmarkClient.LOGGER.info("SCENARIO help-page import notice: {} (error={})", state.notice, state.noticeIsError);
+			shot.run();
+		} else if (f == 345) {
+			mc.setScreenAndShow(mapScreen); // back to the map: it must rebuild itself from the freshly imported data
+		} else if (f == 385) {
+			shot.run();
+		} else if (f == 390 && mapScreen instanceof MapScreen ms) {
+			var map = state.map(DEMO_DIMENSION);
+			var l = map.grid.lands().get(7);
+			int[] b = l.bounds();
+			ms.view().setScale(0.4); // 1024-block tiles are ~410 GUI px wide here, so detail tiles are used
+			ms.view().centerOn((b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0);
+			LandmarkClient.LOGGER.info("SCENARIO zoomed on {} for the detail-tile check", l.name());
+		} else if (f == 430) {
+			shot.run();
+		} else if (f == 435) {
+			var factory = new LandmarkModMenu().getModConfigScreenFactory();
+			LandmarkClient.LOGGER.info("SCENARIO modmenu factory creates {}", factory.create(mapScreen).getClass().getSimpleName());
+			mc.setScreenAndShow(com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(mapScreen));
+		} else if (f == 460) {
+			state.config.setExportPreset(landmark.data.ExportPreset.LOW);
+			mc.stop();
+		}
+	}
 
 	private static String searchQuery = "";
 
@@ -118,6 +214,10 @@ final class DevHarness {
 							LandmarkClient.LOGGER.info("PERF scale=1/{} avg extract {} ms", Math.round(1 / scales[k]), String.format("%.2f", perfSum / 1e6 / perfN));
 						}
 					}
+				}
+				if (SETTINGS) {
+					settingsScenario(mc, framesOpen);
+					return;
 				}
 				// Screenshot script (saved in order to run/screenshots): overview, hover tooltip, search by owner, help.
 				if (framesOpen == 100) {

@@ -17,17 +17,20 @@ public class LandmarkClient implements ClientModInitializer {
 	/** Namespace for textures this mod registers at runtime. */
 	public static final String MOD_ID_FOR_ASSETS = Branding.MOD_ID;
 
+	/** The key that opens the map; registered with Minecraft, so it also appears in the normal Controls screen. */
+	public static KeyMapping openKey;
+
 	@Override
 	public void onInitializeClient() {
 		LOGGER.info("{} loaded", Branding.DISPLAY_NAME);
 		LandmarkState.init(FabricLoader.getInstance().getGameDir(), FabricLoader.getInstance().getConfigDir());
 		landmark.client.LandmarkDev.install();
 
-		KeyMapping open = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.landmark.open", InputConstants.KEY_M,
+		openKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.landmark.open", InputConstants.KEY_M,
 			KeyMapping.Category.register(Identifier.fromNamespaceAndPath(Branding.MOD_ID, "main"))));
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			LandmarkState.get().tickWatcher(mc);
-			while (open.consumeClick()) {
+			while (openKey.consumeClick()) {
 				if (mc.level != null && mc.gui.screen() == null) {
 					mc.setScreenAndShow(new MapScreen());
 				}

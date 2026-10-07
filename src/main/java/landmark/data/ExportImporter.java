@@ -23,11 +23,11 @@ import java.util.zip.ZipFile;
  * and sizes are enforced while reading rather than trusted from headers.
  */
 public final class ExportImporter {
-	static final int MAX_ENTRIES = 2_000;
+	static final int MAX_ENTRIES = 5_000;
 	static final int MAX_MANIFEST_BYTES = 64 * 1024;
 	static final int MAX_LANDS_BYTES = 64 * 1024 * 1024;
 	static final int MAX_TILE_BYTES = 4 * 1024 * 1024;
-	static final long MAX_TOTAL_BYTES = 512L * 1024 * 1024;
+	static final long MAX_TOTAL_BYTES = 3L * 1024 * 1024 * 1024;
 
 	private static final Pattern TILE_NAME = Pattern.compile("tiles/(-?\\d{1,6})_(-?\\d{1,6})\\.(png|jpg)");
 
