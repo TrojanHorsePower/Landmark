@@ -150,7 +150,9 @@ How the export zip is laid out: [docs/export-format.md](docs/export-format.md).
   there is one copy. If the web map's data format ever changes, update it and `Pl3xLandsParser`.
 - **Demo data and screenshots.** `node tools/make-demo-zip.js demo.zip` builds a fake export. In a Fabric dev environment,
   `-Dlandmark.dev.demo=1` opens the map from the title screen with that data and saves screenshots to the run folder, so the
-  screen can be checked without joining a server. It does nothing in a normal game. `node tools/make-icon.js` regenerates
+  screen can be checked without joining a server. It does nothing in a normal game.
+  Add `-Dlandmark.dev.layout=1` to visit every screen and screenshot it at the current window size; Minecraft never makes the
+  GUI smaller than 320x240, so run it at `--width 640 --height 480` with `guiScale:2` in `run/options.txt` to check the worst case. `node tools/make-icon.js` regenerates
   the icon.
 
 ## About this project

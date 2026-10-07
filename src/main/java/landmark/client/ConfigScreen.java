@@ -63,7 +63,7 @@ public class ConfigScreen extends Screen {
 		list.clear();
 		list.add(new HeaderRow(Component.translatable("landmark.config.keybinds")));
 		list.add(new KeyRow(LandmarkClient.openKey));
-		list.add(new NoteRow(Component.translatable("landmark.config.keybinds.note"), Palette.get(ColorKey.TEXT_DIM)));
+		note(Component.translatable("landmark.config.keybinds.note"), Palette.get(ColorKey.TEXT_DIM));
 
 		list.add(new HeaderRow(Component.translatable("landmark.config.features")));
 		list.add(new ToggleRow(Component.translatable("landmark.config.teleportwarning"), () -> state.config.confirmTeleport, v -> state.config.confirmTeleport = v));
@@ -75,9 +75,9 @@ public class ConfigScreen extends Screen {
 		list.add(new HeaderRow(Component.translatable("landmark.config.export")));
 		list.add(new PresetRow());
 		ExportPreset preset = state.config.exportPreset();
-		list.add(new NoteRow(Component.translatable("landmark.export.desc." + preset.id), Palette.get(ColorKey.TEXT_STATUS)));
+		note(Component.translatable("landmark.export.desc." + preset.id), Palette.get(ColorKey.TEXT_STATUS));
 		if (preset.isHeavy()) {
-			list.add(new NoteRow(Component.translatable("landmark.export.warning"), Palette.get(ColorKey.LIST_OPEN)));
+			note(Component.translatable("landmark.export.warning"), Palette.get(ColorKey.LIST_OPEN));
 		}
 
 		ColorKey.Group group = null;
@@ -121,6 +121,22 @@ public class ConfigScreen extends Screen {
 	void devRebind(int glfwKey) {
 		listening = LandmarkClient.openKey;
 		keyPressed(new KeyEvent(glfwKey, 0, 0));
+	}
+
+	/** Adds explanatory text as rows of up to two lines, wrapped to the list's real width so none of it is cut off. */
+	private void note(Component text, int color) {
+		var lines = font.split(text, list.getRowWidth() - 6);
+		for (int i = 0; i < lines.size(); i += 2) {
+			list.add(new NoteRow(lines.subList(i, Math.min(lines.size(), i + 2)), color));
+		}
+	}
+
+	/** The text, or its start followed by an ellipsis if it does not fit in {@code room} pixels. */
+	private String fit(String text, int room) {
+		if (font.width(text) <= room) {
+			return text;
+		}
+		return font.plainSubstrByWidth(text, Math.max(0, room - font.width("\u2026"))) + "\u2026";
 	}
 
 	private void rebuild() {
@@ -291,18 +307,17 @@ public class ConfigScreen extends Screen {
 	}
 
 	private final class NoteRow extends Row {
-		private final Component text;
+		private final List<net.minecraft.util.FormattedCharSequence> lines;
 		private final int color;
 
-		NoteRow(Component text, int color) {
-			this.text = text;
+		NoteRow(List<net.minecraft.util.FormattedCharSequence> lines, int color) {
+			this.lines = lines;
 			this.color = color;
 		}
 
 		@Override
 		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
-			var lines = font.split(text, getContentWidth() - 4);
-			for (int i = 0; i < Math.min(2, lines.size()); i++) {
+			for (int i = 0; i < lines.size(); i++) {
 				g.text(font, lines.get(i), getContentX() + 2, getContentY() + 3 + i * (font.lineHeight + 1), color, false);
 			}
 		}
@@ -326,11 +341,11 @@ public class ConfigScreen extends Screen {
 
 		@Override
 		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
-			g.text(font, Component.translatable(mapping.getName()), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
 			resetButton.setX(getContentRight() - 50);
 			resetButton.setY(getContentY() + 2);
 			keyButton.setX(resetButton.getX() - 4 - 110);
 			keyButton.setY(getContentY() + 2);
+			g.text(font, fit(Component.translatable(mapping.getName()).getString(), keyButton.getX() - getContentX() - 8), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
 			boolean waiting = listening == mapping;
 			boolean clash = !conflicts(mapping, InputConstants.getKey(mapping.saveString())).isEmpty();
 			Component label = mapping.getTranslatedKeyMessage();
@@ -353,9 +368,9 @@ public class ConfigScreen extends Screen {
 
 		@Override
 		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
-			g.text(font, label, getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
 			button.setX(getContentRight() - 70);
 			button.setY(getContentY() + 2);
+			g.text(font, fit(label.getString(), button.getX() - getContentX() - 8), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
 			button.extractRenderState(g, mx, my, partial);
 		}
 	}
@@ -422,7 +437,7 @@ public class ConfigScreen extends Screen {
 			swatch.setY(getContentY() + 2);
 			reset.active = !state.config.isDefaultColor(key);
 			int labelRoom = swatch.getX() - getContentX() - 8;
-			g.text(font, font.plainSubstrByWidth(Component.translatable(key.translationKey()).getString(), labelRoom), getContentX() + 2, getContentY() + 7,
+			g.text(font, fit(Component.translatable(key.translationKey()).getString(), labelRoom), getContentX() + 2, getContentY() + 7,
 				Palette.get(ColorKey.TEXT_BODY), false);
 			swatch.extractRenderState(g, mx, my, partial);
 			ColorPickerScreen.swatch(g, swatch.getX() + 4, swatch.getY() + 4, swatch.getWidth() - 8, swatch.getHeight() - 8, state.config.color(key));

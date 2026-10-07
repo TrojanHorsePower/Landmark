@@ -19,11 +19,12 @@ import org.jspecify.annotations.Nullable;
  * and the hex box always show the same colour: changing either updates the other.
  */
 public class ColorPickerScreen extends Screen {
-	private static final int SV = 128;
+	/** Resolution of the saturation/brightness texture; it is drawn at {@link #sv} pixels, whatever the window size. */
+	private static final int TEX = 128;
 	private static final int BAR_W = 14;
 	private static final Identifier TEXTURE_ID = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, "picker/sv");
 
-	private enum Drag { NONE, SV, HUE, ALPHA }
+	private enum Drag { NONE, AREA, HUE, ALPHA }
 
 	private final Screen parent;
 	private final ColorKey key;
@@ -33,6 +34,8 @@ public class ColorPickerScreen extends Screen {
 	private float sat;
 	private float val;
 	private int alpha;
+	/** Side of the picker square on screen: shrinks on short windows so the buttons below never overlap it. */
+	private int sv = TEX;
 	private Drag drag = Drag.NONE;
 	private boolean syncing;
 	private boolean hexValid = true;
@@ -64,7 +67,7 @@ public class ColorPickerScreen extends Screen {
 	// ---- layout ----
 
 	private int left() {
-		return width / 2 - (SV + 10 + BAR_W + (key.hasAlpha ? 10 + BAR_W : 0)) / 2;
+		return width / 2 - (sv + 10 + BAR_W + (key.hasAlpha ? 10 + BAR_W : 0)) / 2;
 	}
 
 	private int top() {
@@ -72,7 +75,7 @@ public class ColorPickerScreen extends Screen {
 	}
 
 	private int hueX() {
-		return left() + SV + 10;
+		return left() + sv + 10;
 	}
 
 	private int alphaX() {
@@ -81,7 +84,8 @@ public class ColorPickerScreen extends Screen {
 
 	@Override
 	protected void init() {
-		int rowY = top() + SV + 12;
+		sv = Math.max(64, Math.min(TEX, height - 144));
+		int rowY = top() + sv + 12;
 		hexBox = new EditBox(font, width / 2 - 100, rowY, 90, 18, Component.translatable("landmark.picker.hex"));
 		hexBox.setMaxLength(9);
 		hexBox.setResponder(this::onHexTyped);
@@ -96,6 +100,11 @@ public class ColorPickerScreen extends Screen {
 		addRenderableWidget(Button.builder(Component.translatable("landmark.picker.done"), b -> commit())
 			.bounds(width / 2 + 2, by, 100, 20).build());
 		syncHex();
+	}
+
+	/** Dev harness: types into the hex box. */
+	void devHex(String text) {
+		hexBox.setValue(text);
 	}
 
 	private void syncHex() {
@@ -140,15 +149,15 @@ public class ColorPickerScreen extends Screen {
 
 	private void updateTexture() {
 		if (svTexture == null) {
-			svTexture = new DynamicTexture(() -> "landmark picker", new NativeImage(SV, SV, false));
+			svTexture = new DynamicTexture(() -> "landmark picker", new NativeImage(TEX, TEX, false));
 			minecraft.getTextureManager().register(TEXTURE_ID, svTexture);
 			textureHue = -1;
 		}
 		if (textureHue != hue) {
 			NativeImage image = svTexture.getPixels();
-			for (int y = 0; y < SV; y++) {
-				for (int x = 0; x < SV; x++) {
-					image.setPixel(x, y, ColorMath.fromHsv(hue, x / (SV - 1f), 1f - y / (SV - 1f)));
+			for (int y = 0; y < TEX; y++) {
+				for (int x = 0; x < TEX; x++) {
+					image.setPixel(x, y, ColorMath.fromHsv(hue, x / (TEX - 1f), 1f - y / (TEX - 1f)));
 				}
 			}
 			svTexture.upload();
@@ -168,46 +177,49 @@ public class ColorPickerScreen extends Screen {
 		updateTexture();
 		int x0 = left();
 		int y0 = top();
-		g.fill(x0 - 1, y0 - 1, x0 + SV + 1, y0 + SV + 1, 0xFF000000);
-		g.blit(svTexture.getTextureView(), svTexture.getSampler(), x0, y0, x0 + SV, y0 + SV, 0f, 1f, 0f, 1f);
-		int mx0 = x0 + Math.round(sat * (SV - 1));
-		int my0 = y0 + Math.round((1 - val) * (SV - 1));
+		g.fill(x0 - 1, y0 - 1, x0 + sv + 1, y0 + sv + 1, 0xFF000000);
+		g.blit(svTexture.getTextureView(), svTexture.getSampler(), x0, y0, x0 + sv, y0 + sv, 0f, 1f, 0f, 1f);
+		int mx0 = x0 + Math.round(sat * (sv - 1));
+		int my0 = y0 + Math.round((1 - val) * (sv - 1));
 		g.outline(mx0 - 3, my0 - 3, 7, 7, 0xFF000000);
 		g.outline(mx0 - 2, my0 - 2, 5, 5, 0xFFFFFFFF);
 
 		int hx = hueX();
-		g.fill(hx - 1, y0 - 1, hx + BAR_W + 1, y0 + SV + 1, 0xFF000000);
-		int seg = SV / 6;
+		g.fill(hx - 1, y0 - 1, hx + BAR_W + 1, y0 + sv + 1, 0xFF000000);
+		int seg = sv / 6;
 		for (int i = 0; i < 6; i++) {
 			int yTop = y0 + i * seg;
-			int yBottom = i == 5 ? y0 + SV : yTop + seg;
+			int yBottom = i == 5 ? y0 + sv : yTop + seg;
 			g.fillGradient(hx, yTop, hx + BAR_W, yBottom, ColorMath.fromHsv(i / 6f, 1, 1), ColorMath.fromHsv((i + 1) / 6f, 1, 1));
 		}
-		int hy = y0 + Math.round(hue * (SV - 1));
+		int hy = y0 + Math.round(hue * (sv - 1));
 		g.fill(hx - 2, hy - 1, hx + BAR_W + 2, hy + 2, 0xFF000000);
 		g.fill(hx - 1, hy, hx + BAR_W + 1, hy + 1, 0xFFFFFFFF);
 
 		if (key.hasAlpha) {
 			int ax = alphaX();
-			g.fill(ax - 1, y0 - 1, ax + BAR_W + 1, y0 + SV + 1, 0xFF000000);
-			checker(g, ax, y0, BAR_W, SV);
+			g.fill(ax - 1, y0 - 1, ax + BAR_W + 1, y0 + sv + 1, 0xFF000000);
+			checker(g, ax, y0, BAR_W, sv);
 			int rgb = ColorMath.fromHsv(hue, sat, val);
-			g.fillGradient(ax, y0, ax + BAR_W, y0 + SV, rgb, ColorMath.withAlpha(rgb, 0));
-			int ay = y0 + Math.round((1 - alpha / 255f) * (SV - 1));
+			g.fillGradient(ax, y0, ax + BAR_W, y0 + sv, rgb, ColorMath.withAlpha(rgb, 0));
+			int ay = y0 + Math.round((1 - alpha / 255f) * (sv - 1));
 			g.fill(ax - 2, ay - 1, ax + BAR_W + 2, ay + 2, 0xFF000000);
 			g.fill(ax - 1, ay, ax + BAR_W + 1, ay + 1, 0xFFFFFFFF);
 		}
 
 		// old and new colour side by side
 		int px = x0;
-		int py = y0 + SV + 12 + 18 + 22; // below the hex row, leaving room for the labels
-		g.text(font, Component.translatable("landmark.picker.old"), px, py - 10, Palette.get(ColorKey.TEXT_STATUS), false);
-		g.text(font, Component.translatable("landmark.picker.new"), px + 70, py - 10, Palette.get(ColorKey.TEXT_STATUS), false);
+		int py = y0 + sv + 12 + 18 + 22; // below the hex row, leaving room for the labels
+		// While the hex code is invalid the message takes the place of the Before/After labels, so it always fits.
+		if (hexValid) {
+			g.text(font, Component.translatable("landmark.picker.old"), px, py - 10, Palette.get(ColorKey.TEXT_STATUS), false);
+			g.text(font, Component.translatable("landmark.picker.new"), px + 70, py - 10, Palette.get(ColorKey.TEXT_STATUS), false);
+		} else {
+			String msg = Component.translatable("landmark.picker.invalid", key.hasAlpha ? "#RRGGBBAA" : "#RRGGBB").getString();
+			g.text(font, font.plainSubstrByWidth(msg, Math.max(40, width - px - 8)), px, py - 10, Palette.get(ColorKey.TEXT_ERROR), false);
+		}
 		swatch(g, px, py, 60, 18, original);
 		swatch(g, px + 70, py, 60, 18, current());
-		if (!hexValid) {
-			g.text(font, Component.translatable("landmark.picker.invalid", key.hasAlpha ? "#RRGGBBAA" : "#RRGGBB"), px + 140, py + 5, Palette.get(ColorKey.TEXT_ERROR), false);
-		}
 		super.extractRenderState(g, mx, my, partial);
 	}
 
@@ -237,11 +249,11 @@ public class ColorPickerScreen extends Screen {
 		}
 		int x0 = left();
 		int y0 = top();
-		if (e.x() >= x0 && e.x() < x0 + SV && e.y() >= y0 && e.y() < y0 + SV) {
-			drag = Drag.SV;
-		} else if (e.x() >= hueX() && e.x() < hueX() + BAR_W && e.y() >= y0 && e.y() < y0 + SV) {
+		if (e.x() >= x0 && e.x() < x0 + sv && e.y() >= y0 && e.y() < y0 + sv) {
+			drag = Drag.AREA;
+		} else if (e.x() >= hueX() && e.x() < hueX() + BAR_W && e.y() >= y0 && e.y() < y0 + sv) {
 			drag = Drag.HUE;
-		} else if (key.hasAlpha && e.x() >= alphaX() && e.x() < alphaX() + BAR_W && e.y() >= y0 && e.y() < y0 + SV) {
+		} else if (key.hasAlpha && e.x() >= alphaX() && e.x() < alphaX() + BAR_W && e.y() >= y0 && e.y() < y0 + sv) {
 			drag = Drag.ALPHA;
 		} else {
 			return false;
@@ -267,10 +279,10 @@ public class ColorPickerScreen extends Screen {
 	}
 
 	private void dragTo(double mx, double my) {
-		float fy = (float) Math.max(0, Math.min(1, (my - top()) / (SV - 1)));
+		float fy = (float) Math.max(0, Math.min(1, (my - top()) / (sv - 1)));
 		switch (drag) {
-			case SV -> {
-				sat = (float) Math.max(0, Math.min(1, (mx - left()) / (SV - 1)));
+			case AREA -> {
+				sat = (float) Math.max(0, Math.min(1, (mx - left()) / (sv - 1)));
 				val = 1 - fy;
 			}
 			case HUE -> hue = fy;

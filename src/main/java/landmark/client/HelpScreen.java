@@ -37,8 +37,8 @@ public class HelpScreen extends Screen {
 
 	@Override
 	protected void init() {
-		int w = Math.min(width - 20, 360);
-		int x = (width - w) / 2;
+		int w = contentWidth();
+		int x = contentLeft();
 		int half = (w - 4) / 2;
 		int row1 = height - 52;
 		int row2 = height - 28;
@@ -97,14 +97,57 @@ public class HelpScreen extends Screen {
 		g.fill(0, 0, width, height, col(ColorKey.MAP_BACKGROUND));
 	}
 
+	/** Dev harness: scrolls the text. */
+	void devScroll(double to) {
+		scroll = to;
+	}
+
+	// ---- layout: the text scrolls when it does not fit above the status line and buttons ----
+
+	private double scroll;
+	private int contentHeight;
+	private int viewTop;
+	private int viewBottom;
+	private boolean draggingBar;
+
+	private int contentWidth() {
+		return Math.min(width - 24, 360);
+	}
+
+	private int contentLeft() {
+		return (width - contentWidth()) / 2;
+	}
+
+	/** How many lines of status text there are (0 to 2); needed to know where the scrolling area ends. */
+	private List<net.minecraft.util.FormattedCharSequence> statusLines() {
+		String note = state.notice;
+		Component status = note != null ? Component.literal(note) : Component.translatable("landmark.help.drop");
+		var lines = font.split(status, contentWidth());
+		return lines.size() > 2 ? lines.subList(0, 2) : lines;
+	}
+
+	private int maxScroll() {
+		return Math.max(0, contentHeight - (viewBottom - viewTop));
+	}
+
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float partial) {
 		extractBackground(g, mx, my, partial);
-		int w = Math.min(width - 20, 360);
-		int x = (width - w) / 2;
-		int y = 12;
-		g.text(font, title, x, y, col(ColorKey.LIST_OPEN), false);
-		y += 16;
+		int w = contentWidth();
+		int x = contentLeft();
+		g.text(font, title, x, 8, col(ColorKey.LIST_OPEN), false);
+
+		var status = statusLines();
+		int lineH = font.lineHeight + 1;
+		int statusY = height - 52 - 4 - status.size() * lineH;
+		viewTop = 8 + font.lineHeight + 6;
+		viewBottom = Math.max(viewTop + 20, statusY - 4);
+
+		// Lay the text out once to learn its height, then draw it shifted by the scroll offset and clipped to the view.
+		scroll = Math.max(0, Math.min(scroll, maxScroll()));
+		int y = viewTop - (int) scroll;
+		int startY = y;
+		g.enableScissor(0, viewTop, width, viewBottom);
 		y = paragraph(g, Component.translatable("landmark.help.intro"), x, y, w, col(ColorKey.TEXT_STATUS)) + 6;
 		for (String key : new String[] {"landmark.help.step1", "landmark.help.step2", "landmark.help.step3", "landmark.help.step4"}) {
 			y = paragraph(g, Component.translatable(key), x, y, w, col(ColorKey.TEXT_BODY)) + 5;
@@ -112,18 +155,81 @@ public class HelpScreen extends Screen {
 		ExportPreset preset = state.config.exportPreset();
 		y = paragraph(g, Component.translatable("landmark.help.quality", Component.translatable(preset.translationKey())), x, y + 2, w, col(ColorKey.TEXT_STATUS));
 		if (preset.isHeavy()) {
-			paragraph(g, Component.translatable("landmark.export.warning"), x, y, w, col(ColorKey.LIST_OPEN));
+			y = paragraph(g, Component.translatable("landmark.export.warning"), x, y, w, col(ColorKey.LIST_OPEN));
 		}
+		g.disableScissor();
+		contentHeight = y - startY;
+
+		// scrollbar, only when there is something to scroll to
+		if (maxScroll() > 0) {
+			int barX = x + w + 4;
+			int track = viewBottom - viewTop;
+			int barH = Math.max(12, track * track / contentHeight);
+			int barY = viewTop + (int) ((track - barH) * (scroll / maxScroll()));
+			g.fill(barX, viewTop, barX + 3, viewBottom, 0x40FFFFFF);
+			g.fill(barX, barY, barX + 3, barY + barH, col(ColorKey.TEXT_STATUS));
+		}
+
 		// The import result is shown here, because the map is not on screen while this page is open.
-		String note = state.notice;
-		Component status = note != null ? Component.literal(note) : Component.translatable("landmark.help.drop");
-		int color = note == null ? col(ColorKey.TEXT_DIM) : state.noticeIsError ? col(ColorKey.TEXT_ERROR) : col(ColorKey.TEXT_INFO);
-		var lines = font.split(status, w);
-		int statusY = height - 52 - 6 - Math.min(2, lines.size()) * (font.lineHeight + 1);
-		for (int i = 0; i < Math.min(2, lines.size()); i++) {
-			g.text(font, lines.get(i), x, statusY + i * (font.lineHeight + 1), color, false);
+		boolean isNote = state.notice != null;
+		int color = !isNote ? col(ColorKey.TEXT_DIM) : state.noticeIsError ? col(ColorKey.TEXT_ERROR) : col(ColorKey.TEXT_INFO);
+		for (int i = 0; i < status.size(); i++) {
+			g.text(font, status.get(i), x, statusY + i * lineH, color, false);
 		}
 		super.extractRenderState(g, mx, my, partial);
+	}
+
+	@Override
+	public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+		if (maxScroll() > 0) {
+			scroll = Math.max(0, Math.min(maxScroll(), scroll - scrollY * 14));
+			return true;
+		}
+		return super.mouseScrolled(x, y, scrollX, scrollY);
+	}
+
+	@Override
+	public boolean keyPressed(net.minecraft.client.input.KeyEvent e) {
+		if (maxScroll() > 0) {
+			int step = e.isUp() ? -14 : e.isDown() ? 14 : e.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP ? -(viewBottom - viewTop)
+				: e.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN ? viewBottom - viewTop : 0;
+			if (step != 0) {
+				scroll = Math.max(0, Math.min(maxScroll(), scroll + step));
+				return true;
+			}
+		}
+		return super.keyPressed(e);
+	}
+
+	@Override
+	public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent e, boolean doubleClick) {
+		if (maxScroll() > 0 && e.button() == 0 && e.x() >= contentLeft() + contentWidth() && e.x() <= contentLeft() + contentWidth() + 12
+			&& e.y() >= viewTop && e.y() <= viewBottom) {
+			draggingBar = true;
+			dragBar(e.y());
+			return true;
+		}
+		return super.mouseClicked(e, doubleClick);
+	}
+
+	@Override
+	public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent e, double dx, double dy) {
+		if (draggingBar) {
+			dragBar(e.y());
+			return true;
+		}
+		return super.mouseDragged(e, dx, dy);
+	}
+
+	@Override
+	public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent e) {
+		draggingBar = false;
+		return super.mouseReleased(e);
+	}
+
+	private void dragBar(double my) {
+		double f = (my - viewTop) / Math.max(1, viewBottom - viewTop);
+		scroll = Math.max(0, Math.min(maxScroll(), f * maxScroll()));
 	}
 
 	private int paragraph(GuiGraphicsExtractor g, Component text, int x, int y, int w, int color) {

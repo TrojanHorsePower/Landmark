@@ -23,6 +23,7 @@ final class DevHarness {
 	private static int framesOpen = -1;
 	private static final boolean PERF = System.getProperty("landmark.dev.perf") != null;
 	private static final boolean SETTINGS = System.getProperty("landmark.dev.settings") != null;
+	private static final boolean LAYOUT = System.getProperty("landmark.dev.layout") != null;
 	/** Every Nth land is pretended to have an open spawn (the real server has roughly 1 in 12). */
 	private static final int OPEN_EVERY = Integer.getInteger("landmark.dev.openEvery", 5);
 	private static long perfSum;
@@ -125,6 +126,64 @@ final class DevHarness {
 		}
 	}
 
+	/** Visits every screen at the current window size so overlaps and clipping can be checked in the screenshots. */
+	private static void layoutScenario(net.minecraft.client.Minecraft mc, int f) {
+		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		LandmarkState state = LandmarkState.get();
+		var w = mc.getWindow();
+		if (f == 95) {
+			LandmarkClient.LOGGER.info("LAYOUT window {}x{} scale {} -> GUI {}x{}", w.getWidth(), w.getHeight(), w.getGuiScale(), w.getGuiScaledWidth(), w.getGuiScaledHeight());
+			mapScreen = mc.gui.screen();
+		} else if (f == 100 || f == 125) {
+			shot.run(); // 1: the map
+		} else if (f == 105) {
+			devDimension = "minecraft:the_nether"; // a dimension with no claim data: the "no data" message
+		} else if (f == 128) {
+			devDimension = DEMO_DIMENSION;
+		} else if (f == 140) {
+			state.setNotice("Imported 130 lands for minecraft:overworld with 4 map tiles (6 map shapes could not be read and were skipped)", false);
+			state.config.setExportPreset(landmark.data.ExportPreset.HIGH);
+			var help = new HelpScreen(mapScreen);
+			mc.setScreenAndShow(help);
+			configScreen = null;
+			helpScreen = help;
+		} else if (f == 160) {
+			shot.run(); // 3: help page, top of the text
+		} else if (f == 165) {
+			helpScreen.devScroll(100000);
+		} else if (f == 185) {
+			shot.run(); // 4: help page scrolled to the end
+		} else if (f == 190) {
+			configScreen = new ConfigScreen(mapScreen);
+			mc.setScreenAndShow(configScreen);
+		} else if (f == 210) {
+			shot.run(); // 5: settings, top
+		} else if (f == 215) {
+			configScreen.devScrollTo(150);
+		} else if (f == 235) {
+			shot.run(); // 6: settings, features and quality notes
+		} else if (f == 240) {
+			configScreen.devScrollTo(560);
+		} else if (f == 260) {
+			shot.run(); // 7: settings, colours
+		} else if (f == 265) {
+			picker = new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL);
+			mc.setScreenAndShow(picker);
+		} else if (f == 285) {
+			shot.run(); // 8: colour picker
+		} else if (f == 290) {
+			picker.devHex("zzz");
+		} else if (f == 310) {
+			shot.run(); // 9: colour picker with an invalid hex code
+		} else if (f == 320) {
+			state.config.setExportPreset(landmark.data.ExportPreset.LOW);
+			state.setNotice(null, false);
+			mc.stop();
+		}
+	}
+
+	private static HelpScreen helpScreen;
+	private static ColorPickerScreen picker;
 	private static String searchQuery = "";
 
 	/** Zooms onto an open-spawn land with an owner and other members and parks the cursor over it. */
@@ -227,6 +286,10 @@ final class DevHarness {
 				}
 				if (SETTINGS) {
 					settingsScenario(mc, framesOpen);
+					return;
+				}
+				if (LAYOUT) {
+					layoutScenario(mc, framesOpen);
 					return;
 				}
 				if (PERF) {

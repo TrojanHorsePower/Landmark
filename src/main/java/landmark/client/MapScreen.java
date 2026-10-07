@@ -32,13 +32,22 @@ import org.jspecify.annotations.Nullable;
  * type a land name and teleport.
  */
 public class MapScreen extends Screen {
-	private static final int PANEL_W = 190;
+	/** Width of the side panel; narrower on small windows so the map keeps some room (see {@link #init()}). */
+	private int panelW = 190;
 	private static final int ROW_H = 11;
 	private static final int STATUS_H = 34;
 	/** Lands smaller than this on screen (both ways) are outlined as a dot or box instead of edge by edge. */
 	private static final int SMALL_LAND_PX = 12;
 	/** Other (non-open) lands smaller than this on screen get no outline; their fill is still drawn. */
 	private static final int OTHER_MIN_PX = 12;
+
+	/** The text, or its start followed by an ellipsis if it does not fit in {@code room} pixels. */
+	private String fit(String text, int room) {
+		if (font.width(text) <= room) {
+			return text;
+		}
+		return font.plainSubstrByWidth(text, Math.max(0, room - font.width("\u2026"))) + "\u2026";
+	}
 
 	private static int col(ColorKey key) {
 		return Palette.get(key);
@@ -106,7 +115,10 @@ public class MapScreen extends Screen {
 
 	@Override
 	protected void init() {
-		search = new EditBox(font, 4, 4, PANEL_W - 8, 16, Component.translatable("landmark.search"));
+		panelW = Math.max(150, Math.min(190, width / 3 + 24));
+		int bw = (panelW - 12) / 2;
+		int bw2 = panelW - 12 - bw;
+		search = new EditBox(font, 4, 4, panelW - 8, 16, Component.translatable("landmark.search"));
 		search.setHint(Component.translatable("landmark.search.hint"));
 		search.setMaxLength(48);
 		search.setResponder(s -> {
@@ -115,17 +127,18 @@ public class MapScreen extends Screen {
 		});
 		addRenderableWidget(search);
 		refreshButton = addRenderableWidget(Button.builder(Component.translatable("landmark.refresh"), b -> refresh())
-			.bounds(4, 24, 91, 18).build());
+			.bounds(4, 24, bw, 18).build());
 		fitButton = addRenderableWidget(Button.builder(Component.translatable("landmark.fit"), b -> fitToSpawns())
-			.bounds(99, 24, 87, 18).build());
+			.bounds(8 + bw, 24, bw2, 18).build());
 		claimsButton = addRenderableWidget(Button.builder(Component.translatable("landmark.claims.hide"), b -> toggleClaims())
-			.bounds(4, 46, 91, 18).build());
+			.bounds(4, 46, bw, 18).build());
 		settingsButton = addRenderableWidget(Button.builder(Component.translatable("landmark.settings"),
-			b -> minecraft.setScreenAndShow(new ConfigScreen(this))).bounds(99, 46, 87, 18).build());
+			b -> minecraft.setScreenAndShow(new ConfigScreen(this))).bounds(8 + bw, 46, bw2, 18).build());
 		teleportButton = addRenderableWidget(Button.builder(Component.translatable("landmark.teleport"), b -> teleportToSelection())
-			.bounds(4, height - 22, PANEL_W - 8, 18).build());
+			.bounds(4, height - 22, panelW - 8, 18).build());
 		helpButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.button"),
-			b -> minecraft.setScreenAndShow(new HelpScreen(this))).bounds(width - 102, 4, 98, 16).build());
+			b -> minecraft.setScreenAndShow(new HelpScreen(this)))
+			.bounds(Math.max(panelW + 4, width - 102), 4, Math.min(98, width - Math.max(panelW + 4, width - 102) - 4), 16).build());
 		setInitialFocus(search);
 		if (state.config.refreshOnOpen && state.openSpawns == null) {
 			refresh();
@@ -268,7 +281,7 @@ public class MapScreen extends Screen {
 	// ---- layout ----
 
 	private int mapWidth() {
-		return Math.max(1, width - PANEL_W);
+		return Math.max(1, width - panelW);
 	}
 
 	private int mapHeight() {
@@ -276,7 +289,7 @@ public class MapScreen extends Screen {
 	}
 
 	private boolean inMap(double x, double y) {
-		return x >= PANEL_W && y < height - STATUS_H;
+		return x >= panelW && y < height - STATUS_H;
 	}
 
 	private int listTop() {
@@ -309,8 +322,8 @@ public class MapScreen extends Screen {
 		} else {
 			drawNoMap(g);
 		}
-		g.fill(0, 0, PANEL_W, height, col(ColorKey.PANEL_BACKGROUND));
-		g.fill(PANEL_W - 1, 0, PANEL_W, height, col(ColorKey.PANEL_BORDER));
+		g.fill(0, 0, panelW, height, col(ColorKey.PANEL_BACKGROUND));
+		g.fill(panelW - 1, 0, panelW, height, col(ColorKey.PANEL_BORDER));
 		drawList(g, mx, my);
 		updateButtons();
 		super.extractRenderState(g, mx, my, partial);
@@ -334,15 +347,27 @@ public class MapScreen extends Screen {
 	}
 
 	private void drawNoMap(GuiGraphicsExtractor g) {
-		int cx = PANEL_W + mapWidth() / 2;
-		int cy = mapHeight() / 2;
+		int cx = panelW + mapWidth() / 2;
+		int room = Math.max(40, mapWidth() - 16);
 		String dim = dimension.isEmpty() ? "" : dimension;
-		g.centeredText(font, Component.translatable(dim.equals("minecraft:overworld") || dim.isEmpty() ? "landmark.nomap" : "landmark.nomap.dimension", dim), cx, cy - 12, col(ColorKey.TEXT_PRIMARY));
-		g.centeredText(font, Component.translatable("landmark.nomap.hint"), cx, cy + 2, col(ColorKey.TEXT_MUTED));
+		var title = font.split(Component.translatable(dim.equals("minecraft:overworld") || dim.isEmpty() ? "landmark.nomap" : "landmark.nomap.dimension", dim), room);
+		var hint = font.split(Component.translatable("landmark.nomap.hint"), room);
+		int lineH = font.lineHeight + 2;
+		int total = (title.size() + hint.size()) * lineH + 4;
+		int y = Math.max(4, mapHeight() / 2 - total / 2);
+		for (var line : title) {
+			g.text(font, line, cx - font.width(line) / 2, y, col(ColorKey.TEXT_PRIMARY), false);
+			y += lineH;
+		}
+		y += 4;
+		for (var line : hint) {
+			g.text(font, line, cx - font.width(line) / 2, y, col(ColorKey.TEXT_MUTED), false);
+			y += lineH;
+		}
 	}
 
 	private void drawMap(GuiGraphicsExtractor g, int mx, int my) {
-		int x0 = PANEL_W;
+		int x0 = panelW;
 		int y0 = 0;
 		int x1 = width;
 		int y1 = height - STATUS_H;
@@ -508,23 +533,23 @@ public class MapScreen extends Screen {
 		int rows = visibleRows();
 		if (entries.isEmpty()) {
 			String key = state.openSpawns == null ? (state.refreshing ? "landmark.list.loading" : "landmark.list.none") : "landmark.list.empty";
-			g.textWithWordWrap(font, Component.translatable(key), 6, top + 4, PANEL_W - 12, col(ColorKey.TEXT_MUTED));
+			g.textWithWordWrap(font, Component.translatable(key), 6, top + 4, panelW - 12, col(ColorKey.TEXT_MUTED));
 			return;
 		}
 		listScroll = Math.max(0, Math.min(listScroll, Math.max(0, entries.size() - rows)));
 		for (int r = 0; r < rows && listScroll + r < entries.size(); r++) {
 			Entry e = entries.get(listScroll + r);
 			int y = top + r * ROW_H;
-			boolean hover = mx >= 2 && mx < PANEL_W - 2 && my >= y && my < y + ROW_H;
+			boolean hover = mx >= 2 && mx < panelW - 2 && my >= y && my < y + ROW_H;
 			boolean selected = e.name().equalsIgnoreCase(selectedName);
 			if (selected) {
-				g.fill(2, y, PANEL_W - 2, y + ROW_H, col(ColorKey.ROW_SELECTED));
+				g.fill(2, y, panelW - 2, y + ROW_H, col(ColorKey.ROW_SELECTED));
 			} else if (hover) {
-				g.fill(2, y, PANEL_W - 2, y + ROW_H, col(ColorKey.ROW_HOVER));
+				g.fill(2, y, panelW - 2, y + ROW_H, col(ColorKey.ROW_HOVER));
 			}
 			int color = e.typed() ? col(ColorKey.TEXT_INFO) : e.open() ? col(ColorKey.LIST_OPEN) : col(ColorKey.LIST_CLOSED);
 			String label = e.typed() ? "> " + e.name() : e.name();
-			g.text(font, font.plainSubstrByWidth(label, PANEL_W - 14), 6, y + 2, color, false);
+			g.text(font, fit(label, panelW - 14), 6, y + 2, color, false);
 		}
 		if (entries.size() > rows) {
 			g.text(font, (listScroll + 1) + "-" + Math.min(entries.size(), listScroll + rows) + "/" + entries.size(), 6, listBottom() + 2, col(ColorKey.TEXT_DIM), false);
@@ -533,7 +558,7 @@ public class MapScreen extends Screen {
 
 	private void drawStatus(GuiGraphicsExtractor g) {
 		int y = height - STATUS_H;
-		g.fill(PANEL_W, y, width, height, col(ColorKey.STATUS_BACKGROUND));
+		g.fill(panelW, y, width, height, col(ColorKey.STATUS_BACKGROUND));
 		long now = System.currentTimeMillis();
 		int room = mapWidth() - 8;
 		String claimsText;
@@ -546,16 +571,16 @@ public class MapScreen extends Screen {
 		OpenSpawns s = state.openSpawns;
 		String spawnText = s == null ? I18n.tr("landmark.status.nospawns")
 			: I18n.tr("landmark.status.spawns", s.names().size(), Ages.format(s.fetchedAtMillis(), now));
-		g.text(font, font.plainSubstrByWidth(claimsText, room), PANEL_W + 4, y + 3, col(ColorKey.TEXT_STATUS), false);
-		g.text(font, font.plainSubstrByWidth(spawnText, room), PANEL_W + 4, y + 13, col(ColorKey.TEXT_STATUS), false);
+		g.text(font, fit(claimsText, room), panelW + 4, y + 3, col(ColorKey.TEXT_STATUS), false);
+		g.text(font, fit(spawnText, room), panelW + 4, y + 13, col(ColorKey.TEXT_STATUS), false);
 		String note = state.notice;
 		if (note == null && tiles != null && tiles.decodeFailures > 0) {
 			note = I18n.tr("landmark.status.tilefail", tiles.decodeFailures);
 		}
 		if (note != null) {
-			g.text(font, font.plainSubstrByWidth(note, room), PANEL_W + 4, y + 23, state.noticeIsError ? col(ColorKey.TEXT_ERROR) : col(ColorKey.TEXT_INFO), false);
+			g.text(font, fit(note, room), panelW + 4, y + 23, state.noticeIsError ? col(ColorKey.TEXT_ERROR) : col(ColorKey.TEXT_INFO), false);
 		} else {
-			g.text(font, font.plainSubstrByWidth(I18n.tr("landmark.status.dropHint"), room), PANEL_W + 4, y + 23, col(ColorKey.TEXT_DIM), false);
+			g.text(font, fit(I18n.tr("landmark.status.dropHint"), room), panelW + 4, y + 23, col(ColorKey.TEXT_DIM), false);
 		}
 	}
 
@@ -582,7 +607,9 @@ public class MapScreen extends Screen {
 		for (String s : lines) {
 			w = Math.max(w, font.width(s));
 		}
-		int x = Math.min(mx + 10, width - w - 8);
+		w = Math.min(w, width - 16);
+		lines.replaceAll(text -> font.plainSubstrByWidth(text, width - 16));
+		int x = Math.max(4, Math.min(mx + 10, width - w - 8));
 		int y = Math.min(my + 10, height - lines.size() * 10 - 12);
 		g.fill(x - 3, y - 3, x + w + 3, y + lines.size() * 10 + 1, col(ColorKey.TOOLTIP_BACKGROUND));
 		for (int i = 0; i < lines.size(); i++) {
@@ -607,7 +634,7 @@ public class MapScreen extends Screen {
 			dragged = 0;
 			return true;
 		}
-		if (e.x() < PANEL_W && e.y() >= listTop() && e.y() < listTop() + visibleRows() * ROW_H) {
+		if (e.x() < panelW && e.y() >= listTop() && e.y() < listTop() + visibleRows() * ROW_H) {
 			int idx = listScroll + (int) ((e.y() - listTop()) / ROW_H);
 			if (idx < entries.size()) {
 				Entry en = entries.get(idx);
@@ -654,10 +681,10 @@ public class MapScreen extends Screen {
 	@Override
 	public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
 		if (inMap(x, y) && map != null) {
-			view.zoomAt(Math.pow(1.25, scrollY), x - PANEL_W, y);
+			view.zoomAt(Math.pow(1.25, scrollY), x - panelW, y);
 			return true;
 		}
-		if (x < PANEL_W) {
+		if (x < panelW) {
 			listScroll -= (int) Math.signum(scrollY) * 3;
 			return true;
 		}
@@ -696,7 +723,7 @@ public class MapScreen extends Screen {
 		if (map == null || state.hideClaims) {
 			return -1;
 		}
-		return map.grid.landIndexAt((int) Math.floor(view.screenToWorldX(sx - PANEL_W)), (int) Math.floor(view.screenToWorldZ(sy)));
+		return map.grid.landIndexAt((int) Math.floor(view.screenToWorldX(sx - panelW)), (int) Math.floor(view.screenToWorldZ(sy)));
 	}
 
 	private void select(Entry en) {
