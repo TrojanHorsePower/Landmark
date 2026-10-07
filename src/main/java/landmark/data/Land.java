@@ -14,16 +14,14 @@ public record Land(String name, @Nullable String owner, List<String> members, in
 	public int @Nullable [] bounds() {
 		int[] b = null;
 		for (Polygon p : polygons) {
-			int[] r = p.outline();
-			for (int i = 0; i + 1 < r.length; i += 2) {
-				if (b == null) {
-					b = new int[] {r[i], r[i + 1], r[i], r[i + 1]};
-				} else {
-					b[0] = Math.min(b[0], r[i]);
-					b[1] = Math.min(b[1], r[i + 1]);
-					b[2] = Math.max(b[2], r[i]);
-					b[3] = Math.max(b[3], r[i + 1]);
-				}
+			int[] pb = p.bounds();
+			if (b == null) {
+				b = pb.clone();
+			} else {
+				b[0] = Math.min(b[0], pb[0]);
+				b[1] = Math.min(b[1], pb[1]);
+				b[2] = Math.max(b[2], pb[2]);
+				b[3] = Math.max(b[3], pb[3]);
 			}
 		}
 		return b;

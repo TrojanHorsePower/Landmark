@@ -68,6 +68,7 @@ public class ConfigScreen extends Screen {
 		list.add(new HeaderRow(Component.translatable("landmark.config.features")));
 		list.add(new ToggleRow(Component.translatable("landmark.config.teleportwarning"), () -> state.config.confirmTeleport, v -> state.config.confirmTeleport = v));
 		list.add(new ToggleRow(Component.translatable("landmark.config.savespawns"), () -> state.config.saveSpawns, v -> state.config.saveSpawns = v));
+		list.add(new ToggleRow(Component.translatable("landmark.config.outlineother"), () -> state.config.outlineOtherLands, v -> state.config.outlineOtherLands = v));
 		list.add(new ToggleRow(Component.translatable("landmark.config.playermarker"), () -> state.config.showPlayerMarker, v -> state.config.showPlayerMarker = v));
 		list.add(new ToggleRow(Component.translatable("landmark.config.refreshonopen"), () -> state.config.refreshOnOpen, v -> state.config.refreshOnOpen = v));
 

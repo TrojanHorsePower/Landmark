@@ -110,5 +110,6 @@
 	"landmark.color.tooltip_background": "Tooltip background",
 	"landmark.color.tooltip_text": "Tooltip text",
 	"landmark.color.other_lands": "Other lands",
-	"landmark.color.other_outline": "Other lands outline"
+	"landmark.color.other_outline": "Other lands outline",
+	"landmark.config.outlineother": "Outline other lands (can slow the map)"
 }

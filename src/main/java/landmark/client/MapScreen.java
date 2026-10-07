@@ -38,7 +38,7 @@ public class MapScreen extends Screen {
 	/** Lands smaller than this on screen (both ways) are outlined as a dot or box instead of edge by edge. */
 	private static final int SMALL_LAND_PX = 12;
 	/** Other (non-open) lands smaller than this on screen get no outline; their fill is still drawn. */
-	private static final int OTHER_MIN_PX = 5;
+	private static final int OTHER_MIN_PX = 12;
 
 	private static int col(ColorKey key) {
 		return Palette.get(key);
@@ -402,9 +402,10 @@ public class MapScreen extends Screen {
 		}
 
 		if (map != null && showClaims) {
-			// Every other land gets a thin outline too. There are thousands of them, so ones too small to see are skipped.
+			// Optional (off by default): every other land gets a thin outline too. There are thousands of them, so this can be
+			// slow when zoomed out; parts too small to see are skipped to limit the cost.
 			int otherOutline = col(ColorKey.OTHER_OUTLINE);
-			if (otherOutline >>> 24 != 0) {
+			if (state.config.outlineOtherLands && otherOutline >>> 24 != 0) {
 				var lands = map.grid.lands();
 				for (int i = 0; i < lands.size(); i++) {
 					if (!openIdx.contains(i)) {
@@ -446,37 +447,41 @@ public class MapScreen extends Screen {
 		g.disableScissor();
 	}
 
-	/** {@code minPx}: lands smaller than this on screen (both ways) are not outlined at all. */
+	/**
+	 * Outlines a land. The size checks are done per part (polygon), not for the land as a whole: a land can have several parts far
+	 * apart, and its combined box would otherwise make every edge of every tiny part get drawn. {@code minPx}: parts smaller than
+	 * this on screen (both ways) are not outlined at all.
+	 */
 	private void drawOutline(GuiGraphicsExtractor g, Land land, int color, int thickness, int minPx, int mapX,
 		double minWX, double maxWX, double minWZ, double maxWZ) {
-		int[] b = land.bounds();
-		if (b == null || b[0] > maxWX || b[2] < minWX || b[1] > maxWZ || b[3] < minWZ) {
-			return;
-		}
 		int lo = thickness / 2;
 		int hi = thickness - lo;
-		int bx0 = mapX + (int) Math.round(view.worldToScreenX(b[0]));
-		int bz0 = (int) Math.round(view.worldToScreenZ(b[1]));
-		int bx1 = mapX + (int) Math.round(view.worldToScreenX(b[2]));
-		int bz1 = (int) Math.round(view.worldToScreenZ(b[3]));
-		if (bx1 - bx0 < minPx && bz1 - bz0 < minPx) {
-			return;
-		}
-		// Level of detail: every edge of every visible land is a draw call, which is far too many when zoomed out.
-		if (bx1 - bx0 < SMALL_LAND_PX && bz1 - bz0 < SMALL_LAND_PX) {
-			if (bx1 - bx0 < 4 && bz1 - bz0 < 4) {
-				int cx = (bx0 + bx1) / 2;
-				int cz = (bz0 + bz1) / 2;
-				g.fill(cx - 1 - lo, cz - 1 - lo, cx + 2 + hi, cz + 2 + hi, color);
-			} else {
-				g.fill(bx0 - lo, bz0 - lo, bx1 + hi, bz0 + hi, color);
-				g.fill(bx0 - lo, bz1 - lo, bx1 + hi, bz1 + hi, color);
-				g.fill(bx0 - lo, bz0 - lo, bx0 + hi, bz1 + hi, color);
-				g.fill(bx1 - lo, bz0 - lo, bx1 + hi, bz1 + hi, color);
-			}
-			return;
-		}
 		for (Polygon poly : land.polygons()) {
+			int[] b = poly.bounds();
+			if (b[0] > maxWX || b[2] < minWX || b[1] > maxWZ || b[3] < minWZ) {
+				continue;
+			}
+			int bx0 = mapX + (int) Math.round(view.worldToScreenX(b[0]));
+			int bz0 = (int) Math.round(view.worldToScreenZ(b[1]));
+			int bx1 = mapX + (int) Math.round(view.worldToScreenX(b[2]));
+			int bz1 = (int) Math.round(view.worldToScreenZ(b[3]));
+			if (bx1 - bx0 < minPx && bz1 - bz0 < minPx) {
+				continue;
+			}
+			// Level of detail: every edge is a draw call, which is far too many when zoomed out.
+			if (bx1 - bx0 < SMALL_LAND_PX && bz1 - bz0 < SMALL_LAND_PX) {
+				if (bx1 - bx0 < 4 && bz1 - bz0 < 4) {
+					int cx = (bx0 + bx1) / 2;
+					int cz = (bz0 + bz1) / 2;
+					g.fill(cx - 1 - lo, cz - 1 - lo, cx + 2 + hi, cz + 2 + hi, color);
+				} else {
+					g.fill(bx0 - lo, bz0 - lo, bx1 + hi, bz0 + hi, color);
+					g.fill(bx0 - lo, bz1 - lo, bx1 + hi, bz1 + hi, color);
+					g.fill(bx0 - lo, bz0 - lo, bx0 + hi, bz1 + hi, color);
+					g.fill(bx1 - lo, bz0 - lo, bx1 + hi, bz1 + hi, color);
+				}
+				continue;
+			}
 			for (int[] ring : poly.rings()) {
 				int n = ring.length / 2;
 				for (int i = 0; i < n; i++) {

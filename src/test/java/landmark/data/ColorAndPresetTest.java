@@ -121,6 +121,16 @@ class ColorAndPresetTest {
 	}
 
 	@Test
+	void outliningOtherLandsIsOffByDefaultAndRemembered() throws IOException {
+		assertFalse(new LandmarkConfig().outlineOtherLands, "it can slow the map down, so it must be opt-in");
+		var c = new LandmarkConfig();
+		c.outlineOtherLands = true;
+		Path f = dir.resolve("outline.json");
+		c.save(f);
+		assertTrue(LandmarkConfig.load(f).outlineOtherLands);
+	}
+
+	@Test
 	void anOldHueTintSettingIsDroppedNotReinterpreted() throws IOException {
 		Path f = dir.resolve("oldtint.json");
 		Files.writeString(f, "{\"colors\": {\"claim_tint\": \"#FF000099\"}}", StandardCharsets.UTF_8);

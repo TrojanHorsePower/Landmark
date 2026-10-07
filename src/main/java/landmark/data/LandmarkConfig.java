@@ -18,6 +18,8 @@ public final class LandmarkConfig {
 	public boolean confirmTeleport = true;
 	/** Remember where you arrive after a teleport and show a pin there. */
 	public boolean saveSpawns = true;
+	/** Outline every land that is not open-spawn. Off by default: with thousands of lands it can slow the map down. */
+	public boolean outlineOtherLands = false;
 	/** Show your own position on the map. */
 	public boolean showPlayerMarker = true;
 	/** Request the open-spawn list whenever the map opens. */

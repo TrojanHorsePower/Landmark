@@ -82,7 +82,9 @@ have it (it is optional). Everything applies immediately.
 - **Keybinds.** Click the key, press the new one (Esc cancels); if the key is already used the mod asks before binding it. It
   is the same setting as in Options > Controls, so it changes in both places.
 - **Features.** Teleport confirmation, remembering spawn locations after you teleport, showing your own position on the map,
-  and refreshing the open-spawn list when the map opens.
+  refreshing the open-spawn list when the map opens, and an optional outline around every non-open land. That outline is off
+  by default because with thousands of lands it can slow the map down (it cost about 3-6 ms per frame at some zoom levels on the
+  real map, against under 1.5 ms without it); its colour is editable once you turn it on.
 - **Export quality.** Decides what the copied export script fetches:
 
   | Preset | Map detail | Tile format | Roughly, on the Chillzone map |
@@ -106,6 +108,7 @@ have it (it is optional). Everything applies immediately.
 | `confirmTeleport` | `true` | Ask before running `/lands spawn` |
 | `saveSpawns` | `true` | Remember where you arrive after a teleport and show a pin there |
 | `showPlayerMarker` | `true` | Show your own position on the map |
+| `outlineOtherLands` | `false` | Outline lands that are not open-spawn (can slow the map down) |
 | `refreshOnOpen` | `true` | Request the open-spawn list when the map opens |
 | `exportQuality` | `low` | `low`, `medium`, `high` or `ultra` (see above) |
 | `colors` | `{}` | Colors you changed, by name, as hex; anything not listed uses its default |
