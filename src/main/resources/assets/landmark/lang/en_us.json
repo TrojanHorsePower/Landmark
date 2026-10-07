@@ -89,7 +89,6 @@
 	"landmark.color.open_outline": "Open-spawn land outline",
 	"landmark.color.hover_outline": "Hovered land outline",
 	"landmark.color.selected_outline": "Selected land outline",
-	"landmark.color.claim_tint": "Other lands (hue varies per land)",
 	"landmark.color.pin": "Spawn pin",
 	"landmark.color.pin_border": "Spawn pin border",
 	"landmark.color.player": "Your position marker",
@@ -109,5 +108,6 @@
 	"landmark.color.text_error": "Error text",
 	"landmark.color.status_background": "Status bar background",
 	"landmark.color.tooltip_background": "Tooltip background",
-	"landmark.color.tooltip_text": "Tooltip text"
+	"landmark.color.tooltip_text": "Tooltip text",
+	"landmark.color.other_lands": "Other lands"
 }

@@ -121,6 +121,17 @@ class ColorAndPresetTest {
 	}
 
 	@Test
+	void anOldHueTintSettingIsDroppedNotReinterpreted() throws IOException {
+		Path f = dir.resolve("oldtint.json");
+		Files.writeString(f, "{\"colors\": {\"claim_tint\": \"#FF000099\"}}", StandardCharsets.UTF_8);
+		var c = LandmarkConfig.load(f);
+		assertTrue(c.colors.isEmpty());
+		assertEquals(ColorKey.OTHER_LANDS.defaultArgb, c.color(ColorKey.OTHER_LANDS));
+		assertEquals(ColorKey.OTHER_LANDS, ColorKey.byId("other_lands"));
+		assertEquals(null, ColorKey.byId("claim_tint"));
+	}
+
+	@Test
 	void presetsMatchTheSpecification() {
 		assertEquals(3, ExportPreset.LOW.tileFolder);
 		assertEquals("small", ExportPreset.LOW.tileMode);

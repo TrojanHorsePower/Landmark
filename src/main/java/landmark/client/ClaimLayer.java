@@ -9,7 +9,6 @@ import java.util.Set;
 import landmark.LandmarkClient;
 import landmark.map.ChunkOwnerGrid;
 import landmark.data.ColorKey;
-import landmark.map.ClaimColors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
@@ -23,14 +22,12 @@ public final class ClaimLayer implements AutoCloseable {
 
 	private final Minecraft mc;
 	private final DimensionMap map;
-	private final int[] normalColors;
 	public final List<Tile> tiles = new ArrayList<>();
 	private final Map<Long, Tile> byKey = new HashMap<>();
 
 	public ClaimLayer(Minecraft mc, DimensionMap map, String idPrefix) {
 		this.mc = mc;
 		this.map = map;
-		this.normalColors = new int[map.grid.lands().size()];
 		map.grid.forEachTile((tx, tz, cells) -> {
 			NativeImage image = new NativeImage(ChunkOwnerGrid.TILE_CELLS, ChunkOwnerGrid.TILE_CELLS, true);
 			DynamicTexture texture = new DynamicTexture(() -> "landmark claims " + tx + "_" + tz, image);
@@ -44,10 +41,7 @@ public final class ClaimLayer implements AutoCloseable {
 
 	/** Repaints every tile with the current palette; {@code open} holds the indices of lands with a public spawn. */
 	public void recolor(Set<Integer> open) {
-		int tint = Palette.get(ColorKey.CLAIM_TINT);
-		for (int i = 0; i < normalColors.length; i++) {
-			normalColors[i] = ClaimColors.normal(map.grid.lands().get(i).name(), tint);
-		}
+		int otherFill = Palette.get(ColorKey.OTHER_LANDS);
 		int openFill = Palette.get(ColorKey.OPEN_FILL);
 		for (Tile t : tiles) {
 			NativeImage image = t.texture().getPixels();
@@ -58,7 +52,7 @@ public final class ClaimLayer implements AutoCloseable {
 			for (int z = 0; z < n; z++) {
 				for (int x = 0; x < n; x++) {
 					int v = t.cells()[z * n + x];
-					int argb = v == 0 ? 0 : open.contains(v - 1) ? openFill : normalColors[v - 1];
+					int argb = v == 0 ? 0 : open.contains(v - 1) ? openFill : otherFill;
 					image.setPixel(x, z, argb);
 				}
 			}
