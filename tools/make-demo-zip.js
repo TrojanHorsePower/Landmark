@@ -1,7 +1,7 @@
 // Builds a synthetic export zip (fake lands, fake owners, procedural terrain) in the real export format.
 // It contains no data from any real server, so it is safe for screenshots, demos and development.
 //
-//   node tools/make-demo-zip.js demo-export.zip [tileFolder 3|2|1]
+//   node tools/make-demo-zip.js demo-export.zip [tileFolder 3|2|1] [lands] [halfWorldBlocks]
 //
 // Then drop the zip onto the map screen, or import it into a dev run folder.
 const fs = require('fs');
@@ -66,7 +66,9 @@ function png(w, h, rgba) {
 
 // tile folder (detail level) 3, 2 or 1 as in the export presets: tiles cover 4096, 2048 or 1024 blocks
 const FOLDER = parseInt(process.argv[3] || '3', 10);
-const PX = 512, BPT = PX * Math.pow(2, FOLDER), HALF = 4096, BPP = BPT / PX;
+const LAND_COUNT = parseInt(process.argv[4] || '130', 10);
+const HALF = parseInt(process.argv[5] || '4096', 10); // half the world size in blocks
+const PX = 512, BPT = PX * Math.pow(2, FOLDER), BPP = BPT / PX;
 const files = [];
 const tileCount = (() => {
 	let n = 0;
@@ -117,12 +119,12 @@ function tooltip(name, owner, members, chunks) {
 
 const markers = [];
 let lands = 0, guard = 0;
-while (lands < 130 && guard++ < 40000) {
+while (lands < LAND_COUNT && guard++ < LAND_COUNT * 300) {
 	const cx = Math.floor((rand() * 2 - 1) * (HALF / 16 - 14)), cz = Math.floor((rand() * 2 - 1) * (HALF / 16 - 14));
 	if (height(cx * 16, cz * 16) < 0.47 || height(cx * 16, cz * 16) > 0.8) continue;
 	const s = shape(cx, cz);
 	if (!free(s.cells)) continue;
-	const name = A[Math.floor(rand() * A.length)] + N[Math.floor(rand() * N.length)] + (used.size > 90 ? Math.floor(rand() * 90 + 10) : '');
+	const name = A[Math.floor(rand() * A.length)] + N[Math.floor(rand() * N.length)] + (used.size > 90 ? Math.floor(rand() * 9000 + 10) : '');
 	if (used.has(name)) continue;
 	used.add(name); occupy(s.cells); lands++;
 	const owner = 'Demo_' + P[Math.floor(rand() * P.length)] + Math.floor(rand() * 90 + 10);

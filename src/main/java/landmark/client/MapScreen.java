@@ -37,6 +37,8 @@ public class MapScreen extends Screen {
 	private static final int STATUS_H = 34;
 	/** Lands smaller than this on screen (both ways) are outlined as a dot or box instead of edge by edge. */
 	private static final int SMALL_LAND_PX = 12;
+	/** Other (non-open) lands smaller than this on screen get no outline; their fill is still drawn. */
+	private static final int OTHER_MIN_PX = 5;
 
 	private static int col(ColorKey key) {
 		return Palette.get(key);
@@ -400,18 +402,28 @@ public class MapScreen extends Screen {
 		}
 
 		if (map != null && showClaims) {
+			// Every other land gets a thin outline too. There are thousands of them, so ones too small to see are skipped.
+			int otherOutline = col(ColorKey.OTHER_OUTLINE);
+			if (otherOutline >>> 24 != 0) {
+				var lands = map.grid.lands();
+				for (int i = 0; i < lands.size(); i++) {
+					if (!openIdx.contains(i)) {
+						drawOutline(g, lands.get(i), otherOutline, 1, OTHER_MIN_PX, mapX, minWX, maxWX, minWZ, maxWZ);
+					}
+				}
+			}
 			int openOutline = col(ColorKey.OPEN_OUTLINE);
 			for (int i : openIdx) {
-				drawOutline(g, map.land(i), openOutline, 1, mapX, minWX, maxWX, minWZ, maxWZ);
+				drawOutline(g, map.land(i), openOutline, 1, 0, mapX, minWX, maxWX, minWZ, maxWZ);
 			}
 			Land selected = selectedName == null ? null : map.index.byName(selectedName).orElse(null);
 			if (selected != null) {
-				drawOutline(g, selected, col(ColorKey.SELECTED_OUTLINE), 2, mapX, minWX, maxWX, minWZ, maxWZ);
+				drawOutline(g, selected, col(ColorKey.SELECTED_OUTLINE), 2, 0, mapX, minWX, maxWX, minWZ, maxWZ);
 			}
 			if (inMap(mx, my)) {
 				int hi = landAt(mx, my);
 				if (hi >= 0) {
-					drawOutline(g, map.land(hi), col(ColorKey.HOVER_OUTLINE), 2, mapX, minWX, maxWX, minWZ, maxWZ);
+					drawOutline(g, map.land(hi), col(ColorKey.HOVER_OUTLINE), 2, 0, mapX, minWX, maxWX, minWZ, maxWZ);
 				}
 			}
 		}
@@ -434,7 +446,8 @@ public class MapScreen extends Screen {
 		g.disableScissor();
 	}
 
-	private void drawOutline(GuiGraphicsExtractor g, Land land, int color, int thickness, int mapX,
+	/** {@code minPx}: lands smaller than this on screen (both ways) are not outlined at all. */
+	private void drawOutline(GuiGraphicsExtractor g, Land land, int color, int thickness, int minPx, int mapX,
 		double minWX, double maxWX, double minWZ, double maxWZ) {
 		int[] b = land.bounds();
 		if (b == null || b[0] > maxWX || b[2] < minWX || b[1] > maxWZ || b[3] < minWZ) {
@@ -446,6 +459,9 @@ public class MapScreen extends Screen {
 		int bz0 = (int) Math.round(view.worldToScreenZ(b[1]));
 		int bx1 = mapX + (int) Math.round(view.worldToScreenX(b[2]));
 		int bz1 = (int) Math.round(view.worldToScreenZ(b[3]));
+		if (bx1 - bx0 < minPx && bz1 - bz0 < minPx) {
+			return;
+		}
 		// Level of detail: every edge of every visible land is a draw call, which is far too many when zoomed out.
 		if (bx1 - bx0 < SMALL_LAND_PX && bz1 - bz0 < SMALL_LAND_PX) {
 			if (bx1 - bx0 < 4 && bz1 - bz0 < 4) {

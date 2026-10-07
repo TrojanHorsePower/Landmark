@@ -13,6 +13,8 @@ public enum ColorKey {
 	SELECTED_OUTLINE("selected_outline", Group.MAP, 0xFF4DE1FF, false),
 	/** Every claim that is not an open-spawn land. */
 	OTHER_LANDS("other_lands", Group.MAP, 0x668C9BB0, true),
+	/** The outline drawn around every claim that is not an open-spawn land. */
+	OTHER_OUTLINE("other_outline", Group.MAP, 0xB3B4C2D4, true),
 	PIN("pin", Group.MAP, 0xFF40E0FF, false),
 	PIN_BORDER("pin_border", Group.MAP, 0xFF000000, false),
 	PLAYER("player", Group.MAP, 0xFFFF3B30, false),

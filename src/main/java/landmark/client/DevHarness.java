@@ -23,6 +23,8 @@ final class DevHarness {
 	private static int framesOpen = -1;
 	private static final boolean PERF = System.getProperty("landmark.dev.perf") != null;
 	private static final boolean SETTINGS = System.getProperty("landmark.dev.settings") != null;
+	/** Every Nth land is pretended to have an open spawn (the real server has roughly 1 in 12). */
+	private static final int OPEN_EVERY = Integer.getInteger("landmark.dev.openEvery", 5);
 	private static long perfSum;
 	private static int perfN;
 
@@ -135,7 +137,7 @@ final class DevHarness {
 			return;
 		}
 		List<Land> lands = map.grid.lands();
-		for (int i = 0; i < lands.size(); i += 5) {
+		for (int i = 0; i < lands.size(); i += OPEN_EVERY) {
 			Land l = lands.get(i);
 			int[] b = l.bounds();
 			if (b != null && l.owner() != null && l.members().stream().anyMatch(m -> !m.equalsIgnoreCase(l.owner())) && l.chunks() >= 12) {
@@ -175,11 +177,19 @@ final class DevHarness {
 			if (framesOpen < 0 && mc.gui.screen() instanceof TitleScreen && ticks > 60) {
 				devDimension = DEMO_DIMENSION;
 				LandmarkState state = LandmarkState.get();
+				String importZip = System.getProperty("landmark.dev.importzip");
+				if (importZip != null) {
+					try {
+						state.store.importZip(java.nio.file.Path.of(importZip));
+					} catch (java.io.IOException e) {
+						LandmarkClient.LOGGER.warn("dev import failed", e);
+					}
+				}
 				DimensionMap map = state.map(DEMO_DIMENSION);
 				if (map != null) {
 					List<String> names = new ArrayList<>();
 					List<Land> lands = map.grid.lands();
-					for (int i = 0; i < lands.size(); i += 5) {
+					for (int i = 0; i < lands.size(); i += OPEN_EVERY) {
 						names.add(lands.get(i).name());
 					}
 					state.openSpawns = new OpenSpawns(names, System.currentTimeMillis() - 90_000);
@@ -197,8 +207,8 @@ final class DevHarness {
 				framesOpen++;
 				if (PERF && mc.gui.screen() instanceof MapScreen ms) {
 					// 30-frame windows at different zoom levels: average CPU time spent building the frame
-					int[] marks = {100, 130, 160, 190};
-					double[] scales = {1.0 / 128, 1.0 / 48, 1.0 / 24, 1.0 / 8};
+					int[] marks = {100, 130, 160, 190, 220};
+					double[] scales = {1.0 / 128, 1.0 / 48, 1.0 / 24, 1.0 / 8, 1.0 / 3};
 					for (int k = 0; k < marks.length; k++) {
 						if (framesOpen == marks[k]) {
 							ms.view().setScale(scales[k]);
@@ -218,6 +228,12 @@ final class DevHarness {
 				if (SETTINGS) {
 					settingsScenario(mc, framesOpen);
 					return;
+				}
+				if (PERF) {
+					if (framesOpen == 290) {
+						mc.stop();
+					}
+					return; // performance mode only measures; it does not run the screenshot script
 				}
 				// Screenshot script (saved in order to run/screenshots): overview, hover tooltip, search by owner, help.
 				if (framesOpen == 100) {
