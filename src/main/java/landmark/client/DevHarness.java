@@ -624,11 +624,17 @@ final class DevHarness {
 						if (framesOpen == 100 || framesOpen == 130 || framesOpen == 160) {
 							Screenshot.grab(mc, false);
 						}
-						if (framesOpen == 105 || framesOpen == 135 || framesOpen == 165 || framesOpen == 180) {
+						if (framesOpen == 105 || framesOpen == 135 || framesOpen == 165 || framesOpen == 192) {
 							LandmarkClient.LOGGER.info("DIMENSIONS pressed, now: {}", ms.devCycleDimension());
 						}
-						if (framesOpen == 195) {
+						if (framesOpen == 170) {
+							mc.setScreenAndShow(new MapScreen()); // closing and reopening the map must keep The End
+						}
+						if (framesOpen == 185) {
+							LandmarkClient.LOGGER.info("DIMENSIONS reopened, config={}", LandmarkState.get().config.viewDimension);
 							Screenshot.grab(mc, false);
+						}
+						if (framesOpen == 200) {
 							mc.stop();
 						}
 					}

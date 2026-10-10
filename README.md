@@ -115,6 +115,7 @@ have it (it is optional). Everything applies immediately.
 | `showPlayerMarker` | `true` | Show your own position on the map |
 | `outlineOtherLands` | `false` | Outline lands that are not open-spawn (can slow the map down) |
 | `refreshOnOpen` | `true` | Request the open-spawn list when the map opens |
+| `viewDimension` | `""` | The dimension the map is pinned to (`minecraft:overworld`, `minecraft:the_nether`, `minecraft:the_end`); empty follows the dimension you are in. Set by the dimension button |
 | `exportQuality` | `low` | `low`, `medium`, `high` or `ultra` (see above) |
 | `colors` | `{}` | Colors you changed, by name, as hex; anything not listed uses its default |
 | `mapUrl` | `https://map.chillzone.cc/` | The web map the help screen opens (https only) |

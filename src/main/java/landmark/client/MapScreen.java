@@ -71,8 +71,6 @@ public class MapScreen extends Screen {
 	private @Nullable String selectedName;
 
 	private String dimension = "";
-	/** Dimension picked with the dimension button; null follows the dimension the player is in. */
-	private @Nullable String chosenDimension;
 	private @Nullable DimensionMap map;
 	private @Nullable ClaimLayer claims;
 	private @Nullable TileTextures tiles;
@@ -176,7 +174,8 @@ public class MapScreen extends Screen {
 	// ---- data ----
 
 	private void syncData() {
-		String dim = chosenDimension != null ? chosenDimension : playerDimension();
+		String chosen = chosenDimension();
+		String dim = chosen != null ? chosen : playerDimension();
 		boolean dimChanged = !dim.equals(dimension);
 		boolean dataChanged = builtDataVersion != state.dataVersion;
 		// Layers are freed whenever another screen replaces this one (help, confirm), so rebuild them on return too.
@@ -232,10 +231,18 @@ public class MapScreen extends Screen {
 
 	private static final List<String> CYCLE = List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end");
 
+	/** The dimension pinned with the dimension button (remembered in the config), or null to follow the player. */
+	private @Nullable String chosenDimension() {
+		String d = state.config.viewDimension;
+		return d != null && CYCLE.contains(d) ? d : null;
+	}
+
 	/** Auto (follow the player) → Overworld → Nether → The End → Auto. */
 	private void cycleDimension() {
-		int i = chosenDimension == null ? -1 : CYCLE.indexOf(chosenDimension);
-		chosenDimension = i + 1 < CYCLE.size() ? CYCLE.get(i + 1) : null;
+		String chosen = chosenDimension();
+		int i = chosen == null ? -1 : CYCLE.indexOf(chosen);
+		state.config.viewDimension = i + 1 < CYCLE.size() ? CYCLE.get(i + 1) : "";
+		state.saveConfig();
 		search.setValue("");
 		selectedName = null;
 		syncData();
@@ -253,10 +260,11 @@ public class MapScreen extends Screen {
 	}
 
 	private Component dimensionLabel() {
-		if (chosenDimension == null) {
+		String chosen = chosenDimension();
+		if (chosen == null) {
 			return Component.translatable("landmark.dimension.auto", dimensionName(dimension));
 		}
-		return Component.translatable("landmark.dimension", dimensionName(chosenDimension));
+		return Component.translatable("landmark.dimension", dimensionName(chosen));
 	}
 
 	private boolean inClaimBounds(double x, double z) {

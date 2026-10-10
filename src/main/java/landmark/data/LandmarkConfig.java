@@ -30,6 +30,8 @@ public final class LandmarkConfig {
 	public String exportQuality = ExportPreset.LOW.id;
 	/** The web map players export from; opened by the in-game help screen. Change it for another server. */
 	public String mapUrl = "https://map.chillzone.cc/";
+	/** Dimension the map is pinned to (for example {@code minecraft:the_end}); empty follows the dimension you are in. */
+	public String viewDimension = "";
 	/** Maximum number of map tiles kept as GPU textures at once. */
 	public int tileCacheSize = 48;
 	/** Colour overrides by {@link ColorKey#id}, as hex strings. Colours that are not listed use their default. */
