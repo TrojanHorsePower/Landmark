@@ -120,7 +120,7 @@ class ExportImporterTest {
 
 	@Test
 	void importsMoreThanFiveThousandTiles() throws IOException {
-		// The real Chillzone map at Ultra quality is about 6,400 tiles.
+		// A tile-folder-0 export of the real Chillzone map (finer than any preset) is about 6,400 tiles.
 		var f = valid();
 		for (int i = 0; i < 6_000; i++) {
 			f.put("tiles/" + i + "_0.png", PNG);

@@ -96,7 +96,7 @@ have it (it is optional). Everything applies immediately.
   | Low (default) | zoomed out | small JPEG | 8 MB |
   | Medium | zoomed out | full-quality PNG | 50 MB |
   | High | 2x the detail | full-quality PNG | 170 MB |
-  | Ultra | 4x the detail | full-quality PNG | about 640 MB (measured on the Chillzone map) |
+  | Ultra | 4x the detail | full-quality PNG | 300 MB or more |
 
   Higher quality means larger file sizes on disk and longer export times. Only the tile detail and format change; the claims
   are identical in every preset. The mod picks the preset's values when it copies the script, so change it before copying.
