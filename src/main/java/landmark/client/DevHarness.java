@@ -624,7 +624,7 @@ final class DevHarness {
 						if (framesOpen == 100 || framesOpen == 130 || framesOpen == 160) {
 							Screenshot.grab(mc, false);
 						}
-						if (framesOpen == 105 || framesOpen == 135 || framesOpen == 165) {
+						if (framesOpen == 105 || framesOpen == 135 || framesOpen == 165 || framesOpen == 180) {
 							LandmarkClient.LOGGER.info("DIMENSIONS pressed, now: {}", ms.devCycleDimension());
 						}
 						if (framesOpen == 195) {

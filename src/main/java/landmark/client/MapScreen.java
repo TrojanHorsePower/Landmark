@@ -230,35 +230,33 @@ public class MapScreen extends Screen {
 		return level == null ? DevHarness.devDimension : level.dimension().identifier().toString();
 	}
 
-	/** Dimensions the button cycles through: the three vanilla ones, then any other the player is in or has data for. */
-	private List<String> viewableDimensions() {
-		List<String> out = new ArrayList<>(List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"));
-		String here = playerDimension();
-		if (!here.isEmpty() && !out.contains(here)) {
-			out.add(here);
-		}
-		return out;
-	}
+	private static final List<String> CYCLE = List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end");
 
+	/** Auto (follow the player) → Overworld → Nether → The End → Auto. */
 	private void cycleDimension() {
-		List<String> dims = viewableDimensions();
-		int i = dims.indexOf(dimension);
-		chosenDimension = dims.get((i + 1) % dims.size());
+		int i = chosenDimension == null ? -1 : CYCLE.indexOf(chosenDimension);
+		chosenDimension = i + 1 < CYCLE.size() ? CYCLE.get(i + 1) : null;
 		search.setValue("");
 		selectedName = null;
 		syncData();
 		rebuildEntries();
 	}
 
-	private Component dimensionLabel() {
-		String key = switch (dimension) {
+	private static Component dimensionName(String dim) {
+		String key = switch (dim) {
 			case "minecraft:overworld" -> "landmark.dimension.overworld";
 			case "minecraft:the_nether" -> "landmark.dimension.nether";
 			case "minecraft:the_end" -> "landmark.dimension.end";
 			default -> null;
 		};
-		Component name = key != null ? Component.translatable(key) : Component.literal(dimension.substring(dimension.indexOf(':') + 1));
-		return Component.translatable(dimension.equals(playerDimension()) ? "landmark.dimension.here" : "landmark.dimension", name);
+		return key != null ? Component.translatable(key) : Component.literal(dim.substring(dim.indexOf(':') + 1));
+	}
+
+	private Component dimensionLabel() {
+		if (chosenDimension == null) {
+			return Component.translatable("landmark.dimension.auto", dimensionName(dimension));
+		}
+		return Component.translatable("landmark.dimension", dimensionName(chosenDimension));
 	}
 
 	private boolean inClaimBounds(double x, double z) {

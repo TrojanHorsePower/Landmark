@@ -23,7 +23,7 @@ The screenshots in this README use synthetic data (fake lands, fake owners, gene
 - Hover a land for its owner, members, size and whether it has an open spawn.
 - Search by land name, owner or member. Press **Refresh** to re-request the live open-spawn list.
 - Click an amber land (or select one in the list and press Teleport), confirm, and you are on your way.
-- **Dimension button** switches which dimension's map you are viewing (Overworld, Nether, The End), even when you are not in it.
+- **Dimension button** cycles Auto (follows the dimension you are in), Overworld, Nether, The End, so you can view a dimension you are not in.
 - **Hide claims** (button in the side panel) shows the bare terrain; it hides the claims and their spawn pins, and brings both back when you click it again.
 - After you teleport, the mod remembers where you arrived and shows a cyan pin there, even for lands newer than your map
   data. Turn that off in Settings and the pins are hidden (and you can delete all of them there).
