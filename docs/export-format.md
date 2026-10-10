@@ -43,7 +43,7 @@ served). The mod's settings choose one of four presets and write those two value
 | High | 2 | `full` | 2048 |
 | Ultra | 1 | `full` | 1024 |
 
-On the Chillzone map the measured sizes were about 8 MB (Low), 52 MB (Medium) and 172 MB (High); Ultra (about 1,600 tiles) is
-extrapolated at 600 MB or more. The script builds the zip from browser Blobs rather than one big buffer, and the importer
-allows up to 5,000 files and 3 GB, so every preset can be imported. When there are many tiles (more than 800) the map uses
+On the Chillzone map the measured sizes were about 8 MB (Low), 52 MB (Medium) and 172 MB (High); Ultra (about 6,400 tiles) was
+measured at about 640 MB. The script builds the zip from browser Blobs rather than one big buffer, and the importer
+allows up to 50,000 files and 3 GB, so every preset can be imported. When there are many tiles (more than 800) the map uses
 smaller overview copies of them to keep memory use down.

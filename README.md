@@ -23,6 +23,7 @@ The screenshots in this README use synthetic data (fake lands, fake owners, gene
 - Hover a land for its owner, members, size and whether it has an open spawn.
 - Search by land name, owner or member. Press **Refresh** to re-request the live open-spawn list.
 - Click an amber land (or select one in the list and press Teleport), confirm, and you are on your way.
+- **Dimension button** switches which dimension's map you are viewing (Overworld, Nether, The End), even when you are not in it.
 - **Hide claims** (button in the side panel) shows the bare terrain; it hides the claims and their spawn pins, and brings both back when you click it again.
 - After you teleport, the mod remembers where you arrived and shows a cyan pin there, even for lands newer than your map
   data. Turn that off in Settings and the pins are hidden (and you can delete all of them there).
@@ -95,7 +96,7 @@ have it (it is optional). Everything applies immediately.
   | Low (default) | zoomed out | small JPEG | 8 MB |
   | Medium | zoomed out | full-quality PNG | 50 MB |
   | High | 2x the detail | full-quality PNG | 170 MB |
-  | Ultra | 4x the detail | full-quality PNG | 600 MB or more (estimated) |
+  | Ultra | 4x the detail | full-quality PNG | about 640 MB (measured on the Chillzone map) |
 
   Higher quality means larger file sizes on disk and longer export times. Only the tile detail and format change; the claims
   are identical in every preset. The mod picks the preset's values when it copies the script, so change it before copying.

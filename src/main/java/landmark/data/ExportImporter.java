@@ -23,7 +23,7 @@ import java.util.zip.ZipFile;
  * and sizes are enforced while reading rather than trusted from headers.
  */
 public final class ExportImporter {
-	static final int MAX_ENTRIES = 5_000;
+	static final int MAX_ENTRIES = 50_000;
 	static final int MAX_MANIFEST_BYTES = 64 * 1024;
 	static final int MAX_LANDS_BYTES = 64 * 1024 * 1024;
 	static final int MAX_TILE_BYTES = 4 * 1024 * 1024;

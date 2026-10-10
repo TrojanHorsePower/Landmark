@@ -25,6 +25,8 @@ final class DevHarness {
 	private static final boolean SETTINGS = System.getProperty("landmark.dev.settings") != null;
 	private static final boolean LAYOUT = System.getProperty("landmark.dev.layout") != null;
 	private static final boolean SPAWNS = System.getProperty("landmark.dev.spawns") != null;
+	private static final boolean SHOWCASE = System.getProperty("landmark.dev.showcase") != null;
+	private static final boolean DIMENSIONS = System.getProperty("landmark.dev.dimensions") != null;
 	private static final boolean WAYPOINTS = System.getProperty("landmark.dev.waypoints") != null;
 	private static final boolean JM_TEST = System.getProperty("landmark.dev.jmtest") != null;
 	private static final boolean JM_WORLD = System.getProperty("landmark.dev.jmworld") != null;
@@ -390,6 +392,110 @@ final class DevHarness {
 		}
 	}
 
+	/** Captures a set of good-looking screenshots (synthetic data only) for showing the mod off. */
+	private static void showcaseScenario(net.minecraft.client.Minecraft mc, int f) {
+		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		LandmarkState state = LandmarkState.get();
+		if (f == 60) {
+			try {
+				java.nio.file.Path mine = mc.gameDirectory.toPath().resolve("xaero/minimap/Multiplayer_play.example.invalid/dim%0");
+				java.nio.file.Files.createDirectories(mine);
+				java.nio.file.Files.write(mine.resolve("mw$default_1.txt"), java.util.List.of(
+					"sets:gui.xaero_default",
+					"waypoint:Home Base:H:0:70:0:12:false:0:gui.xaero_default:false:0:0:false",
+					"waypoint:Iron Mine:I:900:~:-700:6:false:0:gui.xaero_default:false:0:0:false",
+					"waypoint:Farm:F:-1500:64:1100:10:false:0:gui.xaero_default:false:0:0:false",
+					"waypoint:Harbour:A:1600:64:900:11:false:0:gui.xaero_default:false:0:0:false",
+					"waypoint:gui.xaero_deathpoint:D:-600:70:-900:0:false:1:gui.xaero_default:false:0:0:false"));
+			} catch (java.io.IOException e) {
+				LandmarkClient.LOGGER.warn("fixture failed", e);
+			}
+			state.reloadWaypoints(mc);
+		} else if (f == 95 && mc.gui.screen() instanceof MapScreen ms) {
+			mapScreen = ms;
+			ms.view().setScale(0.17);
+			ms.view().centerOn(100, 50);
+		} else if (f == 125) {
+			shot.run(); // 1: overview with open lands, pins and waypoints
+		} else if (f == 130 && mapScreen instanceof MapScreen ms) {
+			var map = state.map(DEMO_DIMENSION);
+			var lands = map.grid.lands();
+			for (int i = 0; i < lands.size(); i += OPEN_EVERY) {
+				Land l = lands.get(i);
+				int[] b = l.bounds();
+				if (b != null && l.owner() != null && l.members().size() > 1 && l.chunks() >= 24) {
+					searchQuery = l.owner().replaceAll("\\d+$", "");
+					int ax = (b[0] + b[2]) / 2;
+					int az = (b[1] + b[3]) / 2;
+					for (int x = b[0]; x < b[2]; x += 16) {
+						for (int z = b[1]; z < b[3]; z += 16) {
+							if (map.grid.landIndexAt(x + 8, z + 8) == i) {
+								ax = x + 8;
+								az = z + 8;
+							}
+						}
+					}
+					ms.view().setScale(0.45);
+					ms.view().centerOn(ax, az);
+					var win = mc.getWindow();
+					int pw = Math.max(150, Math.min(190, win.getGuiScaledWidth() / 3 + 24));
+					ms.devMouseX = (int) (pw + (win.getGuiScaledWidth() - pw) / 2.0);
+					ms.devMouseY = (int) ((win.getGuiScaledHeight() - 34) / 2.0);
+					break;
+				}
+			}
+		} else if (f == 160) {
+			shot.run(); // 2: hover tooltip on an open-spawn land
+		} else if (f == 165 && mapScreen instanceof MapScreen ms) {
+			ms.devMouseX = -1;
+			ms.devSearch(searchQuery);
+			ms.devSelectFirst();
+		} else if (f == 195) {
+			shot.run(); // 3: search by player name
+		} else if (f == 200 && mapScreen instanceof MapScreen ms) {
+			ms.devSearch("");
+			ms.devClearSelection();
+			ms.view().setScale(0.17);
+			ms.view().centerOn(100, 50);
+			state.hideClaims = true;
+		} else if (f == 225) {
+			shot.run(); // 4: claims hidden (waypoints stay)
+		} else if (f == 230) {
+			state.hideClaims = false;
+			configScreen = new ConfigScreen(mapScreen);
+			mc.setScreenAndShow(configScreen);
+			configScreen.devScrollTo(95);
+		} else if (f == 255) {
+			shot.run(); // 5: settings
+		} else if (f == 260) {
+			mc.setScreenAndShow(mapScreen);
+			state.config.setColor(landmark.data.ColorKey.OPEN_FILL, 0xB300E676);
+			state.config.setColor(landmark.data.ColorKey.OPEN_OUTLINE, 0xFFFFFFFF);
+			state.config.setColor(landmark.data.ColorKey.OTHER_LANDS, 0x663F51B5);
+			state.config.setColor(landmark.data.ColorKey.MAP_BACKGROUND, 0xFF0E0B16);
+			state.config.setColor(landmark.data.ColorKey.PANEL_BACKGROUND, 0xFF171126);
+			state.config.setColor(landmark.data.ColorKey.LIST_OPEN, 0xFF69F0AE);
+			state.config.setColor(landmark.data.ColorKey.PIN, 0xFFFF4081);
+			state.config.setColor(landmark.data.ColorKey.PLAYER, 0xFFFFEA00);
+			Palette.reload(state.config);
+		} else if (f == 295) {
+			shot.run(); // 6: a custom colour theme
+		} else if (f == 300) {
+			state.config.resetAllColors();
+			Palette.reload(state.config);
+			picker = new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL);
+			mc.setScreenAndShow(picker);
+		} else if (f == 325) {
+			shot.run(); // 7: colour picker
+		} else if (f == 330) {
+			mc.setScreenAndShow(new HelpScreen(mapScreen));
+		} else if (f == 355) {
+			shot.run(); // 8: in-game instructions
+		} else if (f == 365) {
+			mc.stop();
+		}
+	}
+
 	private static HelpScreen helpScreen;
 	private static ColorPickerScreen picker;
 	private static String searchQuery = "";
@@ -507,6 +613,25 @@ final class DevHarness {
 				}
 				if (SPAWNS) {
 					spawnsScenario(mc, framesOpen);
+					return;
+				}
+				if (SHOWCASE) {
+					showcaseScenario(mc, framesOpen);
+					return;
+				}
+				if (DIMENSIONS) {
+					if (mc.gui.screen() instanceof MapScreen ms) {
+						if (framesOpen == 100 || framesOpen == 130 || framesOpen == 160) {
+							Screenshot.grab(mc, false);
+						}
+						if (framesOpen == 105 || framesOpen == 135 || framesOpen == 165) {
+							LandmarkClient.LOGGER.info("DIMENSIONS pressed, now: {}", ms.devCycleDimension());
+						}
+						if (framesOpen == 195) {
+							Screenshot.grab(mc, false);
+							mc.stop();
+						}
+					}
 					return;
 				}
 				if (WAYPOINTS) {

@@ -65,11 +65,14 @@ public class MapScreen extends Screen {
 	private Button helpButton;
 	private Button claimsButton;
 	private Button settingsButton;
+	private Button dimensionButton;
 	private List<Entry> entries = List.of();
 	private int listScroll;
 	private @Nullable String selectedName;
 
 	private String dimension = "";
+	/** Dimension picked with the dimension button; null follows the dimension the player is in. */
+	private @Nullable String chosenDimension;
 	private @Nullable DimensionMap map;
 	private @Nullable ClaimLayer claims;
 	private @Nullable TileTextures tiles;
@@ -96,6 +99,17 @@ public class MapScreen extends Screen {
 	/** Dev harness: pretends the cursor is here (-1 = use the real cursor), so tests do not depend on window focus. */
 	int devMouseX = -1;
 	int devMouseY = -1;
+
+	/** Dev harness: clears the selected land. */
+	void devClearSelection() {
+		selectedName = null;
+	}
+
+	/** Dev harness: presses the dimension button; returns the label it then shows. */
+	String devCycleDimension() {
+		cycleDimension();
+		return dimensionLabel().getString();
+	}
 
 	/** Dev harness: presses the Hide claims button. */
 	void devToggleClaims() {
@@ -139,6 +153,8 @@ public class MapScreen extends Screen {
 			.bounds(4, 46, bw, 18).build());
 		settingsButton = addRenderableWidget(Button.builder(Component.translatable("landmark.settings"),
 			b -> minecraft.setScreenAndShow(new ConfigScreen(this))).bounds(8 + bw, 46, bw2, 18).build());
+		dimensionButton = addRenderableWidget(Button.builder(Component.empty(), b -> cycleDimension())
+			.bounds(4, 68, panelW - 8, 18).build());
 		teleportButton = addRenderableWidget(Button.builder(Component.translatable("landmark.teleport"), b -> teleportToSelection())
 			.bounds(4, height - 22, panelW - 8, 18).build());
 		helpButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.button"),
@@ -160,8 +176,7 @@ public class MapScreen extends Screen {
 	// ---- data ----
 
 	private void syncData() {
-		var level = minecraft.level;
-		String dim = level == null ? DevHarness.devDimension : level.dimension().identifier().toString();
+		String dim = chosenDimension != null ? chosenDimension : playerDimension();
 		boolean dimChanged = !dim.equals(dimension);
 		boolean dataChanged = builtDataVersion != state.dataVersion;
 		// Layers are freed whenever another screen replaces this one (help, confirm), so rebuild them on return too.
@@ -201,13 +216,49 @@ public class MapScreen extends Screen {
 			viewInitialised = true;
 			view.setViewport(mapWidth(), mapHeight());
 			var p = minecraft.player;
-			if (map != null && p != null && inClaimBounds(p.getX(), p.getZ())) {
+			if (map != null && p != null && dimension.equals(playerDimension()) && inClaimBounds(p.getX(), p.getZ())) {
 				view.centerOn(p.getX(), p.getZ());
 				view.setScale(1.0 / 4);
 			} else {
 				fitToSpawns();
 			}
 		}
+	}
+
+	private String playerDimension() {
+		var level = minecraft.level;
+		return level == null ? DevHarness.devDimension : level.dimension().identifier().toString();
+	}
+
+	/** Dimensions the button cycles through: the three vanilla ones, then any other the player is in or has data for. */
+	private List<String> viewableDimensions() {
+		List<String> out = new ArrayList<>(List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"));
+		String here = playerDimension();
+		if (!here.isEmpty() && !out.contains(here)) {
+			out.add(here);
+		}
+		return out;
+	}
+
+	private void cycleDimension() {
+		List<String> dims = viewableDimensions();
+		int i = dims.indexOf(dimension);
+		chosenDimension = dims.get((i + 1) % dims.size());
+		search.setValue("");
+		selectedName = null;
+		syncData();
+		rebuildEntries();
+	}
+
+	private Component dimensionLabel() {
+		String key = switch (dimension) {
+			case "minecraft:overworld" -> "landmark.dimension.overworld";
+			case "minecraft:the_nether" -> "landmark.dimension.nether";
+			case "minecraft:the_end" -> "landmark.dimension.end";
+			default -> null;
+		};
+		Component name = key != null ? Component.translatable(key) : Component.literal(dimension.substring(dimension.indexOf(':') + 1));
+		return Component.translatable(dimension.equals(playerDimension()) ? "landmark.dimension.here" : "landmark.dimension", name);
 	}
 
 	private boolean inClaimBounds(double x, double z) {
@@ -300,7 +351,7 @@ public class MapScreen extends Screen {
 	}
 
 	private int listTop() {
-		return 70;
+		return 90;
 	}
 
 	private int listBottom() {
@@ -354,6 +405,7 @@ public class MapScreen extends Screen {
 		refreshButton.setMessage(Component.translatable(state.refreshing ? "landmark.refreshing" : "landmark.refresh"));
 		refreshButton.active = !state.refreshing;
 		fitButton.active = map != null;
+		dimensionButton.setMessage(dimensionLabel());
 		claimsButton.active = map != null;
 		claimsButton.setMessage(Component.translatable(state.hideClaims ? "landmark.claims.show" : "landmark.claims.hide"));
 		String target = teleportTarget();
@@ -492,7 +544,7 @@ public class MapScreen extends Screen {
 			}
 		}
 		var p = minecraft.player;
-		if (p != null && state.config.showPlayerMarker) {
+		if (p != null && state.config.showPlayerMarker && dimension.equals(playerDimension())) {
 			int px = mapX + (int) view.worldToScreenX(p.getX());
 			int pz = (int) view.worldToScreenZ(p.getZ());
 			g.fill(px - 3, pz - 3, px + 4, pz + 4, col(ColorKey.PLAYER_BORDER));

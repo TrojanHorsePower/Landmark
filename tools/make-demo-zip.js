@@ -72,7 +72,8 @@ const PX = 512, BPT = PX * Math.pow(2, FOLDER), BPP = BPT / PX;
 const files = [];
 const tileCount = (() => {
 	let n = 0;
-	for (let tx = -HALF / BPT; tx < HALF / BPT; tx++) for (let tz = -HALF / BPT; tz < HALF / BPT; tz++) {
+	const T = Math.ceil(HALF / BPT); // whole tiles only, even when the world is not a multiple of the tile size
+	for (let tx = -T; tx < T; tx++) for (let tz = -T; tz < T; tz++) {
 		const rgba = Buffer.alloc(PX * PX * 4);
 		for (let y = 0; y < PX; y++) for (let x = 0; x < PX; x++) {
 			const bx = tx * BPT + x * BPP, bz = tz * BPT + y * BPP;

@@ -119,6 +119,26 @@ class ExportImporterTest {
 	}
 
 	@Test
+	void importsMoreThanFiveThousandTiles() throws IOException {
+		// The real Chillzone map at Ultra quality is about 6,400 tiles.
+		var f = valid();
+		for (int i = 0; i < 6_000; i++) {
+			f.put("tiles/" + i + "_0.png", PNG);
+		}
+		var r = ExportImporter.importZip(zip(f), dir.resolve("many"));
+		assertEquals(6_000, r.tileCount());
+	}
+
+	@Test
+	void rejectsAbsurdlyManyFiles() throws IOException {
+		var f = valid();
+		for (int i = 0; i <= ExportImporter.MAX_ENTRIES; i++) {
+			f.put("junk/" + i, new byte[0]);
+		}
+		assertThrows(ImportException.class, () -> ExportImporter.importZip(zip(f), dir.resolve("junk")));
+	}
+
+	@Test
 	void rejectsNonZip() throws IOException {
 		Path p = dir.resolve("x.zip");
 		try (OutputStream o = Files.newOutputStream(p)) {
