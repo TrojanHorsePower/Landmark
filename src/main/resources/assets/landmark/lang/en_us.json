@@ -71,7 +71,7 @@
 	"landmark.export.desc.low": "Zoomed-out map as small JPEG tiles. Smallest file and quickest export (roughly 8 MB on the Chillzone map).",
 	"landmark.export.desc.medium": "The same zoomed-out map as full-quality PNG tiles (roughly 50 MB on the Chillzone map).",
 	"landmark.export.desc.high": "Twice the map detail as full-quality PNG tiles (roughly 170 MB on the Chillzone map).",
-	"landmark.export.desc.ultra": "Four times the map detail as full-quality PNG tiles (roughly 600 MB or more on the Chillzone map, estimated).",
+	"landmark.export.desc.ultra": "Four times the map detail as full-quality PNG tiles (roughly 300 MB or more on the Chillzone map).",
 	"landmark.export.warning": "Higher quality means larger file sizes on disk and longer export times.",
 	"landmark.colors.group.map": "Map",
 	"landmark.colors.group.panel": "Side panel and list",
