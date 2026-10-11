@@ -1,8 +1,21 @@
 package landmark.client;
 
-/** Development aid: the JourneyMap API of this Minecraft version cannot create waypoints, so there is nothing to do. */
+import journeymap.api.v2.client.IClientAPI;
+import journeymap.api.v2.common.waypoint.WaypointFactory;
+import net.minecraft.core.BlockPos;
+
+/** Development aid: creates waypoints through JourneyMap's API to test reading them. Only used by the dev harness. */
 final class DevJourneyMap {
 	private DevJourneyMap() {}
 
-	static void addTestWaypoints(Object api, String modId) {}
+	static void addTestWaypoints(Object api, String modId) {
+		IClientAPI jm = (IClientAPI) api;
+		var overworld = landmark.compat.Platform.dimensionKey("minecraft:overworld");
+		var a = WaypointFactory.createClientWaypoint(modId, new BlockPos(300, 66, -250), "JM Lighthouse", overworld, true);
+		a.setColor(0x33CCFF);
+		var b = WaypointFactory.createClientWaypoint(modId, new BlockPos(-900, 70, 600), "JM Cabin", overworld, true);
+		b.setColor(0xFF8800);
+		jm.addWaypoint(modId, a);
+		jm.addWaypoint(modId, b);
+	}
 }
