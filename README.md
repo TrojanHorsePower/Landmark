@@ -138,9 +138,11 @@ If you use either mod, the waypoints you made there appear on Landmark's map. No
   opens the sets that have waypoints in the dimension you are viewing, with counts: tick the ones you want, or choose **All sets**.
   It has the same Auto / Overworld / Nether / The End button as the map (one shared setting), so you can look through the
   sets of any dimension. The same choice is in Settings.
-- **Other dimensions (off by default).** Turn on *Waypoints from the other dimension* (Settings, or on the sets screen) to see
-  Nether waypoints on the Overworld map and the reverse, with coordinates scaled by 8. They are drawn as rings, and the
-  tooltip gives their real position. The End and modded dimensions are not converted.
+- **Other dimensions (off by default).** Turn on *Overworld and Nether waypoints on both maps* (Settings, or the "Also show
+  Nether waypoints" button on the sets screen) to see Nether waypoints on the Overworld map and the reverse, with coordinates
+  scaled by 8. They are drawn as rings, and the tooltip gives their real position. Their sets are listed on the sets screen
+  under their own heading ("From The Nether"), separate from the viewed dimension's sets, so same-named sets never mix. The End
+  and modded dimensions are not converted.
 - Waypoints stay visible when you hide claims, because they are not claims. Colours come from the other mod. Settings shows how
   many were found from each source, and you can turn the whole thing off there.
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import landmark.data.ColorKey;
 import landmark.data.WaypointSetMode;
+import landmark.waypoints.DimensionScale;
 import landmark.waypoints.ExternalWaypoint;
 import landmark.waypoints.WaypointSets;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -27,6 +28,7 @@ public class WaypointSetsScreen extends Screen {
 
 	private final Screen parent;
 	private Button dimensionButton;
+	private Button crossButton;
 	private final LandmarkState state = LandmarkState.get();
 	private List<Row> rows = List.of();
 	private int scroll;
@@ -67,13 +69,12 @@ public class WaypointSetsScreen extends Screen {
 				state.config.waypointSets = v.id;
 				state.saveConfig();
 			}));
-		addRenderableWidget(CycleButton.onOffBuilder(state.config.crossDimensionWaypoints)
-			.create(x, 72, w, 20, Component.translatable("landmark.waypointsets.cross"), (b, v) -> {
-				state.config.crossDimensionWaypoints = v;
-				state.saveConfig();
-				scroll = 0;
-				buildRows();
-			}));
+		crossButton = addRenderableWidget(Button.builder(Component.empty(), b -> {
+			state.config.crossDimensionWaypoints = !state.config.crossDimensionWaypoints;
+			state.saveConfig();
+			scroll = 0;
+			buildRows();
+		}).bounds(x, 72, w, 20).build());
 		int third = (w - 8) / 3;
 		int y = height - 26;
 		addRenderableWidget(Button.builder(Component.translatable("landmark.waypointsets.showall"), b -> setAll(false)).bounds(x, y, third, 20).build());
@@ -91,18 +92,41 @@ public class WaypointSetsScreen extends Screen {
 		buildRows();
 	}
 
+	/** The dimension whose waypoints can be shown here scaled by 8, or null (The End and others have none). */
+	private @org.jspecify.annotations.Nullable String otherDimension() {
+		String d = dimension();
+		return d.equals(DimensionScale.OVERWORLD) ? DimensionScale.NETHER : d.equals(DimensionScale.NETHER) ? DimensionScale.OVERWORLD : null;
+	}
+
+	private boolean crossOn() {
+		return state.config.crossDimensionWaypoints && otherDimension() != null;
+	}
+
+	/** The sets of the viewed dimension, then (when other-dimension waypoints are on) the other dimension's under their own header. */
 	private void buildRows() {
-		// Only the sets that have waypoints in the viewed dimension are listed.
-		var groups = state.external.groups(dimension()).stream().filter(g -> g.count() > 0).toList();
-		boolean twoSources = groups.stream().map(WaypointSets.Group::source).distinct().count() > 1;
+		String here = dimension();
+		String other = otherDimension();
+		var groups = state.external.groups(here).stream().filter(g -> g.count() > 0).toList();
+		var own = groups.stream().filter(g -> g.dimension().isEmpty() || g.dimension().equals(here)).toList();
+		boolean twoSources = own.stream().map(WaypointSets.Group::source).distinct().count() > 1;
 		List<Row> out = new ArrayList<>();
 		ExternalWaypoint.Source last = null;
-		for (var g : groups) {
+		for (var g : own) {
 			if (twoSources && g.source() != last) {
 				out.add(new Row(true, g.source().displayName, null));
 			}
 			last = g.source();
 			out.add(new Row(false, "", g));
+		}
+		if (crossOn()) {
+			var from = groups.stream().filter(g -> g.dimension().equals(other)).toList();
+			if (!from.isEmpty()) {
+				String scale = here.equals(DimensionScale.OVERWORLD) ? "\u00d78" : "\u00f78";
+				out.add(new Row(true, Component.translatable("landmark.waypointsets.from", ViewDimension.name(other), scale).getString(), null));
+				for (var g : from) {
+					out.add(new Row(false, "", g));
+				}
+			}
 		}
 		rows = out;
 	}
@@ -116,20 +140,27 @@ public class WaypointSetsScreen extends Screen {
 		};
 	}
 
-	/** Ticks or unticks one group, first turning the current view (active set or all) into a custom choice. */
-	private void toggle(WaypointSets.Group g) {
+	/** Turns the current view (active set or all) into a custom choice, so single sets can be switched. */
+	private void toPick() {
 		var cfg = state.config;
-		if (cfg.waypointMode() != WaypointSetMode.PICK) {
-			Set<String> hidden = new HashSet<>();
-			for (var other : state.external.groups(dimension())) {
-				boolean shown = cfg.waypointMode() == WaypointSetMode.ALL || other.active() || (other.count() == 0 && other.activeAnywhere());
-				if (!shown) {
-					hidden.add(other.key());
-				}
-			}
-			cfg.hiddenWaypointSets = new ArrayList<>(hidden);
-			cfg.waypointSets = WaypointSetMode.PICK.id;
+		if (cfg.waypointMode() == WaypointSetMode.PICK) {
+			return;
 		}
+		Set<String> hidden = new HashSet<>();
+		for (var other : state.external.groups(dimension())) {
+			boolean shown = cfg.waypointMode() == WaypointSetMode.ALL || other.active() || (other.count() == 0 && other.activeAnywhere());
+			if (!shown) {
+				hidden.add(other.key());
+			}
+		}
+		cfg.hiddenWaypointSets = new ArrayList<>(hidden);
+		cfg.waypointSets = WaypointSetMode.PICK.id;
+	}
+
+	/** Ticks or unticks one group. */
+	private void toggle(WaypointSets.Group g) {
+		toPick();
+		var cfg = state.config;
 		if (!cfg.hiddenWaypointSets.remove(g.key())) {
 			cfg.hiddenWaypointSets.add(g.key());
 		}
@@ -137,20 +168,22 @@ public class WaypointSetsScreen extends Screen {
 		modeButton.setValue(WaypointSetMode.PICK);
 	}
 
+	/** Shows or hides every set that is listed on this screen; sets of dimensions that are not listed are left alone. */
 	private void setAll(boolean hide) {
+		toPick();
 		var cfg = state.config;
-		if (hide) {
-			cfg.hiddenWaypointSets = new ArrayList<>();
-			for (var g : state.external.groups(dimension())) {
-				cfg.hiddenWaypointSets.add(g.key());
+		for (Row r : rows) {
+			if (!r.header()) {
+				String key = r.group().key();
+				if (hide && !cfg.hiddenWaypointSets.contains(key)) {
+					cfg.hiddenWaypointSets.add(key);
+				} else if (!hide) {
+					cfg.hiddenWaypointSets.remove(key);
+				}
 			}
-			cfg.waypointSets = WaypointSetMode.PICK.id;
-		} else {
-			cfg.hiddenWaypointSets = new ArrayList<>();
-			cfg.waypointSets = WaypointSetMode.ALL.id;
 		}
 		state.saveConfig();
-		modeButton.setValue(cfg.waypointMode());
+		modeButton.setValue(WaypointSetMode.PICK);
 	}
 
 	private int visibleRows() {
@@ -180,6 +213,12 @@ public class WaypointSetsScreen extends Screen {
 		int w = contentWidth();
 		g.text(font, title, x, 8, col(ColorKey.LIST_OPEN), false);
 		dimensionButton.setMessage(ViewDimension.label(state.config, dimension()));
+		String other = otherDimension();
+		crossButton.visible = other != null;
+		if (other != null) {
+			crossButton.setMessage(Component.translatable("landmark.waypointsets.cross", ViewDimension.name(other),
+				Component.translatable(state.config.crossDimensionWaypoints ? "options.on" : "options.off")));
+		}
 		if (rows.isEmpty()) {
 			g.text(font, fit(Component.translatable("landmark.waypointsets.none").getString(), w), x, listTop + 4, col(ColorKey.TEXT_MUTED), false);
 		}
@@ -210,9 +249,6 @@ public class WaypointSetsScreen extends Screen {
 			String name = ExternalWaypoints.displayName(grp.name());
 			if (name.isEmpty()) {
 				name = Component.translatable("landmark.waypointsets.ungrouped").getString();
-			}
-			if (!grp.dimension().isEmpty() && !grp.dimension().equals(dimension())) {
-				name += " (" + ViewDimension.name(grp.dimension()).getString() + ")"; // a converted set from the other dimension
 			}
 			if (grp.active()) {
 				name += " (" + Component.translatable("landmark.waypointsets.active").getString() + ")";
@@ -272,9 +308,14 @@ public class WaypointSetsScreen extends Screen {
 		cycleDimension();
 	}
 
+	/** Dev harness: Show all / Hide all. */
+	void devSetAll(boolean hide) {
+		setAll(hide);
+	}
+
 	/** Dev harness: the listed sets as "name=count". */
 	String devRows() {
-		return rows.stream().filter(r -> !r.header()).map(r -> r.group().name() + "=" + r.group().count()).toList().toString();
+		return rows.stream().map(r -> r.header() ? "[" + r.text() + "]" : r.group().name() + "=" + r.group().count()).toList().toString();
 	}
 
 	/** Dev harness: unticks or ticks the nth listed group, as a click would. */

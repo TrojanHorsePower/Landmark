@@ -212,6 +212,20 @@ final class DevHarness {
 			ms.view().setScale(0.5);
 			ms.view().centerOn(0, 0);
 			state.config.waypointSets = "active";
+		} else if (f == 144) {
+			mc.setScreenAndShow(new WaypointSetsScreen(mapScreen));
+		} else if (f == 146 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+			LandmarkClient.LOGGER.info("WPSETS cross picker rows: {}", s.devRows());
+			shot.run();
+		} else if (f == 147 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+			s.devSetAll(true);
+			LandmarkClient.LOGGER.info("WPSETS after hide all (overworld view): hidden={}", state.config.hiddenWaypointSets);
+		} else if (f == 148) {
+			shot.run();
+		} else if (f == 149) {
+			mc.setScreenAndShow(mapScreen);
+			state.config.waypointSets = "active";
+			state.config.hiddenWaypointSets = new java.util.ArrayList<>();
 		} else if (f == 150) {
 			shot.run();
 			state.config.crossDimensionWaypoints = false;
