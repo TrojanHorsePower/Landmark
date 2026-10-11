@@ -506,12 +506,23 @@ final class DevHarness {
 				java.nio.file.Path mine = mc.gameDirectory.toPath().resolve("xaero/minimap/Multiplayer_play.example.invalid/dim%0");
 				java.nio.file.Files.createDirectories(mine);
 				java.nio.file.Files.write(mine.resolve("mw$default_1.txt"), java.util.List.of(
-					"sets:gui.xaero_default",
+					"sets:gui.xaero_default:Farms:Mining",
 					"waypoint:Home Base:H:0:70:0:12:false:0:gui.xaero_default:false:0:0:false",
 					"waypoint:Iron Mine:I:900:~:-700:6:false:0:gui.xaero_default:false:0:0:false",
 					"waypoint:Farm:F:-1500:64:1100:10:false:0:gui.xaero_default:false:0:0:false",
 					"waypoint:Harbour:A:1600:64:900:11:false:0:gui.xaero_default:false:0:0:false",
-					"waypoint:gui.xaero_deathpoint:D:-600:70:-900:0:false:1:gui.xaero_default:false:0:0:false"));
+					"waypoint:gui.xaero_deathpoint:D:-600:70:-900:0:false:1:gui.xaero_default:false:0:0:false",
+					"waypoint:Wheat:W:-400:64:300:10:false:0:Farms:false:0:0:false",
+					"waypoint:Sugar Cane:S:-450:64:380:10:false:0:Farms:false:0:0:false",
+					"waypoint:Quarry:Q:1200:40:-300:6:false:0:Mining:false:0:0:false",
+					"waypoint:Deep Shaft:D:1250:-20:-380:6:false:0:Mining:false:0:0:false"));
+				java.nio.file.Path nether = mine.resolveSibling("dim%-1");
+				java.nio.file.Files.createDirectories(nether);
+				java.nio.file.Files.write(nether.resolve("mw$default_1.txt"), java.util.List.of(
+					"sets:Portals:gui.xaero_default",
+					"waypoint:Home Gate:G:10:64:10:3:false:0:Portals:false:0:0:false",
+					"waypoint:Harbour Gate:G:200:64:110:3:false:0:Portals:false:0:0:false",
+					"waypoint:Fortress:F:-80:70:60:5:false:0:gui.xaero_default:false:0:0:false"));
 			} catch (java.io.IOException e) {
 				LandmarkClient.LOGGER.warn("fixture failed", e);
 			}
@@ -596,7 +607,13 @@ final class DevHarness {
 			landmark.compat.Platform.show(mc, new HelpScreen(mapScreen));
 		} else if (f == 355) {
 			shot.run(); // 8: in-game instructions
-		} else if (f == 365) {
+		} else if (f == 360) {
+			state.config.crossDimensionWaypoints = true; // in memory only: shows the other dimension's sets under their own heading
+			landmark.compat.Platform.show(mc, new WaypointSetsScreen(mapScreen));
+		} else if (f == 385) {
+			shot.run(); // 9: the waypoint sets screen
+		} else if (f == 395) {
+			state.config.crossDimensionWaypoints = false;
 			mc.stop();
 		}
 	}
