@@ -24,12 +24,22 @@ public abstract class LandmarkScreen extends Screen {
 
 	/** Draws the widgets that were added with addRenderableWidget. */
 	protected final void drawWidgets(Gfx g, int mx, int my, float partial) {
-		super.render(g.raw(), mx, my, partial);
+		drawingWidgets = true;
+		try {
+			super.render(g.raw(), mx, my, partial);
+		} finally {
+			drawingWidgets = false;
+		}
 	}
+
+	/** Set while the game's own render() runs: before 1.21.6 that calls renderBackground again, over what was drawn. */
+	private boolean drawingWidgets;
 
 	@Override
 	public final void renderBackground(GuiGraphics g, int mx, int my, float partial) {
-		drawBackground(new Gfx(g), mx, my, partial);
+		if (!drawingWidgets) {
+			drawBackground(new Gfx(g), mx, my, partial);
+		}
 	}
 
 	@Override

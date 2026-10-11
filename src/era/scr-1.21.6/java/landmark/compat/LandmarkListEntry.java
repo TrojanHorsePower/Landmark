@@ -19,7 +19,7 @@ public abstract class LandmarkListEntry<E extends ContainerObjectSelectionList.E
 	public final void render(GuiGraphics g, int index, int top, int left, int width, int height, int mx, int my, boolean hovered, float partial) {
 		contentX = left;
 		contentY = top;
-		contentWidth = width;
+		contentWidth = width - 8; // matches where the newer versions put the right edge of a row
 		contentHeight = height;
 		draw(new Gfx(g), mx, my, hovered, partial);
 	}
