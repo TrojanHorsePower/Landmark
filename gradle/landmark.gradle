@@ -79,10 +79,12 @@ processResources {
 	inputs.property "version", v
 	def range = project.minecraft_range
 	def javaV = project.java_version
+	def loaderMin = project.loader_min
+	inputs.property "loaderMin", loaderMin
 	inputs.property "minecraftRange", range
 	inputs.property "javaVersion", javaV
 	filesMatching("fabric.mod.json") {
-		expand "version": v, "minecraftRange": range, "javaVersion": javaV
+		expand "version": v, "minecraftRange": range, "javaVersion": javaV, "loaderMin": loaderMin
 	}
 }
 
