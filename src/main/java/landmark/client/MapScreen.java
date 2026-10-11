@@ -540,8 +540,14 @@ public class MapScreen extends Screen {
 				if (wx < mapX - 6 || wx > width + 6 || wz < -6 || wz > mapHeight() + 6 || drawn++ > 600) {
 					continue;
 				}
-				diamond(g, wx, wz, 4, border);
-				diamond(g, wx, wz, 3, wp.argb());
+				if (wp.origin() != null) {
+					// from another dimension (scaled by 8): drawn as a ring so it is not mistaken for a real position here
+					diamond(g, wx, wz, 4, wp.argb());
+					diamond(g, wx, wz, 2, border);
+				} else {
+					diamond(g, wx, wz, 4, border);
+					diamond(g, wx, wz, 3, wp.argb());
+				}
 			}
 		}
 		var p = minecraft.player;
@@ -700,7 +706,14 @@ public class MapScreen extends Screen {
 			lines.add(I18n.tr(wp.source() == ExternalWaypoint.Source.XAERO ? "landmark.tip.waypoint.set" : "landmark.tip.waypoint.group",
 				ExternalWaypoints.displayName(wp.group())));
 		}
-		lines.add(wp.y() == null ? wp.x() + ", " + wp.z() : wp.x() + ", " + wp.y() + ", " + wp.z());
+		if (wp.origin() != null) {
+			var o = wp.origin();
+			lines.add(I18n.tr("landmark.tip.waypoint.from", dimensionName(o.dimension()).getString(),
+				wp.y() == null ? o.x() + ", " + o.z() : o.x() + ", " + wp.y() + ", " + o.z()));
+			lines.add(I18n.tr("landmark.tip.waypoint.at", wp.x() + ", " + wp.z()));
+		} else {
+			lines.add(wp.y() == null ? wp.x() + ", " + wp.z() : wp.x() + ", " + wp.y() + ", " + wp.z());
+		}
 		int w = 0;
 		for (String line : lines) {
 			w = Math.max(w, font.width(line));

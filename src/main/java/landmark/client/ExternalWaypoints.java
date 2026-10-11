@@ -58,8 +58,8 @@ public final class ExternalWaypoints {
 	public List<ExternalWaypoint> forDimension(String dimension) {
 		var mode = config.waypointMode();
 		List<ExternalWaypoint> out = new ArrayList<>();
-		for (ExternalWaypoint w : all()) {
-			if (w.dimension().equals(dimension) && WaypointSets.shown(w, mode, config.hiddenWaypointSets)) {
+		for (ExternalWaypoint w : WaypointSets.viewable(all(), dimension, config.crossDimensionWaypoints)) {
+			if (WaypointSets.shown(w, mode, config.hiddenWaypointSets)) {
 				out.add(w);
 			}
 		}
@@ -80,7 +80,7 @@ public final class ExternalWaypoints {
 
 	/** The sets and groups to choose from, with counts for the given dimension. */
 	public List<WaypointSets.Group> groups(String dimension) {
-		return WaypointSets.groups(all(), dimension);
+		return WaypointSets.groups(WaypointSets.viewable(all(), dimension, config.crossDimensionWaypoints), dimension);
 	}
 
 	public boolean loadedOnce() {

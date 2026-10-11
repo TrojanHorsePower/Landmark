@@ -21,6 +21,25 @@ public final class WaypointSets {
 	}
 
 	/**
+	 * The waypoints that can be drawn in {@code dimension} before the set choice is applied: those made there and, when
+	 * {@code crossDimension} is on, the Overworld's in the Nether and the Nether's in the Overworld at converted positions.
+	 */
+	public static List<ExternalWaypoint> viewable(Collection<ExternalWaypoint> all, String dimension, boolean crossDimension) {
+		List<ExternalWaypoint> out = new ArrayList<>();
+		for (ExternalWaypoint w : all) {
+			if (w.dimension().equals(dimension)) {
+				out.add(w);
+			} else if (crossDimension) {
+				int[] c = DimensionScale.convert(w.x(), w.z(), w.dimension(), dimension);
+				if (c != null) {
+					out.add(w.convertedTo(dimension, c[0], c[1]));
+				}
+			}
+		}
+		return out;
+	}
+
+	/**
 	 * One Xaero set or JourneyMap group. {@code count} is its waypoints in the viewed dimension, {@code total} in all of them;
 	 * {@code active} is whether the other mod shows it in the viewed dimension and {@code activeAnywhere} in any dimension.
 	 */

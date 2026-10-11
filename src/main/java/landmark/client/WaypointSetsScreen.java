@@ -67,12 +67,19 @@ public class WaypointSetsScreen extends Screen {
 				state.config.waypointSets = v.id;
 				state.saveConfig();
 			}));
+		addRenderableWidget(CycleButton.onOffBuilder(state.config.crossDimensionWaypoints)
+			.create(x, 72, w, 20, Component.translatable("landmark.waypointsets.cross"), (b, v) -> {
+				state.config.crossDimensionWaypoints = v;
+				state.saveConfig();
+				scroll = 0;
+				buildRows();
+			}));
 		int third = (w - 8) / 3;
 		int y = height - 26;
 		addRenderableWidget(Button.builder(Component.translatable("landmark.waypointsets.showall"), b -> setAll(false)).bounds(x, y, third, 20).build());
 		addRenderableWidget(Button.builder(Component.translatable("landmark.waypointsets.hideall"), b -> setAll(true)).bounds(x + third + 4, y, third, 20).build());
 		addRenderableWidget(Button.builder(Component.translatable("landmark.picker.done"), b -> onClose()).bounds(x + 2 * (third + 4), y, w - 2 * (third + 4), 20).build());
-		listTop = 76;
+		listTop = 100;
 		listBottom = Math.max(listTop + ROW_H, height - 32);
 		buildRows();
 	}

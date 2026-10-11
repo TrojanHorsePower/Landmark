@@ -31,6 +31,11 @@ public final class LandmarkConfig {
 	public String waypointSets = "active";
 	/** Group keys (see {@code ExternalWaypoint#groupKey}) switched off while {@link #waypointSets} is {@code pick}. */
 	public java.util.List<String> hiddenWaypointSets = new java.util.ArrayList<>();
+	/**
+	 * Also draw the Overworld's waypoints on the Nether map and the Nether's on the Overworld map, with the coordinates
+	 * scaled by 8 (like Xaero's Minimap). Off by default.
+	 */
+	public boolean crossDimensionWaypoints = false;
 	/** Request the open-spawn list whenever the map opens. */
 	public boolean refreshOnOpen = true;
 	/** Export quality preset id (low, medium, high, ultra); decides the tile detail and format in the copied export script. */

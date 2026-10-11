@@ -200,8 +200,19 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("WPSETS map button after picker change: {}", ms.devDimensionLabel());
 			ms.devCycleDimension(); // End
 			ms.devCycleDimension(); // back to Auto
+			state.config.crossDimensionWaypoints = true;
+			state.config.waypointSets = "all";
+			LandmarkClient.LOGGER.info("WPSETS cross on: overworld drawn={} nether drawn={} end drawn={}",
+				state.external.forDimension("minecraft:overworld").size(), state.external.forDimension("minecraft:the_nether").size(),
+				state.external.forDimension("minecraft:the_end").size());
+			var conv = state.external.forDimension("minecraft:overworld").stream().filter(w -> w.origin() != null).findFirst();
+			LandmarkClient.LOGGER.info("WPSETS converted example: {}", conv.orElse(null));
+			ms.view().setScale(0.5);
+			ms.view().centerOn(0, 0);
+			state.config.waypointSets = "active";
 		} else if (f == 150) {
 			shot.run();
+			state.config.crossDimensionWaypoints = false;
 			state.config.waypointSets = "all";
 			LandmarkClient.LOGGER.info("WPSETS all mode drawn={}", state.external.forDimension(DEMO_DIMENSION).size());
 			state.config.waypointSets = "active";
