@@ -18,7 +18,7 @@ final class ViewDimension {
 	/** The dimension the player is in ("" with no world). */
 	static String player(Minecraft mc) {
 		var level = mc.level;
-		return level == null ? DevHarness.devDimension : level.dimension().identifier().toString();
+		return level == null ? DevHarness.devDimension : landmark.compat.Platform.dimensionId(level);
 	}
 
 	/** The pinned dimension, or null to follow the player. */

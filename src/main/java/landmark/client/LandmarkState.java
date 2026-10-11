@@ -131,7 +131,7 @@ public final class LandmarkState {
 		if (w == null || mc.player == null || mc.level == null) {
 			return;
 		}
-		var arrival = w.tick(mc.level.dimension().identifier().toString(), mc.player.getX(), mc.player.getY(), mc.player.getZ());
+		var arrival = w.tick(landmark.compat.Platform.dimensionId(mc.level), mc.player.getX(), mc.player.getY(), mc.player.getZ());
 		if (arrival != null) {
 			learned.record(new LearnedSpawns.Spawn(arrival.land(), arrival.dimension(), arrival.x(), arrival.y(), arrival.z(),
 				System.currentTimeMillis()));

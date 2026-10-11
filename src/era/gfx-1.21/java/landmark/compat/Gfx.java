@@ -31,7 +31,10 @@ public final class Gfx {
 	}
 
 	public void outline(int x, int y, int w, int h, int argb) {
-		g.renderOutline(x, y, w, h, argb);
+		g.fill(x, y, x + w, y + 1, argb);
+		g.fill(x, y + h - 1, x + w, y + h, argb);
+		g.fill(x, y + 1, x + 1, y + h - 1, argb);
+		g.fill(x + w - 1, y + 1, x + w, y + h - 1, argb);
 	}
 
 	public void text(Font font, String text, int x, int y, int argb, boolean shadow) {

@@ -64,7 +64,7 @@ public class WaypointSetsScreen extends LandmarkScreen {
 		int w = contentWidth();
 		int x = contentLeft();
 		dimensionButton = addRenderableWidget(Button.builder(Component.empty(), b -> cycleDimension()).bounds(x, 24, w, 20).build());
-		modeButton = addRenderableWidget(CycleButton.<WaypointSetMode>builder(m -> Component.translatable(m.translationKey), state.config.waypointMode())
+		modeButton = addRenderableWidget(landmark.compat.Platform.<WaypointSetMode>cycleBuilder(m -> Component.translatable(m.translationKey), state.config.waypointMode())
 			.withValues(WaypointSetMode.values())
 			.create(x, 48, w, 20, Component.translatable("landmark.waypointsets.show"), (b, v) -> {
 				state.config.waypointSets = v.id;

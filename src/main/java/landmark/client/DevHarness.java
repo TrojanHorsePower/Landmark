@@ -422,7 +422,7 @@ final class DevHarness {
 			}
 			case 1 -> {
 				if (mc.level != null && mc.player != null && worldTicks > 200) {
-					LandmarkClient.LOGGER.info("JMWORLD joined: dimension={} player at {},{}", mc.level.dimension().identifier(), (int) mc.player.getX(), (int) mc.player.getZ());
+					LandmarkClient.LOGGER.info("JMWORLD joined: dimension={} player at {},{}", landmark.compat.Platform.dimensionId(mc.level), (int) mc.player.getX(), (int) mc.player.getZ());
 					String zip = System.getProperty("landmark.dev.importzip");
 					if (zip != null) {
 						try {

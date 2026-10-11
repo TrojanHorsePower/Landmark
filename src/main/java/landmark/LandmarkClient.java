@@ -7,7 +7,6 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +24,7 @@ public class LandmarkClient implements ClientModInitializer {
 		LandmarkState.init(FabricLoader.getInstance().getGameDir(), FabricLoader.getInstance().getConfigDir());
 		landmark.client.LandmarkDev.install();
 
-		openKey = landmark.compat.Platform.registerKey(new KeyMapping("key.landmark.open", InputConstants.KEY_M,
-			KeyMapping.Category.register(Identifier.fromNamespaceAndPath(Branding.MOD_ID, "main"))));
+		openKey = landmark.compat.Platform.registerKey("key.landmark.open", InputConstants.KEY_M, "main");
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			LandmarkState.get().tickWatcher(mc);
 			while (openKey.consumeClick()) {

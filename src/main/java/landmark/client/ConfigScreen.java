@@ -434,7 +434,7 @@ public class ConfigScreen extends LandmarkScreen {
 		private final CycleButton<landmark.data.WaypointSetMode> button;
 
 		WaypointModeRow() {
-			button = add(CycleButton.<landmark.data.WaypointSetMode>builder(m -> Component.translatable(m.translationKey), state.config.waypointMode())
+			button = add(landmark.compat.Platform.<landmark.data.WaypointSetMode>cycleBuilder(m -> Component.translatable(m.translationKey), state.config.waypointMode())
 				.withValues(landmark.data.WaypointSetMode.values()).displayOnlyValue()
 				.create(0, 0, 150, 20, Component.translatable("landmark.config.waypointsets"), (b, v) -> {
 					state.config.waypointSets = v.id;
@@ -454,7 +454,7 @@ public class ConfigScreen extends LandmarkScreen {
 		private final CycleButton<ExportPreset> button;
 
 		PresetRow() {
-			button = add(CycleButton.<ExportPreset>builder(p -> Component.translatable(p.translationKey()), state.config.exportPreset())
+			button = add(landmark.compat.Platform.<ExportPreset>cycleBuilder(p -> Component.translatable(p.translationKey()), state.config.exportPreset())
 				.withValues(ExportPreset.values()).displayOnlyValue()
 				.create(0, 0, 110, 20, Component.translatable("landmark.config.quality"), (b, v) -> {
 					state.config.setExportPreset(v);

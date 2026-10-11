@@ -18,7 +18,6 @@ import java.util.stream.Stream;
 import landmark.LandmarkClient;
 import net.minecraft.client.Minecraft;
 import landmark.compat.LandmarkTexture;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -34,13 +33,11 @@ public final class TileOverview implements AutoCloseable {
 
 	private record Ready(int tx, int tz, int[] abgr) {}
 
-	private record Entry(Identifier id, LandmarkTexture texture) {}
-
 	private final Minecraft mc;
 	private final Path dir;
 	private final String idPrefix;
 	private final Queue<Ready> done = new ConcurrentLinkedQueue<>();
-	private final Map<Long, Entry> textures = new HashMap<>();
+	private final Map<Long, LandmarkTexture> textures = new HashMap<>();
 	private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
 		Thread t = new Thread(r, "landmark-overview");
 		t.setDaemon(true);
@@ -141,17 +138,16 @@ public final class TileOverview implements AutoCloseable {
 					image.setPixelABGR(x, y, r.abgr()[y * n + x]);
 				}
 			}
-			Identifier id = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, idPrefix + "/" + r.tx() + "_" + r.tz());
-			LandmarkTexture t = new LandmarkTexture(() -> "landmark overview " + r.tx() + "_" + r.tz(), image, id, true);
-			mc.getTextureManager().register(id, t);
+			LandmarkTexture t = new LandmarkTexture(() -> "landmark overview " + r.tx() + "_" + r.tz(), image,
+				idPrefix + "/" + r.tx() + "_" + r.tz(), true);
+			t.register(mc);
 			t.upload();
-			textures.put(key(r.tx(), r.tz()), new Entry(id, t));
+			textures.put(key(r.tx(), r.tz()), t);
 		}
 	}
 
 	public @Nullable LandmarkTexture get(int tx, int tz) {
-		Entry e = textures.get(key(tx, tz));
-		return e == null ? null : e.texture();
+		return textures.get(key(tx, tz));
 	}
 
 	public boolean complete() {
@@ -166,8 +162,8 @@ public final class TileOverview implements AutoCloseable {
 	public void close() {
 		closed = true;
 		worker.shutdownNow();
-		for (Entry e : textures.values()) {
-			mc.getTextureManager().release(e.id());
+		for (LandmarkTexture t : textures.values()) {
+			t.release(mc);
 		}
 		textures.clear();
 		done.clear();

@@ -22,9 +22,16 @@ public final class Platform {
 		return mapping.saveString().equals(key.getName());
 	}
 
-	/** Registers a key binding (it then shows up in Options > Controls). */
-	public static KeyMapping registerKey(KeyMapping mapping) {
-		return net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.registerKeyBinding(mapping);
+	/** Registers a key binding in the mod's own category (it then shows up in Options > Controls). */
+	public static KeyMapping registerKey(String name, int keyCode, String categoryPath) {
+		return net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.registerKeyBinding(new KeyMapping(name, keyCode,
+			KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(landmark.Branding.MOD_ID, categoryPath))));
+	}
+
+	/** A cycling button builder with the given starting value. */
+	public static <T> net.minecraft.client.gui.components.CycleButton.Builder<T> cycleBuilder(
+		java.util.function.Function<T, net.minecraft.network.chat.Component> label, T initial) {
+		return net.minecraft.client.gui.components.CycleButton.builder(label, initial);
 	}
 
 	/** Dev harness: saves a screenshot to the game's screenshots folder. */
@@ -38,5 +45,15 @@ public final class Platform {
 			net.minecraft.world.Difficulty.NORMAL, true,
 			new net.minecraft.world.level.gamerules.GameRules(net.minecraft.world.level.WorldDataConfiguration.DEFAULT.enabledFeatures()),
 			net.minecraft.world.level.WorldDataConfiguration.DEFAULT);
+	}
+
+	/** The identifier of a level's dimension, for example {@code minecraft:overworld}. */
+	public static String dimensionId(net.minecraft.world.level.Level level) {
+		return level.dimension().identifier().toString();
+	}
+
+	/** Dev harness: the dimension key for an identifier string. */
+	public static net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimensionKey(String id) {
+		return net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, net.minecraft.resources.Identifier.parse(id));
 	}
 }

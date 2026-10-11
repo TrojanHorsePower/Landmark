@@ -5,6 +5,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
 import java.util.function.Supplier;
+import landmark.Branding;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 
@@ -16,14 +18,19 @@ public final class LandmarkTexture extends DynamicTexture {
 	private final Identifier id;
 	private final boolean linear;
 
-	public LandmarkTexture(Supplier<String> name, NativeImage image, Identifier id, boolean linear) {
+	/** {@code path} identifies the texture within this mod's namespace, for example {@code tiles/overworld/3_4}. */
+	public LandmarkTexture(Supplier<String> name, NativeImage image, String path, boolean linear) {
 		super(name, image);
-		this.id = id;
+		this.id = Identifier.fromNamespaceAndPath(Branding.MOD_ID, path);
 		this.linear = linear;
 	}
 
-	public Identifier id() {
-		return id;
+	public void register(Minecraft mc) {
+		mc.getTextureManager().register(id, this);
+	}
+
+	public void release(Minecraft mc) {
+		mc.getTextureManager().release(id);
 	}
 
 	GpuSampler drawSampler() {

@@ -48,6 +48,9 @@ dependencies {
 	add(cfg('implementation', 'modImplementation'), "net.fabricmc:fabric-loader:${project.loader_version}")
 	add(cfg('implementation', 'modImplementation'), "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}")
 
+	// Annotations only (@Nullable); Minecraft ships this itself from 1.21.11, older versions need it to compile.
+	compileOnly "org.jspecify:jspecify:1.0.0"
+
 	// Optional: Landmark runs without JourneyMap. compileOnly is never packaged into the jar.
 	add(cfg('compileOnly', 'modCompileOnly'), "info.journeymap:journeymap-api-fabric:${project.journeymap_api_version}")
 

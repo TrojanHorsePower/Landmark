@@ -12,20 +12,17 @@ import java.util.Set;
 import landmark.LandmarkClient;
 import net.minecraft.client.Minecraft;
 import landmark.compat.LandmarkTexture;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
 /** Lazily loads imported map tiles (PNG or JPEG) as GPU textures, keeping at most {@code maxEntries} of them. */
 public final class TileTextures implements AutoCloseable {
 	private static final int LOADS_PER_FRAME = 4;
 
-	private record Entry(Identifier id, LandmarkTexture texture) {}
-
-	private final Minecraft mc;
+		private final Minecraft mc;
 	private final Path dir;
 	private final String idPrefix;
 	private int maxEntries;
-	private final LinkedHashMap<Long, Entry> cache = new LinkedHashMap<>(16, 0.75f, true);
+	private final LinkedHashMap<Long, LandmarkTexture> cache = new LinkedHashMap<>(16, 0.75f, true);
 	private final Set<Long> missing = new HashSet<>();
 	private int loadedThisFrame;
 	public int decodeFailures;
@@ -48,9 +45,9 @@ public final class TileTextures implements AutoCloseable {
 
 	public @Nullable LandmarkTexture get(int tx, int tz) {
 		long key = ((long) tx << 32) | (tz & 0xFFFFFFFFL);
-		Entry e = cache.get(key);
-		if (e != null) {
-			return e.texture();
+		LandmarkTexture cached = cache.get(key);
+		if (cached != null) {
+			return cached;
 		}
 		if (missing.contains(key) || loadedThisFrame >= LOADS_PER_FRAME) {
 			return null;
@@ -63,11 +60,10 @@ public final class TileTextures implements AutoCloseable {
 		}
 		try {
 			NativeImage image = TileDecoder.decode(Files.readAllBytes(file));
-			Identifier id = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, idPrefix + "/" + tx + "_" + tz);
-			LandmarkTexture texture = new LandmarkTexture(() -> "landmark tile " + tx + "_" + tz, image, id, true);
-			mc.getTextureManager().register(id, texture);
+			LandmarkTexture texture = new LandmarkTexture(() -> "landmark tile " + tx + "_" + tz, image, idPrefix + "/" + tx + "_" + tz, true);
+			texture.register(mc);
 			texture.upload();
-			cache.put(key, new Entry(id, texture));
+			cache.put(key, texture);
 			evict();
 			return texture;
 		} catch (IOException | RuntimeException ex) {
@@ -89,18 +85,18 @@ public final class TileTextures implements AutoCloseable {
 	}
 
 	private void evict() {
-		Iterator<Map.Entry<Long, Entry>> it = cache.entrySet().iterator();
+		Iterator<Map.Entry<Long, LandmarkTexture>> it = cache.entrySet().iterator();
 		while (cache.size() > maxEntries && it.hasNext()) {
-			Entry old = it.next().getValue();
+			LandmarkTexture old = it.next().getValue();
 			it.remove();
-			mc.getTextureManager().release(old.id());
+			old.release(mc);
 		}
 	}
 
 	@Override
 	public void close() {
-		for (Entry e : cache.values()) {
-			mc.getTextureManager().release(e.id());
+		for (LandmarkTexture t : cache.values()) {
+			t.release(mc);
 		}
 		cache.clear();
 		missing.clear();

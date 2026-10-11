@@ -12,7 +12,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import landmark.compat.LandmarkTexture;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -23,7 +22,6 @@ public class ColorPickerScreen extends LandmarkScreen {
 	/** Resolution of the saturation/brightness texture; it is drawn at {@link #sv} pixels, whatever the window size. */
 	private static final int TEX = 128;
 	private static final int BAR_W = 14;
-	private static final Identifier TEXTURE_ID = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, "picker/sv");
 
 	private enum Drag { NONE, AREA, HUE, ALPHA }
 
@@ -142,7 +140,9 @@ public class ColorPickerScreen extends LandmarkScreen {
 
 	@Override
 	public void removed() {
-		minecraft.getTextureManager().release(TEXTURE_ID);
+		if (svTexture != null) {
+			svTexture.release(minecraft);
+		}
 		svTexture = null;
 	}
 
@@ -150,8 +150,8 @@ public class ColorPickerScreen extends LandmarkScreen {
 
 	private void updateTexture() {
 		if (svTexture == null) {
-			svTexture = new LandmarkTexture(() -> "landmark picker", new NativeImage(TEX, TEX, false), TEXTURE_ID, false);
-			minecraft.getTextureManager().register(TEXTURE_ID, svTexture);
+			svTexture = new LandmarkTexture(() -> "landmark picker", new NativeImage(TEX, TEX, false), "picker/sv", false);
+			svTexture.register(minecraft);
 			textureHue = -1;
 		}
 		if (textureHue != hue) {
