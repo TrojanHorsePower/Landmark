@@ -95,7 +95,7 @@ public final class TileOverview implements AutoCloseable {
 	static int[] downscale(NativeImage image, int size) {
 		int w = image.getWidth();
 		int h = image.getHeight();
-		int[] src = image.getPixelsABGR();
+		int[] src = landmark.compat.Pixels.abgr(image);
 		int[] out = new int[size * size];
 		for (int y = 0; y < size; y++) {
 			int y0 = y * h / size;
@@ -135,7 +135,7 @@ public final class TileOverview implements AutoCloseable {
 			NativeImage image = new NativeImage(n, n, false);
 			for (int y = 0; y < n; y++) {
 				for (int x = 0; x < n; x++) {
-					image.setPixelABGR(x, y, r.abgr()[y * n + x]);
+					landmark.compat.Pixels.setAbgr(image, x, y, r.abgr()[y * n + x]);
 				}
 			}
 			LandmarkTexture t = new LandmarkTexture(() -> "landmark overview " + r.tx() + "_" + r.tz(), image,

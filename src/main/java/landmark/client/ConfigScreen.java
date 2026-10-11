@@ -61,7 +61,7 @@ public class ConfigScreen extends LandmarkScreen {
 
 	/** Fills the list from the current settings. Called again whenever a setting changes the list's shape. */
 	private void populate() {
-		savedScroll = list.scrollAmount();
+		savedScroll = list.scrolled;
 		list.clear();
 		list.add(new HeaderRow(Component.translatable("landmark.config.keybinds")));
 		list.add(new KeyRow(LandmarkClient.openKey));
@@ -284,6 +284,15 @@ public class ConfigScreen extends LandmarkScreen {
 			return Math.min(width - 20, 340);
 		}
 
+		/** The last scroll position that was set (the game's own getter has a different name in different versions). */
+		double scrolled;
+
+		@Override
+		public void setScrollAmount(double amount) {
+			super.setScrollAmount(amount);
+			scrolled = amount;
+		}
+
 		void add(Row row) {
 			addEntry(row);
 		}
@@ -480,7 +489,7 @@ public class ConfigScreen extends LandmarkScreen {
 		ColorRow(ColorKey key) {
 			this.key = key;
 			swatch = add(Button.builder(Component.empty(), b -> {
-				savedScroll = list.scrollAmount();
+				savedScroll = list.scrolled;
 				landmark.compat.Platform.show(minecraft, new ColorPickerScreen(ConfigScreen.this, key));
 			}).bounds(0, 0, 26, 20).build());
 			hex = add(new EditBox(font, 0, 0, 72, 18, Component.translatable(key.translationKey())));

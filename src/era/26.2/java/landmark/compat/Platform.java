@@ -63,4 +63,5 @@ public final class Platform {
 	public static long windowHandle(com.mojang.blaze3d.platform.Window w) {
 		return w.handle();
 	}
+
 }

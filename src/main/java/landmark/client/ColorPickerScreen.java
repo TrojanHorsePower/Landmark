@@ -159,7 +159,7 @@ public class ColorPickerScreen extends LandmarkScreen {
 			NativeImage image = svTexture.getPixels();
 			for (int y = 0; y < TEX; y++) {
 				for (int x = 0; x < TEX; x++) {
-					image.setPixel(x, y, ColorMath.fromHsv(hue, x / (TEX - 1f), 1f - y / (TEX - 1f)));
+					landmark.compat.Pixels.setArgb(image, x, y, ColorMath.fromHsv(hue, x / (TEX - 1f), 1f - y / (TEX - 1f)));
 				}
 			}
 			svTexture.upload();

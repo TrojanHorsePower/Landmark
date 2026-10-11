@@ -51,7 +51,7 @@ public final class ClaimLayer implements AutoCloseable {
 				for (int x = 0; x < n; x++) {
 					int v = t.cells()[z * n + x];
 					int argb = v == 0 ? 0 : open.contains(v - 1) ? openFill : otherFill;
-					image.setPixel(x, z, argb);
+					landmark.compat.Pixels.setArgb(image, x, z, argb);
 				}
 			}
 			t.texture().upload();
