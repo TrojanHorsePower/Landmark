@@ -153,6 +153,13 @@ final class DevHarness {
 					lines.add("waypoint:" + set + " " + i + ":W:" + x + ":64:" + z + ":" + (i % 15 + 1) + ":false:0:" + set + ":false:0:0:false");
 				}
 				java.nio.file.Files.write(dir.resolve("mw$default_1.txt"), lines);
+				java.nio.file.Path nether = dir.resolveSibling("dim%-1");
+				java.nio.file.Files.createDirectories(nether);
+				java.nio.file.Files.write(nether.resolve("mw$default_1.txt"), java.util.List.of(
+					"sets:Portals:Industry",
+					"waypoint:Gate 1:G:10:64:10:3:false:0:Portals:false:0:0:false",
+					"waypoint:Gate 2:G:40:64:10:3:false:0:Portals:false:0:0:false",
+					"waypoint:Nether Mine:N:-30:40:90:5:false:0:Industry:false:0:0:false"));
 			} catch (java.io.IOException e) {
 				LandmarkClient.LOGGER.warn("fixture failed", e);
 			}
@@ -166,7 +173,7 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("WPSETS default mode={} drawn={} of {}", state.config.waypointSets, state.external.forDimension(DEMO_DIMENSION).size(), state.external.all().size());
 			shot.run();
 		} else if (f == 115) {
-			var screen = new WaypointSetsScreen(mapScreen, DEMO_DIMENSION);
+			var screen = new WaypointSetsScreen(mapScreen);
 			configScreen = null;
 			mc.setScreenAndShow(screen);
 		} else if (f == 125) {
@@ -179,8 +186,20 @@ final class DevHarness {
 		} else if (f == 136 && mc.gui.screen() instanceof WaypointSetsScreen s) {
 			s.devToggle(1); // Farms: ticking another set
 			LandmarkClient.LOGGER.info("WPSETS after ticking two: hidden={} drawn={}", state.config.hiddenWaypointSets, state.external.forDimension(DEMO_DIMENSION).size());
+		} else if (f == 137 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+			LandmarkClient.LOGGER.info("WPSETS picker Auto rows: {}", s.devRows());
+			s.devCycleDimension();
+			LandmarkClient.LOGGER.info("WPSETS picker {} rows: {}", state.config.viewDimension, s.devRows());
+			s.devCycleDimension();
+			LandmarkClient.LOGGER.info("WPSETS picker {} rows: {}", state.config.viewDimension, s.devRows());
+		} else if (f == 139) {
+			shot.run();
 		} else if (f == 140) {
 			mc.setScreenAndShow(mapScreen);
+		} else if (f == 142 && mc.gui.screen() instanceof MapScreen ms) {
+			LandmarkClient.LOGGER.info("WPSETS map button after picker change: {}", ms.devDimensionLabel());
+			ms.devCycleDimension(); // End
+			ms.devCycleDimension(); // back to Auto
 		} else if (f == 150) {
 			shot.run();
 			state.config.waypointSets = "all";

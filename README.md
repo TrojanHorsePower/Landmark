@@ -134,7 +134,9 @@ If you use either mod, the waypoints you made there appear on Landmark's map. No
   waypoints appear, that is the first thing to check.
 - **Sets and groups.** By default only the set Xaero's is showing (its active set, per dimension) or the JourneyMap groups that are
   switched on are drawn, as in those mods. The **Waypoints** button in the side panel (shown when a waypoint mod has waypoints)
-  opens a list of all sets with counts: tick the ones you want, or choose **All sets**. The same choice is in Settings.
+  opens the sets that have waypoints in the dimension you are viewing, with counts: tick the ones you want, or choose **All sets**.
+  It has the same Auto / Overworld / Nether / The End button as the map (one shared setting), so you can look through the
+  sets of any dimension. The same choice is in Settings.
 - Waypoints stay visible when you hide claims, because they are not claims. Colours come from the other mod. Settings shows how
   many were found from each source, and you can turn the whole thing off there.
 

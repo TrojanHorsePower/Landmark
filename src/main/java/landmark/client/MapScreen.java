@@ -110,6 +110,12 @@ public class MapScreen extends Screen {
 		return dimensionLabel().getString();
 	}
 
+	/** Dev harness: the dimension button's label. */
+	String devDimensionLabel() {
+		syncData();
+		return dimensionLabel().getString();
+	}
+
 	/** Dev harness: presses the Hide claims button. */
 	void devToggleClaims() {
 		toggleClaims();
@@ -155,7 +161,7 @@ public class MapScreen extends Screen {
 		dimensionButton = addRenderableWidget(Button.builder(Component.empty(), b -> cycleDimension())
 			.bounds(4, 68, panelW - 8, 18).build());
 		waypointsButton = addRenderableWidget(Button.builder(Component.empty(),
-			b -> minecraft.setScreenAndShow(new WaypointSetsScreen(this, dimension))).bounds(4, 90, panelW - 8, 18).build());
+			b -> minecraft.setScreenAndShow(new WaypointSetsScreen(this))).bounds(4, 90, panelW - 8, 18).build());
 		teleportButton = addRenderableWidget(Button.builder(Component.translatable("landmark.teleport"), b -> teleportToSelection())
 			.bounds(4, height - 22, panelW - 8, 18).build());
 		helpButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.button"),
@@ -177,8 +183,7 @@ public class MapScreen extends Screen {
 	// ---- data ----
 
 	private void syncData() {
-		String chosen = chosenDimension();
-		String dim = chosen != null ? chosen : playerDimension();
+		String dim = ViewDimension.resolve(state.config, playerDimension());
 		boolean dimChanged = !dim.equals(dimension);
 		boolean dataChanged = builtDataVersion != state.dataVersion;
 		// Layers are freed whenever another screen replaces this one (help, confirm), so rebuild them on return too.
@@ -199,6 +204,7 @@ public class MapScreen extends Screen {
 				}
 			}
 			if (dimChanged || dataChanged) {
+				selectedName = null; // also covers a dimension changed on the waypoint sets screen
 				viewInitialised = false;
 			}
 		}
@@ -228,23 +234,12 @@ public class MapScreen extends Screen {
 	}
 
 	private String playerDimension() {
-		var level = minecraft.level;
-		return level == null ? DevHarness.devDimension : level.dimension().identifier().toString();
-	}
-
-	private static final List<String> CYCLE = List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end");
-
-	/** The dimension pinned with the dimension button (remembered in the config), or null to follow the player. */
-	private @Nullable String chosenDimension() {
-		String d = state.config.viewDimension;
-		return d != null && CYCLE.contains(d) ? d : null;
+		return ViewDimension.player(minecraft);
 	}
 
 	/** Auto (follow the player) → Overworld → Nether → The End → Auto. */
 	private void cycleDimension() {
-		String chosen = chosenDimension();
-		int i = chosen == null ? -1 : CYCLE.indexOf(chosen);
-		state.config.viewDimension = i + 1 < CYCLE.size() ? CYCLE.get(i + 1) : "";
+		ViewDimension.cycle(state.config);
 		state.saveConfig();
 		search.setValue("");
 		selectedName = null;
@@ -253,21 +248,11 @@ public class MapScreen extends Screen {
 	}
 
 	static Component dimensionName(String dim) {
-		String key = switch (dim) {
-			case "minecraft:overworld" -> "landmark.dimension.overworld";
-			case "minecraft:the_nether" -> "landmark.dimension.nether";
-			case "minecraft:the_end" -> "landmark.dimension.end";
-			default -> null;
-		};
-		return key != null ? Component.translatable(key) : Component.literal(dim.substring(dim.indexOf(':') + 1));
+		return ViewDimension.name(dim);
 	}
 
 	private Component dimensionLabel() {
-		String chosen = chosenDimension();
-		if (chosen == null) {
-			return Component.translatable("landmark.dimension.auto", dimensionName(dimension));
-		}
-		return Component.translatable("landmark.dimension", dimensionName(chosen));
+		return ViewDimension.label(state.config, dimension);
 	}
 
 	private boolean inClaimBounds(double x, double z) {
