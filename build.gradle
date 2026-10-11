@@ -2,7 +2,19 @@ plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
 
-version = project.mod_version
+// Per-Minecraft-version settings (Minecraft and API versions, supported range) live in eras/<era>.properties.
+def eraProps = new Properties()
+file("eras/${project.era}.properties").withInputStream { eraProps.load(it) }
+eraProps.each { k, v ->
+	if (project.hasProperty(k)) {
+		project.setProperty(k, v)
+	} else {
+		project.ext.set(k, v)
+	}
+}
+sourceSets.main.java.srcDir "src/era/${project.era}/java"
+
+version = project.era == '26.2' ? project.mod_version : "${project.mod_version}+mc${project.era}"
 group = project.maven_group
 base.archivesName = project.archives_base_name
 
@@ -53,19 +65,21 @@ processResources {
 	}
 	def v = project.version
 	inputs.property "version", v
+	def range = project.minecraft_range
+	inputs.property "minecraftRange", range
 	filesMatching("fabric.mod.json") {
-		expand "version": v
+		expand "version": v, "minecraftRange": range
 	}
 }
 
 tasks.withType(JavaCompile).configureEach {
-	options.release = 25
+	options.release = Integer.parseInt(project.java_version)
 }
 
 java {
 	withSourcesJar()
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
+	sourceCompatibility = JavaVersion.toVersion(project.java_version)
+	targetCompatibility = JavaVersion.toVersion(project.java_version)
 }
 
 jar {

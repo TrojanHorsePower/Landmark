@@ -241,7 +241,7 @@ public class ConfigScreen extends Screen {
 			return out;
 		}
 		for (KeyMapping other : minecraft.options.keyMappings) {
-			if (other != target && !other.isUnbound() && other.matches(key)) {
+			if (other != target && !other.isUnbound() && landmark.compat.Platform.matches(other, key)) {
 				out.add(other);
 			}
 		}

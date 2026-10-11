@@ -31,7 +31,7 @@ public class LandmarkClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			LandmarkState.get().tickWatcher(mc);
 			while (openKey.consumeClick()) {
-				if (mc.level != null && mc.gui.screen() == null) {
+				if (mc.level != null && landmark.compat.Platform.screen(mc) == null) {
 					mc.setScreenAndShow(new MapScreen());
 				}
 			}
