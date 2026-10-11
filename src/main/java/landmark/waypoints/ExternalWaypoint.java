@@ -40,8 +40,25 @@ public record ExternalWaypoint(Source source, String name, String dimension, int
 		return new ExternalWaypoint(source, name, targetDimension, cx, y, cz, argb, group, active, new Origin(dimension, x, z));
 	}
 
-	/** Identifies the group across dimensions and sources; this is what the "hidden sets" setting stores. */
+	/**
+	 * Identifies the set or group; this is what the "hidden sets" setting stores. Xaero's sets belong to one dimension (the
+	 * same name in two dimensions is two sets), so its key includes the dimension; JourneyMap groups are global. A converted
+	 * waypoint keeps the key of the set it really belongs to.
+	 */
 	public String groupKey() {
-		return source.name().toLowerCase(java.util.Locale.ROOT) + ":" + group;
+		return key(source, setDimension(), group);
+	}
+
+	/** The dimension the set really belongs to ("" for JourneyMap, whose groups are not per dimension). */
+	public String setDimension() {
+		if (source != Source.XAERO) {
+			return "";
+		}
+		return origin != null ? origin.dimension() : dimension;
+	}
+
+	public static String key(Source source, String setDimension, String group) {
+		String name = source.name().toLowerCase(java.util.Locale.ROOT);
+		return setDimension.isEmpty() ? name + ":" + group : name + ":" + setDimension + ":" + group;
 	}
 }

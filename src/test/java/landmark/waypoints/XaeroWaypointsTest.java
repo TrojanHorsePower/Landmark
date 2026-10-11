@@ -57,7 +57,7 @@ class XaeroWaypointsTest {
 		assertTrue(wps.get(0).active(), "the first name on the sets line is the active set");
 		assertFalse(wps.get(1).active());
 		assertFalse(wps.get(2).active());
-		assertEquals("xaero:Farms", wps.get(2).groupKey());
+		assertEquals("xaero:minecraft:overworld:Farms", wps.get(2).groupKey());
 	}
 
 	@Test

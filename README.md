@@ -113,7 +113,7 @@ have it (it is optional). Everything applies immediately.
 | `saveSpawns` | `true` | Remember where you arrive after a teleport and show a pin there |
 | `showExternalWaypoints` | `true` | Show waypoints from Xaero's Minimap and JourneyMap |
 | `waypointSets` | `active` | `active` (only the set or group the other mod shows), `all`, or `pick` (everything except `hiddenWaypointSets`) |
-| `hiddenWaypointSets` | `[]` | Sets switched off in `pick` mode, as `xaero:<set>` or `journeymap:<group>` |
+| `hiddenWaypointSets` | `[]` | Sets switched off in `pick` mode, as `xaero:<dimension>:<set>` or `journeymap:<group>` |
 | `crossDimensionWaypoints` | `false` | Also show Nether waypoints on the Overworld map and Overworld ones on the Nether map, coordinates scaled by 8 |
 | `showPlayerMarker` | `true` | Show your own position on the map |
 | `outlineOtherLands` | `false` | Outline lands that are not open-spawn (can slow the map down) |

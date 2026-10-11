@@ -211,6 +211,9 @@ public class WaypointSetsScreen extends Screen {
 			if (name.isEmpty()) {
 				name = Component.translatable("landmark.waypointsets.ungrouped").getString();
 			}
+			if (!grp.dimension().isEmpty() && !grp.dimension().equals(dimension())) {
+				name += " (" + ViewDimension.name(grp.dimension()).getString() + ")"; // a converted set from the other dimension
+			}
 			if (grp.active()) {
 				name += " (" + Component.translatable("landmark.waypointsets.active").getString() + ")";
 			}

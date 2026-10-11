@@ -205,6 +205,8 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("WPSETS cross on: overworld drawn={} nether drawn={} end drawn={}",
 				state.external.forDimension("minecraft:overworld").size(), state.external.forDimension("minecraft:the_nether").size(),
 				state.external.forDimension("minecraft:the_end").size());
+			LandmarkClient.LOGGER.info("WPSETS overworld sets with cross on: {}", state.external.groups("minecraft:overworld").stream()
+				.map(g -> g.key() + "=" + g.count()).toList());
 			var conv = state.external.forDimension("minecraft:overworld").stream().filter(w -> w.origin() != null).findFirst();
 			LandmarkClient.LOGGER.info("WPSETS converted example: {}", conv.orElse(null));
 			ms.view().setScale(0.5);

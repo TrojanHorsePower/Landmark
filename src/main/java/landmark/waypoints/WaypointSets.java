@@ -40,12 +40,13 @@ public final class WaypointSets {
 	}
 
 	/**
-	 * One Xaero set or JourneyMap group. {@code count} is its waypoints in the viewed dimension, {@code total} in all of them;
+	 * One Xaero set or JourneyMap group. {@code dimension} is the dimension a Xaero set belongs to ("" for JourneyMap). {@code count} is its waypoints in the viewed dimension, {@code total} in all of them;
 	 * {@code active} is whether the other mod shows it in the viewed dimension and {@code activeAnywhere} in any dimension.
 	 */
-	public record Group(ExternalWaypoint.Source source, String name, int count, int total, boolean active, boolean activeAnywhere) {
+	public record Group(ExternalWaypoint.Source source, String dimension, String name, int count, int total, boolean active,
+		boolean activeAnywhere) {
 		public String key() {
-			return source.name().toLowerCase(java.util.Locale.ROOT) + ":" + name;
+			return ExternalWaypoint.key(source, dimension, name);
 		}
 	}
 
@@ -56,10 +57,10 @@ public final class WaypointSets {
 
 	/** The groups that have at least one waypoint, ordered by source and then name. */
 	public static List<Group> groups(Collection<ExternalWaypoint> all, String dimension) {
-		record Acc(ExternalWaypoint.Source source, String name, int[] counts, boolean[] active) {}
+		record Acc(ExternalWaypoint.Source source, String dimension, String name, int[] counts, boolean[] active) {}
 		Map<String, Acc> byKey = new LinkedHashMap<>();
 		for (ExternalWaypoint w : all) {
-			Acc a = byKey.computeIfAbsent(w.groupKey(), k -> new Acc(w.source(), w.group(), new int[2], new boolean[2]));
+			Acc a = byKey.computeIfAbsent(w.groupKey(), k -> new Acc(w.source(), w.setDimension(), w.group(), new int[2], new boolean[2]));
 			a.counts[1]++;
 			a.active[1] |= w.active();
 			if (w.dimension().equals(dimension)) {
@@ -69,10 +70,22 @@ public final class WaypointSets {
 		}
 		List<Group> out = new ArrayList<>();
 		for (Acc a : byKey.values()) {
-			out.add(new Group(a.source, a.name, a.counts[0], a.counts[1], a.active[0], a.active[1]));
+			out.add(new Group(a.source, a.dimension, a.name, a.counts[0], a.counts[1], a.active[0], a.active[1]));
 		}
 		Collator collator = Collator.getInstance();
-		out.sort((x, y) -> x.source != y.source ? x.source.compareTo(y.source) : collator.compare(sortName(x.name), sortName(y.name)));
+		// by source, then the viewed dimension's sets before other dimensions', then name
+		out.sort((x, y) -> {
+			if (x.source != y.source) {
+				return x.source.compareTo(y.source);
+			}
+			boolean xHere = x.dimension.equals(dimension);
+			boolean yHere = y.dimension.equals(dimension);
+			if (xHere != yHere) {
+				return xHere ? -1 : 1;
+			}
+			int d = x.dimension.compareTo(y.dimension);
+			return d != 0 ? d : collator.compare(sortName(x.name), sortName(y.name));
+		});
 		return out;
 	}
 }
