@@ -139,7 +139,10 @@ final class DevHarness {
 	private static void wpSetsScenario(net.minecraft.client.Minecraft mc, int f) {
 		LandmarkState state = LandmarkState.get();
 		var shot = (Runnable) () -> Screenshot.grab(mc, false);
-		if (f == 60) {
+		if (f == 60 && System.getProperty("landmark.dev.keepWaypointFiles") != null) {
+			state.config.waypointSets = "active";
+			state.reloadWaypoints(mc); // use the Xaero files that are already in the run folder
+		} else if (f == 60) {
 			try {
 				java.nio.file.Path dir = mc.gameDirectory.toPath().resolve("xaero/minimap/Multiplayer_play.example.invalid/dim%0");
 				java.nio.file.Files.createDirectories(dir);
