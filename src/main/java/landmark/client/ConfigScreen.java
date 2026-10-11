@@ -83,10 +83,10 @@ public class ConfigScreen extends LandmarkScreen {
 		}
 		if (state.config.showExternalWaypoints) {
 			list.add(new WaypointModeRow());
+			note(Component.translatable("landmark.config.waypointsets.note"), Palette.get(ColorKey.TEXT_STATUS));
 			list.add(new ToggleRow(Component.translatable("landmark.config.crossdimension"), () -> state.config.crossDimensionWaypoints,
 				v -> state.config.crossDimensionWaypoints = v));
 			note(Component.translatable("landmark.config.crossdimension.note"), Palette.get(ColorKey.TEXT_STATUS));
-			note(Component.translatable("landmark.config.waypointsets.note"), Palette.get(ColorKey.TEXT_STATUS));
 		}
 		list.add(new ToggleRow(Component.translatable("landmark.config.playermarker"), () -> state.config.showPlayerMarker, v -> state.config.showPlayerMarker = v));
 		list.add(new ToggleRow(Component.translatable("landmark.config.refreshonopen"), () -> state.config.refreshOnOpen, v -> state.config.refreshOnOpen = v));

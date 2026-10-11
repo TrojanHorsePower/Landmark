@@ -413,8 +413,7 @@ final class DevHarness {
 			case 0 -> {
 				if (landmark.compat.Platform.screen(mc) instanceof TitleScreen && ticks > 80) {
 					LandmarkClient.LOGGER.info("JMWORLD creating a singleplayer world");
-					var settings = new net.minecraft.world.level.LevelSettings("landmark-dev", net.minecraft.world.level.GameType.CREATIVE,
-						net.minecraft.world.level.LevelSettings.DifficultySettings.DEFAULT, true, net.minecraft.world.level.WorldDataConfiguration.DEFAULT);
+					var settings = landmark.compat.Platform.devLevelSettings("landmark-dev");
 					mc.createWorldOpenFlows().createFreshLevel("landmark-dev", settings, net.minecraft.world.level.levelgen.WorldOptions.defaultWithRandomSeed(),
 						net.minecraft.world.level.levelgen.presets.WorldPresets::createNormalWorldDimensions, landmark.compat.Platform.screen(mc));
 					worldStage = 1;

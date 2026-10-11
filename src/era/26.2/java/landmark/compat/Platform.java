@@ -21,8 +21,19 @@ public final class Platform {
 		return mapping.matches(key);
 	}
 
+	/** Registers a key binding (it then shows up in Options > Controls). */
+	public static KeyMapping registerKey(KeyMapping mapping) {
+		return net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.registerKeyMapping(mapping);
+	}
+
 	/** Dev harness: saves a screenshot to the game's screenshots folder. */
 	public static void screenshot(Minecraft mc) {
 		Screenshot.grab(mc, false);
+	}
+
+	/** Dev harness: settings for a fresh creative test world. */
+	public static net.minecraft.world.level.LevelSettings devLevelSettings(String name) {
+		return new net.minecraft.world.level.LevelSettings(name, net.minecraft.world.level.GameType.CREATIVE,
+			net.minecraft.world.level.LevelSettings.DifficultySettings.DEFAULT, true, net.minecraft.world.level.WorldDataConfiguration.DEFAULT);
 	}
 }

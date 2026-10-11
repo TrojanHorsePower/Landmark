@@ -1,0 +1,99 @@
+// Per-Minecraft-version settings (Minecraft and API versions, supported range) live in eras/<era>.properties.
+def eraProps = new Properties()
+file("eras/${project.era}.properties").withInputStream { eraProps.load(it) }
+eraProps.each { k, v ->
+	if (project.hasProperty(k)) {
+		project.setProperty(k, v)
+	} else {
+		project.ext.set(k, v)
+	}
+}
+project.era_sources.split(",").each { sourceSets.main.java.srcDir "src/era/${it.trim()}/java" }
+
+// Every jar names the Minecraft version it is for, e.g. landmark-0.2.1+mc26.2.jar
+version = "${project.mod_version}+mc${project.era}"
+group = project.maven_group
+base.archivesName = project.archives_base_name
+
+repositories {
+	mavenCentral()
+	// Mod Menu: optional integration only (compile-time API), see LandmarkModMenu
+	maven {
+		name = 'TerraformersMC'
+		url = 'https://maven.terraformersmc.com/releases/'
+		content {
+			includeGroup 'com.terraformersmc'
+		}
+	}
+	// JourneyMap API: optional integration only (compile-time API, never bundled), see LandmarkJourneyMapPlugin
+	maven {
+		name = 'JourneyMap'
+		url = 'https://maven.blamejared.com'
+		content {
+			includeGroup 'info.journeymap'
+		}
+	}
+}
+
+// Versions up to 1.21.11 are obfuscated and use the remapping Loom plugin (build-remap.gradle), where mods are
+// "mod" configurations so they get remapped; 26.x is not obfuscated and uses plain configurations.
+def remap = project.hasProperty('loom_remap') && project.loom_remap == 'true'
+def cfg = { String plain, String modName -> remap ? modName : plain }
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	if (remap) {
+		mappings loom.officialMojangMappings()
+	}
+	add(cfg('implementation', 'modImplementation'), "net.fabricmc:fabric-loader:${project.loader_version}")
+	add(cfg('implementation', 'modImplementation'), "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}")
+
+	// Optional: Landmark runs without JourneyMap. compileOnly is never packaged into the jar.
+	add(cfg('compileOnly', 'modCompileOnly'), "info.journeymap:journeymap-api-fabric:${project.journeymap_api_version}")
+
+	// Optional: Landmark runs without Mod Menu. compileOnly is not packaged; runtimeOnly only affects the dev client.
+	add(cfg('compileOnly', 'modCompileOnly'), "com.terraformersmc:modmenu:${project.modmenu_version}")
+	// ./gradlew runClient -PnoModMenu starts the dev client without Mod Menu, to check the mod works without it
+	if (!project.hasProperty("noModMenu")) {
+		add(cfg('runtimeOnly', 'modRuntimeOnly'), "com.terraformersmc:modmenu:${project.modmenu_version}")
+	}
+
+	testImplementation platform("org.junit:junit-bom:5.12.2")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+processResources {
+	// The in-game help screen copies this script to the clipboard; tools/export.js stays the single source.
+	from('tools/export.js') {
+		into 'assets/landmark'
+	}
+	def v = project.version
+	inputs.property "version", v
+	def range = project.minecraft_range
+	inputs.property "minecraftRange", range
+	filesMatching("fabric.mod.json") {
+		expand "version": v, "minecraftRange": range
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.release = Integer.parseInt(project.java_version)
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.toVersion(project.java_version)
+	targetCompatibility = JavaVersion.toVersion(project.java_version)
+}
+
+jar {
+	def projectName = project.base.archivesName.get()
+	from('LICENSE') {
+		rename { "${it}_${projectName}" }
+	}
+}
+
+test {
+	useJUnitPlatform()
+}
