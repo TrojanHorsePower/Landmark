@@ -14,7 +14,8 @@ eraProps.each { k, v ->
 }
 sourceSets.main.java.srcDir "src/era/${project.era}/java"
 
-version = project.era == '26.2' ? project.mod_version : "${project.mod_version}+mc${project.era}"
+// Every jar names the Minecraft version it is for, e.g. landmark-0.2.1+mc26.2.jar
+version = "${project.mod_version}+mc${project.era}"
 group = project.maven_group
 base.archivesName = project.archives_base_name
 
