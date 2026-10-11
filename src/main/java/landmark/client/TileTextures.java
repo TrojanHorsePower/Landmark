@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import landmark.LandmarkClient;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
+import landmark.compat.LandmarkTexture;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
@@ -19,7 +19,7 @@ import org.jspecify.annotations.Nullable;
 public final class TileTextures implements AutoCloseable {
 	private static final int LOADS_PER_FRAME = 4;
 
-	private record Entry(Identifier id, DynamicTexture texture) {}
+	private record Entry(Identifier id, LandmarkTexture texture) {}
 
 	private final Minecraft mc;
 	private final Path dir;
@@ -46,7 +46,7 @@ public final class TileTextures implements AutoCloseable {
 		loadedThisFrame = 0;
 	}
 
-	public @Nullable DynamicTexture get(int tx, int tz) {
+	public @Nullable LandmarkTexture get(int tx, int tz) {
 		long key = ((long) tx << 32) | (tz & 0xFFFFFFFFL);
 		Entry e = cache.get(key);
 		if (e != null) {
@@ -64,7 +64,7 @@ public final class TileTextures implements AutoCloseable {
 		try {
 			NativeImage image = TileDecoder.decode(Files.readAllBytes(file));
 			Identifier id = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, idPrefix + "/" + tx + "_" + tz);
-			DynamicTexture texture = new DynamicTexture(() -> "landmark tile " + tx + "_" + tz, image);
+			LandmarkTexture texture = new LandmarkTexture(() -> "landmark tile " + tx + "_" + tz, image, id, true);
 			mc.getTextureManager().register(id, texture);
 			texture.upload();
 			cache.put(key, new Entry(id, texture));

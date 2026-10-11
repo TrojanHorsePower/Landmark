@@ -8,7 +8,8 @@ import java.util.List;
 import landmark.LandmarkClient;
 import landmark.data.ColorKey;
 import landmark.data.ExportPreset;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import landmark.compat.Gfx;
+import landmark.compat.LandmarkScreen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,7 +20,7 @@ import org.jspecify.annotations.Nullable;
  * Step-by-step instructions for exporting the map data, with buttons to open the website and copy the script. A dropped zip is
  * imported right here: the result is shown on this page, so there is no need to go back to the map first.
  */
-public class HelpScreen extends Screen {
+public class HelpScreen extends LandmarkScreen {
 	static final String SCRIPT_RESOURCE = "/assets/landmark/export.js";
 
 	private final Screen parent;
@@ -93,7 +94,7 @@ public class HelpScreen extends Screen {
 	}
 
 	@Override
-	public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float partial) {
+	protected void drawBackground(Gfx g, int mx, int my, float partial) {
 		g.fill(0, 0, width, height, col(ColorKey.MAP_BACKGROUND));
 	}
 
@@ -131,8 +132,8 @@ public class HelpScreen extends Screen {
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float partial) {
-		extractBackground(g, mx, my, partial);
+	protected void draw(Gfx g, int mx, int my, float partial) {
+		drawBackground(g, mx, my, partial);
 		int w = contentWidth();
 		int x = contentLeft();
 		g.text(font, title, x, 8, col(ColorKey.LIST_OPEN), false);
@@ -176,7 +177,7 @@ public class HelpScreen extends Screen {
 		for (int i = 0; i < status.size(); i++) {
 			g.text(font, status.get(i), x, statusY + i * lineH, color, false);
 		}
-		super.extractRenderState(g, mx, my, partial);
+		drawWidgets(g, mx, my, partial);
 	}
 
 	@Override
@@ -232,7 +233,7 @@ public class HelpScreen extends Screen {
 		scroll = Math.max(0, Math.min(maxScroll(), f * maxScroll()));
 	}
 
-	private int paragraph(GuiGraphicsExtractor g, Component text, int x, int y, int w, int color) {
+	private int paragraph(Gfx g, Component text, int x, int y, int w, int color) {
 		for (var line : font.split(text, w)) {
 			g.text(font, line, x, y, color, false);
 			y += font.lineHeight + 1;

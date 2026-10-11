@@ -1,8 +1,5 @@
 package landmark.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuSampler;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,14 +13,15 @@ import landmark.data.Polygon;
 import landmark.waypoints.ExternalWaypoint;
 import landmark.map.ChunkOwnerGrid;
 import landmark.map.MapView;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import landmark.compat.Gfx;
+import landmark.compat.LandmarkScreen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.texture.DynamicTexture;
+import landmark.compat.LandmarkTexture;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 
@@ -32,7 +30,7 @@ import org.jspecify.annotations.Nullable;
  * it is a searchable list of the lands whose spawn the server currently lists; with neither it still lets the player
  * type a land name and teleport.
  */
-public class MapScreen extends Screen {
+public class MapScreen extends LandmarkScreen {
 	/** Width of the side panel; narrower on small windows so the map keeps some room (see {@link #init()}). */
 	private int panelW = 190;
 	private static final int ROW_H = 11;
@@ -364,12 +362,12 @@ public class MapScreen extends Screen {
 	// ---- rendering ----
 
 	@Override
-	public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float partial) {
+	protected void drawBackground(Gfx g, int mx, int my, float partial) {
 		g.fill(0, 0, width, height, col(ColorKey.MAP_BACKGROUND));
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float partial) {
+	protected void draw(Gfx g, int mx, int my, float partial) {
 		if (devMouseX >= 0) {
 			mx = devMouseX;
 			my = devMouseY;
@@ -377,7 +375,7 @@ public class MapScreen extends Screen {
 		long t0 = System.nanoTime();
 		syncData();
 		view.setViewport(mapWidth(), mapHeight());
-		extractBackground(g, mx, my, partial);
+		drawBackground(g, mx, my, partial);
 		if (map != null) {
 			drawMap(g, mx, my);
 		} else {
@@ -387,7 +385,7 @@ public class MapScreen extends Screen {
 		g.fill(panelW - 1, 0, panelW, height, col(ColorKey.PANEL_BORDER));
 		drawList(g, mx, my);
 		updateButtons();
-		super.extractRenderState(g, mx, my, partial);
+		drawWidgets(g, mx, my, partial);
 		drawStatus(g);
 		if (map != null && inMap(mx, my)) {
 			ExternalWaypoint wp = waypointAt(mx, my);
@@ -415,7 +413,7 @@ public class MapScreen extends Screen {
 			: Component.translatable("landmark.teleport.to", target));
 	}
 
-	private void drawNoMap(GuiGraphicsExtractor g) {
+	private void drawNoMap(Gfx g) {
 		int cx = panelW + mapWidth() / 2;
 		int room = Math.max(40, mapWidth() - 16);
 		String dim = dimension.isEmpty() ? "" : dimension;
@@ -435,7 +433,7 @@ public class MapScreen extends Screen {
 		}
 	}
 
-	private void drawMap(GuiGraphicsExtractor g, int mx, int my) {
+	private void drawMap(Gfx g, int mx, int my) {
 		int x0 = panelW;
 		int y0 = 0;
 		int x1 = width;
@@ -450,7 +448,6 @@ public class MapScreen extends Screen {
 
 		if (tiles != null && map != null && map.stored.tiles() != null) {
 			int bpt = map.stored.tiles().blocksPerTile();
-			GpuSampler linear = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
 			int tx0 = Math.floorDiv((int) minWX, bpt);
 			int tx1 = Math.floorDiv((int) maxWX, bpt);
 			int tz0 = Math.floorDiv((int) minWZ, bpt);
@@ -466,13 +463,13 @@ public class MapScreen extends Screen {
 			}
 			for (int tx = tx0; tx <= tx1; tx++) {
 				for (int tz = tz0; tz <= tz1; tz++) {
-					DynamicTexture t = far ? overview.get(tx, tz) : tiles.get(tx, tz);
+					LandmarkTexture t = far ? overview.get(tx, tz) : tiles.get(tx, tz);
 					if (t != null) {
 						int sx0 = mapX + (int) Math.floor(view.worldToScreenX((double) tx * bpt));
 						int sz0 = (int) Math.floor(view.worldToScreenZ((double) tz * bpt));
 						int sx1 = mapX + (int) Math.ceil(view.worldToScreenX((double) (tx + 1) * bpt));
 						int sz1 = (int) Math.ceil(view.worldToScreenZ((double) (tz + 1) * bpt));
-						g.blit(t.getTextureView(), linear, sx0, sz0, sx1, sz1, 0f, 1f, 0f, 1f);
+						g.blit(t, sx0, sz0, sx1, sz1);
 					}
 				}
 			}
@@ -491,7 +488,7 @@ public class MapScreen extends Screen {
 				int sz0 = (int) Math.floor(view.worldToScreenZ(wz0));
 				int sx1 = mapX + (int) Math.ceil(view.worldToScreenX(wx0 + span));
 				int sz1 = (int) Math.ceil(view.worldToScreenZ(wz0 + span));
-				g.blit(t.texture().getTextureView(), t.texture().getSampler(), sx0, sz0, sx1, sz1, 0f, 1f, 0f, 1f);
+				g.blit(t.texture(), sx0, sz0, sx1, sz1);
 			}
 		}
 
@@ -565,7 +562,7 @@ public class MapScreen extends Screen {
 	 * apart, and its combined box would otherwise make every edge of every tiny part get drawn. {@code minPx}: parts smaller than
 	 * this on screen (both ways) are not outlined at all.
 	 */
-	private void drawOutline(GuiGraphicsExtractor g, Land land, int color, int thickness, int minPx, int mapX,
+	private void drawOutline(Gfx g, Land land, int color, int thickness, int minPx, int mapX,
 		double minWX, double maxWX, double minWZ, double maxWZ) {
 		int lo = thickness / 2;
 		int hi = thickness - lo;
@@ -616,7 +613,7 @@ public class MapScreen extends Screen {
 		}
 	}
 
-	private void drawList(GuiGraphicsExtractor g, int mx, int my) {
+	private void drawList(Gfx g, int mx, int my) {
 		int top = listTop();
 		int rows = visibleRows();
 		if (entries.isEmpty()) {
@@ -644,7 +641,7 @@ public class MapScreen extends Screen {
 		}
 	}
 
-	private void drawStatus(GuiGraphicsExtractor g) {
+	private void drawStatus(Gfx g) {
 		int y = height - STATUS_H;
 		g.fill(panelW, y, width, height, col(ColorKey.STATUS_BACKGROUND));
 		long now = System.currentTimeMillis();
@@ -672,7 +669,7 @@ public class MapScreen extends Screen {
 		}
 	}
 
-	private static void diamond(GuiGraphicsExtractor g, int cx, int cz, int r, int color) {
+	private static void diamond(Gfx g, int cx, int cz, int r, int color) {
 		for (int dz = -r; dz <= r; dz++) {
 			int half = r - Math.abs(dz);
 			g.fill(cx - half, cz + dz, cx + half + 1, cz + dz + 1, color);
@@ -697,7 +694,7 @@ public class MapScreen extends Screen {
 		return best;
 	}
 
-	private void drawWaypointTooltip(GuiGraphicsExtractor g, int mx, int my, ExternalWaypoint wp) {
+	private void drawWaypointTooltip(Gfx g, int mx, int my, ExternalWaypoint wp) {
 		String name = ExternalWaypoints.displayName(wp.name());
 		List<String> lines = new ArrayList<>();
 		lines.add(name);
@@ -728,7 +725,7 @@ public class MapScreen extends Screen {
 		}
 	}
 
-	private void drawHoverTooltip(GuiGraphicsExtractor g, int mx, int my) {
+	private void drawHoverTooltip(Gfx g, int mx, int my) {
 		int hi = landAt(mx, my);
 		if (hi < 0) {
 			return;

@@ -4,12 +4,13 @@ import com.mojang.blaze3d.platform.NativeImage;
 import landmark.data.ColorKey;
 import landmark.data.ColorMath;
 import landmark.LandmarkClient;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import landmark.compat.Gfx;
+import landmark.compat.LandmarkScreen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.texture.DynamicTexture;
+import landmark.compat.LandmarkTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
@@ -18,7 +19,7 @@ import org.jspecify.annotations.Nullable;
  * Colour picker: a saturation/brightness square, a hue bar, an opacity bar (for colours that have one) and a hex box. The picker
  * and the hex box always show the same colour: changing either updates the other.
  */
-public class ColorPickerScreen extends Screen {
+public class ColorPickerScreen extends LandmarkScreen {
 	/** Resolution of the saturation/brightness texture; it is drawn at {@link #sv} pixels, whatever the window size. */
 	private static final int TEX = 128;
 	private static final int BAR_W = 14;
@@ -40,7 +41,7 @@ public class ColorPickerScreen extends Screen {
 	private boolean syncing;
 	private boolean hexValid = true;
 	private EditBox hexBox;
-	private @Nullable DynamicTexture svTexture;
+	private @Nullable LandmarkTexture svTexture;
 	private float textureHue = -1;
 
 	public ColorPickerScreen(Screen parent, ColorKey key) {
@@ -149,7 +150,7 @@ public class ColorPickerScreen extends Screen {
 
 	private void updateTexture() {
 		if (svTexture == null) {
-			svTexture = new DynamicTexture(() -> "landmark picker", new NativeImage(TEX, TEX, false));
+			svTexture = new LandmarkTexture(() -> "landmark picker", new NativeImage(TEX, TEX, false), TEXTURE_ID, false);
 			minecraft.getTextureManager().register(TEXTURE_ID, svTexture);
 			textureHue = -1;
 		}
@@ -166,19 +167,19 @@ public class ColorPickerScreen extends Screen {
 	}
 
 	@Override
-	public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float partial) {
+	protected void drawBackground(Gfx g, int mx, int my, float partial) {
 		g.fill(0, 0, width, height, Palette.get(ColorKey.MAP_BACKGROUND));
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float partial) {
-		extractBackground(g, mx, my, partial);
+	protected void draw(Gfx g, int mx, int my, float partial) {
+		drawBackground(g, mx, my, partial);
 		g.centeredText(font, title, width / 2, 14, Palette.get(ColorKey.LIST_OPEN));
 		updateTexture();
 		int x0 = left();
 		int y0 = top();
 		g.fill(x0 - 1, y0 - 1, x0 + sv + 1, y0 + sv + 1, 0xFF000000);
-		g.blit(svTexture.getTextureView(), svTexture.getSampler(), x0, y0, x0 + sv, y0 + sv, 0f, 1f, 0f, 1f);
+		g.blit(svTexture, x0, y0, x0 + sv, y0 + sv);
 		int mx0 = x0 + Math.round(sat * (sv - 1));
 		int my0 = y0 + Math.round((1 - val) * (sv - 1));
 		g.outline(mx0 - 3, my0 - 3, 7, 7, 0xFF000000);
@@ -220,10 +221,10 @@ public class ColorPickerScreen extends Screen {
 		}
 		swatch(g, px, py, 60, 18, original);
 		swatch(g, px + 70, py, 60, 18, current());
-		super.extractRenderState(g, mx, my, partial);
+		drawWidgets(g, mx, my, partial);
 	}
 
-	private static void checker(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+	private static void checker(Gfx g, int x, int y, int w, int h) {
 		for (int cy = 0; cy < h; cy += 4) {
 			for (int cx = 0; cx < w; cx += 4) {
 				g.fill(x + cx, y + cy, Math.min(x + w, x + cx + 4), Math.min(y + h, y + cy + 4), ((cx + cy) / 4 & 1) == 0 ? 0xFF808080 : 0xFFC0C0C0);
@@ -231,7 +232,7 @@ public class ColorPickerScreen extends Screen {
 		}
 	}
 
-	static void swatch(GuiGraphicsExtractor g, int x, int y, int w, int h, int argb) {
+	static void swatch(Gfx g, int x, int y, int w, int h, int argb) {
 		g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF000000);
 		checker(g, x, y, w, h);
 		g.fill(x, y, x + w, y + h, argb);

@@ -12,7 +12,7 @@ eraProps.each { k, v ->
 		project.ext.set(k, v)
 	}
 }
-sourceSets.main.java.srcDir "src/era/${project.era}/java"
+project.era_sources.split(",").each { sourceSets.main.java.srcDir "src/era/${it.trim()}/java" }
 
 // Every jar names the Minecraft version it is for, e.g. landmark-0.2.1+mc26.2.jar
 version = "${project.mod_version}+mc${project.era}"

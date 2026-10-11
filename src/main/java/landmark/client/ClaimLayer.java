@@ -10,7 +10,7 @@ import landmark.LandmarkClient;
 import landmark.map.ChunkOwnerGrid;
 import landmark.data.ColorKey;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
+import landmark.compat.LandmarkTexture;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -18,7 +18,7 @@ import net.minecraft.resources.Identifier;
  * nearest-neighbour sampling (DynamicTexture's default), so each chunk stays a crisp square at any zoom.
  */
 public final class ClaimLayer implements AutoCloseable {
-	public record Tile(int tx, int tz, Identifier id, DynamicTexture texture, int[] cells) {}
+	public record Tile(int tx, int tz, Identifier id, LandmarkTexture texture, int[] cells) {}
 
 	private final Minecraft mc;
 	private final DimensionMap map;
@@ -30,8 +30,8 @@ public final class ClaimLayer implements AutoCloseable {
 		this.map = map;
 		map.grid.forEachTile((tx, tz, cells) -> {
 			NativeImage image = new NativeImage(ChunkOwnerGrid.TILE_CELLS, ChunkOwnerGrid.TILE_CELLS, true);
-			DynamicTexture texture = new DynamicTexture(() -> "landmark claims " + tx + "_" + tz, image);
 			Identifier id = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, idPrefix + "/" + tx + "_" + tz);
+			LandmarkTexture texture = new LandmarkTexture(() -> "landmark claims " + tx + "_" + tz, image, id, false);
 			mc.getTextureManager().register(id, texture);
 			Tile t = new Tile(tx, tz, id, texture, cells);
 			tiles.add(t);

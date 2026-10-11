@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import landmark.LandmarkClient;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
+import landmark.compat.LandmarkTexture;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public final class TileOverview implements AutoCloseable {
 
 	private record Ready(int tx, int tz, int[] abgr) {}
 
-	private record Entry(Identifier id, DynamicTexture texture) {}
+	private record Entry(Identifier id, LandmarkTexture texture) {}
 
 	private final Minecraft mc;
 	private final Path dir;
@@ -142,14 +142,14 @@ public final class TileOverview implements AutoCloseable {
 				}
 			}
 			Identifier id = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, idPrefix + "/" + r.tx() + "_" + r.tz());
-			DynamicTexture t = new DynamicTexture(() -> "landmark overview " + r.tx() + "_" + r.tz(), image);
+			LandmarkTexture t = new LandmarkTexture(() -> "landmark overview " + r.tx() + "_" + r.tz(), image, id, true);
 			mc.getTextureManager().register(id, t);
 			t.upload();
 			textures.put(key(r.tx(), r.tz()), new Entry(id, t));
 		}
 	}
 
-	public @Nullable DynamicTexture get(int tx, int tz) {
+	public @Nullable LandmarkTexture get(int tx, int tz) {
 		Entry e = textures.get(key(tx, tz));
 		return e == null ? null : e.texture();
 	}

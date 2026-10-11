@@ -10,7 +10,9 @@ import landmark.data.ColorKey;
 import landmark.data.ColorMath;
 import landmark.data.ExportPreset;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import landmark.compat.Gfx;
+import landmark.compat.LandmarkListEntry;
+import landmark.compat.LandmarkScreen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.CycleButton;
@@ -29,7 +31,7 @@ import org.jspecify.annotations.Nullable;
  * Settings: keybinds, feature toggles, export quality and every colour. Opened from Mod Menu (if installed) or from the
  * Settings button on the map. Changes apply immediately and are saved when the screen closes.
  */
-public class ConfigScreen extends Screen {
+public class ConfigScreen extends LandmarkScreen {
 	private static final int ROW_H = 24;
 
 	private final Screen parent;
@@ -188,15 +190,15 @@ public class ConfigScreen extends Screen {
 	}
 
 	@Override
-	public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float partial) {
+	protected void drawBackground(Gfx g, int mx, int my, float partial) {
 		g.fill(0, 0, width, height, Palette.get(ColorKey.MAP_BACKGROUND));
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float partial) {
-		extractBackground(g, mx, my, partial);
+	protected void draw(Gfx g, int mx, int my, float partial) {
+		drawBackground(g, mx, my, partial);
 		g.centeredText(font, title, width / 2, 12, Palette.get(ColorKey.LIST_OPEN));
-		super.extractRenderState(g, mx, my, partial);
+		drawWidgets(g, mx, my, partial);
 	}
 
 	@Override
@@ -291,7 +293,7 @@ public class ConfigScreen extends Screen {
 		}
 	}
 
-	private abstract static class Row extends ContainerObjectSelectionList.Entry<Row> {
+	private abstract static class Row extends LandmarkListEntry<Row> {
 		final List<GuiEventListener> children = new ArrayList<>();
 		final List<NarratableEntry> narratables = new ArrayList<>();
 
@@ -320,7 +322,7 @@ public class ConfigScreen extends Screen {
 		}
 
 		@Override
-		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+		protected void draw(Gfx g, int mx, int my, boolean hovered, float partial) {
 			g.text(font, text, getContentX(), getContentBottom() - font.lineHeight - 2, Palette.get(ColorKey.LIST_OPEN), false);
 			g.fill(getContentX(), getContentBottom() - 1, getContentRight(), getContentBottom(), Palette.get(ColorKey.PANEL_BORDER));
 		}
@@ -334,7 +336,7 @@ public class ConfigScreen extends Screen {
 		}
 
 		@Override
-		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+		protected void draw(Gfx g, int mx, int my, boolean hovered, float partial) {
 			g.text(font, text, getContentX() + 2, getContentBottom() - font.lineHeight - 2, Palette.get(ColorKey.TEXT_STATUS), false);
 		}
 	}
@@ -349,7 +351,7 @@ public class ConfigScreen extends Screen {
 		}
 
 		@Override
-		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+		protected void draw(Gfx g, int mx, int my, boolean hovered, float partial) {
 			for (int i = 0; i < lines.size(); i++) {
 				g.text(font, lines.get(i), getContentX() + 2, getContentY() + 3 + i * (font.lineHeight + 1), color, false);
 			}
@@ -373,7 +375,7 @@ public class ConfigScreen extends Screen {
 		}
 
 		@Override
-		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+		protected void draw(Gfx g, int mx, int my, boolean hovered, float partial) {
 			resetButton.setX(getContentRight() - 50);
 			resetButton.setY(getContentY() + 2);
 			keyButton.setX(resetButton.getX() - 4 - 110);
@@ -385,8 +387,8 @@ public class ConfigScreen extends Screen {
 			keyButton.setMessage(waiting ? Component.literal("> ").append(label.copy().withStyle(net.minecraft.ChatFormatting.YELLOW)).append(" <")
 				: clash ? label.copy().withStyle(net.minecraft.ChatFormatting.RED) : label);
 			resetButton.active = !mapping.isDefault();
-			keyButton.extractRenderState(g, mx, my, partial);
-			resetButton.extractRenderState(g, mx, my, partial);
+			g.widget(keyButton, mx, my, partial);
+			g.widget(resetButton, mx, my, partial);
 		}
 	}
 
@@ -400,13 +402,13 @@ public class ConfigScreen extends Screen {
 		}
 
 		@Override
-		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+		protected void draw(Gfx g, int mx, int my, boolean hovered, float partial) {
 			delete.setX(getContentRight() - 70);
 			delete.setY(getContentY() + 2);
 			delete.active = state.learned.size() > 0;
 			String label = Component.translatable("landmark.config.savedspawns", state.learned.size()).getString();
 			g.text(font, fit(label, delete.getX() - getContentX() - 8), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
-			delete.extractRenderState(g, mx, my, partial);
+			g.widget(delete, mx, my, partial);
 		}
 	}
 
@@ -420,11 +422,11 @@ public class ConfigScreen extends Screen {
 		}
 
 		@Override
-		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+		protected void draw(Gfx g, int mx, int my, boolean hovered, float partial) {
 			button.setX(getContentRight() - 70);
 			button.setY(getContentY() + 2);
 			g.text(font, fit(label.getString(), button.getX() - getContentX() - 8), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
-			button.extractRenderState(g, mx, my, partial);
+			g.widget(button, mx, my, partial);
 		}
 	}
 
@@ -440,11 +442,11 @@ public class ConfigScreen extends Screen {
 		}
 
 		@Override
-		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+		protected void draw(Gfx g, int mx, int my, boolean hovered, float partial) {
 			g.text(font, fit(Component.translatable("landmark.config.waypointsets").getString(), getContentWidth() - 156), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
 			button.setX(getContentRight() - 150);
 			button.setY(getContentY() + 2);
-			button.extractRenderState(g, mx, my, partial);
+			g.widget(button, mx, my, partial);
 		}
 	}
 
@@ -461,11 +463,11 @@ public class ConfigScreen extends Screen {
 		}
 
 		@Override
-		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+		protected void draw(Gfx g, int mx, int my, boolean hovered, float partial) {
 			g.text(font, Component.translatable("landmark.config.quality"), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
 			button.setX(getContentRight() - 110);
 			button.setY(getContentY() + 2);
-			button.extractRenderState(g, mx, my, partial);
+			g.widget(button, mx, my, partial);
 		}
 	}
 
@@ -500,7 +502,7 @@ public class ConfigScreen extends Screen {
 		}
 
 		@Override
-		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+		protected void draw(Gfx g, int mx, int my, boolean hovered, float partial) {
 			int right = getContentRight();
 			reset.setX(right - 50);
 			reset.setY(getContentY() + 2);
@@ -512,10 +514,10 @@ public class ConfigScreen extends Screen {
 			int labelRoom = swatch.getX() - getContentX() - 8;
 			g.text(font, fit(Component.translatable(key.translationKey()).getString(), labelRoom), getContentX() + 2, getContentY() + 7,
 				Palette.get(ColorKey.TEXT_BODY), false);
-			swatch.extractRenderState(g, mx, my, partial);
+			g.widget(swatch, mx, my, partial);
 			ColorPickerScreen.swatch(g, swatch.getX() + 4, swatch.getY() + 4, swatch.getWidth() - 8, swatch.getHeight() - 8, state.config.color(key));
-			hex.extractRenderState(g, mx, my, partial);
-			reset.extractRenderState(g, mx, my, partial);
+			g.widget(hex, mx, my, partial);
+			g.widget(reset, mx, my, partial);
 		}
 	}
 }
