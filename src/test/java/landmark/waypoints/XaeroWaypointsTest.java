@@ -46,6 +46,27 @@ class XaeroWaypointsTest {
 	}
 
 	@Test
+	void readsTheSetAndWhetherItIsTheActiveOne() {
+		var lines = List.of(
+			"sets:Industry:gui.xaero_default:Farms",
+			"waypoint:A:A:1:64:1:5:false:0:Industry:false:0:0:false",
+			"waypoint:B:B:2:64:2:5:false:0:gui.xaero_default:false:0:0:false",
+			"waypoint:C:C:3:64:3:5:false:0:Farms:false:0:0:false");
+		var wps = XaeroWaypoints.parse(lines, "minecraft:overworld");
+		assertEquals("Industry", wps.get(0).group());
+		assertTrue(wps.get(0).active(), "the first name on the sets line is the active set");
+		assertFalse(wps.get(1).active());
+		assertFalse(wps.get(2).active());
+		assertEquals("xaero:Farms", wps.get(2).groupKey());
+	}
+
+	@Test
+	void withoutASetsLineEverythingCountsAsActive() {
+		var wps = XaeroWaypoints.parse(List.of("waypoint:A:A:1:64:1:5:false:0:Industry:false:0:0:false"), "minecraft:overworld");
+		assertTrue(wps.get(0).active());
+	}
+
+	@Test
 	void decodesEscapedColonsAndUnknownHeights() {
 		var shaft = XaeroWaypoints.parse(FILE, "minecraft:overworld").get(1);
 		assertEquals("Mine:shaft", shaft.name());

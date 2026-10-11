@@ -37,7 +37,7 @@ public final class LandmarkState {
 		return t;
 	});
 
-	public final ExternalWaypoints external = new ExternalWaypoints();
+	public final ExternalWaypoints external;
 	public @Nullable OpenSpawns openSpawns;
 	public boolean refreshing;
 	/** Session-only: hide claims (and their spawn pins) so the bare map is visible. */
@@ -52,6 +52,7 @@ public final class LandmarkState {
 		this.store = new DataStore(gameDir.resolve("landmark"));
 		this.configFile = configDir.resolve("landmark.json");
 		this.config = LandmarkConfig.load(configFile);
+		this.external = new ExternalWaypoints(config);
 		Palette.reload(config);
 		this.learnedFile = gameDir.resolve("landmark").resolve("learned-spawns.json");
 		this.learned = LearnedSpawns.load(learnedFile);

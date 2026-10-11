@@ -122,9 +122,25 @@ public final class XaeroWaypoints {
 		return colon > 0 && address.indexOf(':') == colon ? address.substring(0, colon) : address;
 	}
 
+	/**
+	 * The set Xaero is showing for this dimension: the first name on the {@code sets:} line (checked by saving the same folder with
+	 * two different sets selected, which only changed the order of that line). Null when the line is missing, which makes every set
+	 * count as active rather than hiding things.
+	 */
+	static String activeSet(List<String> lines) {
+		for (String line : lines) {
+			if (line.startsWith("sets:")) {
+				String first = line.substring(5).split(":", -1)[0].replace("§§", ":");
+				return first.isEmpty() ? null : first;
+			}
+		}
+		return null;
+	}
+
 	/** Parses the lines of one waypoint file. Lines that are not waypoints, are malformed, or are disabled are skipped. */
 	public static List<ExternalWaypoint> parse(List<String> lines, String dimension) {
 		List<ExternalWaypoint> out = new ArrayList<>();
+		String active = activeSet(lines);
 		for (String line : lines) {
 			if (!line.regionMatches(true, 0, "waypoint:", 0, 9)) {
 				continue;
@@ -140,8 +156,9 @@ public final class XaeroWaypoints {
 				Integer y = "~".equals(p[4]) ? null : Integer.valueOf(Integer.parseInt(p[4]));
 				int colorIndex = Integer.parseInt(p[6]);
 				int argb = colorIndex >= 0 && colorIndex < COLORS.length ? COLORS[colorIndex] : 0xFFFFFFFF;
+				String set = p[9].replace("§§", ":");
 				out.add(new ExternalWaypoint(ExternalWaypoint.Source.XAERO, p[1].replace("§§", ":"), dimension,
-					Integer.parseInt(p[3]), y, Integer.parseInt(p[5]), argb));
+					Integer.parseInt(p[3]), y, Integer.parseInt(p[5]), argb, set, active == null || active.equals(set)));
 			} catch (NumberFormatException e) {
 				// skip a damaged line
 			}

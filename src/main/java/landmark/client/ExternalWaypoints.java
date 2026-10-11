@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import landmark.LandmarkClient;
 import landmark.waypoints.ExternalWaypoint;
+import landmark.waypoints.WaypointSets;
 import landmark.waypoints.XaeroWaypoints;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
@@ -19,14 +20,26 @@ public final class ExternalWaypoints {
 	/** Set by {@link LandmarkJourneyMapPlugin} when JourneyMap is present. Typed as Object so this class loads without JourneyMap. */
 	static volatile @Nullable Object journeyMapApi;
 
+	private final landmark.data.LandmarkConfig config;
 	private volatile List<ExternalWaypoint> xaero = List.of();
 	private volatile List<ExternalWaypoint> journeyMap = List.of();
 	private boolean loadedOnce;
 	/** Bumped when the waypoint lists change. */
 	public volatile int version;
 
+	public ExternalWaypoints(landmark.data.LandmarkConfig config) {
+		this.config = config;
+	}
+
 	/** The name to show: Xaero's built-in names (such as its death point) are translation keys, with a readable fallback. */
 	public static String displayName(String name) {
+		if (name.startsWith("jm.")) {
+			// JourneyMap's built-in group names are translation keys too (its default group is jm.waypoint.groups.default.name)
+			if (net.minecraft.locale.Language.getInstance().has(name)) {
+				return net.minecraft.network.chat.Component.translatable(name).getString();
+			}
+			return name.contains(".default.") ? "Default" : name;
+		}
 		if (!name.startsWith("gui.xaero_")) {
 			return name;
 		}
@@ -41,20 +54,33 @@ public final class ExternalWaypoints {
 		return rest.isEmpty() ? name : Character.toUpperCase(rest.charAt(0)) + rest.substring(1);
 	}
 
-	/** Waypoints to draw in this dimension. */
+	/** Waypoints to draw in this dimension: the ones that pass the player's choice of sets (see {@link WaypointSets}). */
 	public List<ExternalWaypoint> forDimension(String dimension) {
+		var mode = config.waypointMode();
 		List<ExternalWaypoint> out = new ArrayList<>();
-		for (ExternalWaypoint w : journeyMap) {
-			if (w.dimension().equals(dimension)) {
-				out.add(w);
-			}
-		}
-		for (ExternalWaypoint w : xaero) {
-			if (w.dimension().equals(dimension)) {
+		for (ExternalWaypoint w : all()) {
+			if (w.dimension().equals(dimension) && WaypointSets.shown(w, mode, config.hiddenWaypointSets)) {
 				out.add(w);
 			}
 		}
 		return out;
+	}
+
+	public boolean hasWaypoints() {
+		return !xaero.isEmpty() || !journeyMap.isEmpty();
+	}
+
+	/** Every waypoint that was read, whichever sets are chosen. */
+	public List<ExternalWaypoint> all() {
+		List<ExternalWaypoint> out = new ArrayList<>(journeyMap.size() + xaero.size());
+		out.addAll(journeyMap);
+		out.addAll(xaero);
+		return out;
+	}
+
+	/** The sets and groups to choose from, with counts for the given dimension. */
+	public List<WaypointSets.Group> groups(String dimension) {
+		return WaypointSets.groups(all(), dimension);
 	}
 
 	public boolean loadedOnce() {

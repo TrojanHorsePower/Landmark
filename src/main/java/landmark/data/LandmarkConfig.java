@@ -24,6 +24,13 @@ public final class LandmarkConfig {
 	public boolean showExternalWaypoints = true;
 	/** Show your own position on the map. */
 	public boolean showPlayerMarker = true;
+	/**
+	 * Which external waypoints to draw: {@code active} (only the set or group the other mod is showing, like that mod does),
+	 * {@code all}, or {@code pick} (everything except {@link #hiddenWaypointSets}).
+	 */
+	public String waypointSets = "active";
+	/** Group keys (see {@code ExternalWaypoint#groupKey}) switched off while {@link #waypointSets} is {@code pick}. */
+	public java.util.List<String> hiddenWaypointSets = new java.util.ArrayList<>();
 	/** Request the open-spawn list whenever the map opens. */
 	public boolean refreshOnOpen = true;
 	/** Export quality preset id (low, medium, high, ultra); decides the tile detail and format in the copied export script. */
@@ -36,6 +43,10 @@ public final class LandmarkConfig {
 	public int tileCacheSize = 48;
 	/** Colour overrides by {@link ColorKey#id}, as hex strings. Colours that are not listed use their default. */
 	public Map<String, String> colors = new LinkedHashMap<>();
+
+	public WaypointSetMode waypointMode() {
+		return WaypointSetMode.byId(waypointSets);
+	}
 
 	public ExportPreset exportPreset() {
 		return ExportPreset.byId(exportQuality);
@@ -94,6 +105,10 @@ public final class LandmarkConfig {
 			}
 			c.colors.keySet().removeIf(id -> ColorKey.byId(id) == null);
 			c.exportQuality = ExportPreset.byId(c.exportQuality).id;
+			c.waypointSets = WaypointSetMode.byId(c.waypointSets).id;
+			if (c.hiddenWaypointSets == null) {
+				c.hiddenWaypointSets = new java.util.ArrayList<>();
+			}
 			return c;
 		} catch (IOException | RuntimeException e) {
 			return new LandmarkConfig();

@@ -79,6 +79,10 @@ public class ConfigScreen extends Screen {
 			note(Component.literal(state.external.summary(Component.translatable("landmark.waypoints.notinstalled").getString(),
 				Component.translatable("landmark.waypoints.found").getString())), Palette.get(ColorKey.TEXT_STATUS));
 		}
+		if (state.config.showExternalWaypoints) {
+			list.add(new WaypointModeRow());
+			note(Component.translatable("landmark.config.waypointsets.note"), Palette.get(ColorKey.TEXT_STATUS));
+		}
 		list.add(new ToggleRow(Component.translatable("landmark.config.playermarker"), () -> state.config.showPlayerMarker, v -> state.config.showPlayerMarker = v));
 		list.add(new ToggleRow(Component.translatable("landmark.config.refreshonopen"), () -> state.config.refreshOnOpen, v -> state.config.refreshOnOpen = v));
 
@@ -417,6 +421,26 @@ public class ConfigScreen extends Screen {
 			button.setX(getContentRight() - 70);
 			button.setY(getContentY() + 2);
 			g.text(font, fit(label.getString(), button.getX() - getContentX() - 8), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
+			button.extractRenderState(g, mx, my, partial);
+		}
+	}
+
+	private final class WaypointModeRow extends Row {
+		private final CycleButton<landmark.data.WaypointSetMode> button;
+
+		WaypointModeRow() {
+			button = add(CycleButton.<landmark.data.WaypointSetMode>builder(m -> Component.translatable(m.translationKey), state.config.waypointMode())
+				.withValues(landmark.data.WaypointSetMode.values()).displayOnlyValue()
+				.create(0, 0, 150, 20, Component.translatable("landmark.config.waypointsets"), (b, v) -> {
+					state.config.waypointSets = v.id;
+				}));
+		}
+
+		@Override
+		public void extractContent(GuiGraphicsExtractor g, int mx, int my, boolean hovered, float partial) {
+			g.text(font, fit(Component.translatable("landmark.config.waypointsets").getString(), getContentWidth() - 156), getContentX() + 2, getContentY() + 7, Palette.get(ColorKey.TEXT_BODY), false);
+			button.setX(getContentRight() - 150);
+			button.setY(getContentY() + 2);
 			button.extractRenderState(g, mx, my, partial);
 		}
 	}

@@ -112,6 +112,8 @@ have it (it is optional). Everything applies immediately.
 | `confirmTeleport` | `true` | Ask before running `/lands spawn` |
 | `saveSpawns` | `true` | Remember where you arrive after a teleport and show a pin there |
 | `showExternalWaypoints` | `true` | Show waypoints from Xaero's Minimap and JourneyMap |
+| `waypointSets` | `active` | `active` (only the set or group the other mod shows), `all`, or `pick` (everything except `hiddenWaypointSets`) |
+| `hiddenWaypointSets` | `[]` | Sets switched off in `pick` mode, as `xaero:<set>` or `journeymap:<group>` |
 | `showPlayerMarker` | `true` | Show your own position on the map |
 | `outlineOtherLands` | `false` | Outline lands that are not open-spawn (can slow the map down) |
 | `refreshOnOpen` | `true` | Request the open-spawn list when the map opens |
@@ -130,6 +132,9 @@ If you use either mod, the waypoints you made there appear on Landmark's map. No
   (`xaero/minimap/Multiplayer_<server>/`). Only the folder for the server you are connected to is read, and only waypoints
   that are switched on in Xaero's. The server folder is matched by address, so if you joined with an unusual address and no
   waypoints appear, that is the first thing to check.
+- **Sets and groups.** By default only the set Xaero's is showing (its active set, per dimension) or the JourneyMap groups that are
+  switched on are drawn, as in those mods. The **Waypoints** button in the side panel (shown when a waypoint mod has waypoints)
+  opens a list of all sets with counts: tick the ones you want, or choose **All sets**. The same choice is in Settings.
 - Waypoints stay visible when you hide claims, because they are not claims. Colours come from the other mod. Settings shows how
   many were found from each source, and you can turn the whole thing off there.
 

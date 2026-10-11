@@ -27,6 +27,7 @@ final class DevHarness {
 	private static final boolean SPAWNS = System.getProperty("landmark.dev.spawns") != null;
 	private static final boolean SHOWCASE = System.getProperty("landmark.dev.showcase") != null;
 	private static final boolean DIMENSIONS = System.getProperty("landmark.dev.dimensions") != null;
+	private static final boolean WPSETS = System.getProperty("landmark.dev.wpsets") != null;
 	private static final boolean WAYPOINTS = System.getProperty("landmark.dev.waypoints") != null;
 	private static final boolean JM_TEST = System.getProperty("landmark.dev.jmtest") != null;
 	private static final boolean JM_WORLD = System.getProperty("landmark.dev.jmworld") != null;
@@ -130,6 +131,63 @@ final class DevHarness {
 			mc.setScreenAndShow(com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(mapScreen));
 		} else if (f == 460) {
 			state.config.setExportPreset(landmark.data.ExportPreset.LOW);
+			mc.stop();
+		}
+	}
+
+	/** Waypoint sets: active set by default, picking sets, show all. All names and places are made up. */
+	private static void wpSetsScenario(net.minecraft.client.Minecraft mc, int f) {
+		LandmarkState state = LandmarkState.get();
+		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		if (f == 60) {
+			try {
+				java.nio.file.Path dir = mc.gameDirectory.toPath().resolve("xaero/minimap/Multiplayer_play.example.invalid/dim%0");
+				java.nio.file.Files.createDirectories(dir);
+				String[] sets = {"Industry", "gui.xaero_default", "Farms", "Mining", "Travel Hub", "Empty Set"};
+				java.util.List<String> lines = new java.util.ArrayList<>();
+				lines.add("sets:" + String.join(":", sets));
+				for (int i = 0; i < 40; i++) {
+					String set = sets[i % 5]; // "Empty Set" has none
+					int x = -1600 + (i * 137) % 3200;
+					int z = -700 + (i * 211) % 1400;
+					lines.add("waypoint:" + set + " " + i + ":W:" + x + ":64:" + z + ":" + (i % 15 + 1) + ":false:0:" + set + ":false:0:0:false");
+				}
+				java.nio.file.Files.write(dir.resolve("mw$default_1.txt"), lines);
+			} catch (java.io.IOException e) {
+				LandmarkClient.LOGGER.warn("fixture failed", e);
+			}
+			state.config.waypointSets = "active";
+			state.reloadWaypoints(mc);
+		} else if (f == 95 && mc.gui.screen() instanceof MapScreen ms) {
+			mapScreen = ms;
+			ms.view().setScale(0.12);
+			ms.view().centerOn(0, 0);
+		} else if (f == 110) {
+			LandmarkClient.LOGGER.info("WPSETS default mode={} drawn={} of {}", state.config.waypointSets, state.external.forDimension(DEMO_DIMENSION).size(), state.external.all().size());
+			shot.run();
+		} else if (f == 115) {
+			var screen = new WaypointSetsScreen(mapScreen, DEMO_DIMENSION);
+			configScreen = null;
+			mc.setScreenAndShow(screen);
+		} else if (f == 125) {
+			shot.run();
+		} else if (f == 126 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+			s.devToggle(0); // Default (sorted first): ticking it turns the active-set view into a chosen set
+			LandmarkClient.LOGGER.info("WPSETS after ticking one: mode={} hidden={} drawn={}", state.config.waypointSets, state.config.hiddenWaypointSets, state.external.forDimension(DEMO_DIMENSION).size());
+		} else if (f == 135) {
+			shot.run();
+		} else if (f == 136 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+			s.devToggle(1); // Farms: ticking another set
+			LandmarkClient.LOGGER.info("WPSETS after ticking two: hidden={} drawn={}", state.config.hiddenWaypointSets, state.external.forDimension(DEMO_DIMENSION).size());
+		} else if (f == 140) {
+			mc.setScreenAndShow(mapScreen);
+		} else if (f == 150) {
+			shot.run();
+			state.config.waypointSets = "all";
+			LandmarkClient.LOGGER.info("WPSETS all mode drawn={}", state.external.forDimension(DEMO_DIMENSION).size());
+			state.config.waypointSets = "active";
+			state.config.hiddenWaypointSets = new java.util.ArrayList<>();
+		} else if (f == 155) {
 			mc.stop();
 		}
 	}
@@ -345,7 +403,7 @@ final class DevHarness {
 				}
 				if (worldTicks == 100) {
 					var wps = state.external.forDimension("minecraft:overworld");
-					LandmarkClient.LOGGER.info("JMWORLD read {} waypoints: {}", wps.size(), wps.stream().map(w -> w.source() + ":" + w.name() + "@" + w.x() + "," + w.y() + "," + w.z() + " #" + Integer.toHexString(w.argb())).toList());
+					LandmarkClient.LOGGER.info("JMWORLD read {} waypoints: {}", wps.size(), wps.stream().map(w -> w.source() + ":" + w.name() + "@" + w.x() + "," + w.y() + "," + w.z() + " #" + Integer.toHexString(w.argb()) + " group='" + w.group() + "' active=" + w.active()).toList());
 					mc.setScreenAndShow(new MapScreen());
 					worldStage = 3;
 					worldTicks = 0;
@@ -384,7 +442,7 @@ final class DevHarness {
 			state.reloadWaypoints(mc);
 		} else if (f == 100) {
 			var wps = state.external.forDimension(DEMO_DIMENSION);
-			LandmarkClient.LOGGER.info("JMTEST read {} waypoints for the overworld: {}", wps.size(), wps.stream().map(w -> w.source() + ":" + w.name() + "@" + w.x() + "," + w.z()).toList());
+			LandmarkClient.LOGGER.info("JMTEST read {} waypoints for the overworld: {}", wps.size(), wps.stream().map(w -> w.source() + ":" + w.name() + "@" + w.x() + "," + w.z() + " group=" + w.group() + " active=" + w.active()).toList());
 			mapScreen = mc.gui.screen();
 			shot.run();
 		} else if (f == 110) {
@@ -617,6 +675,10 @@ final class DevHarness {
 				}
 				if (SHOWCASE) {
 					showcaseScenario(mc, framesOpen);
+					return;
+				}
+				if (WPSETS) {
+					wpSetsScenario(mc, framesOpen);
 					return;
 				}
 				if (DIMENSIONS) {

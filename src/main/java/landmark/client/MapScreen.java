@@ -66,6 +66,7 @@ public class MapScreen extends Screen {
 	private Button claimsButton;
 	private Button settingsButton;
 	private Button dimensionButton;
+	private Button waypointsButton;
 	private List<Entry> entries = List.of();
 	private int listScroll;
 	private @Nullable String selectedName;
@@ -153,6 +154,8 @@ public class MapScreen extends Screen {
 			b -> minecraft.setScreenAndShow(new ConfigScreen(this))).bounds(8 + bw, 46, bw2, 18).build());
 		dimensionButton = addRenderableWidget(Button.builder(Component.empty(), b -> cycleDimension())
 			.bounds(4, 68, panelW - 8, 18).build());
+		waypointsButton = addRenderableWidget(Button.builder(Component.empty(),
+			b -> minecraft.setScreenAndShow(new WaypointSetsScreen(this, dimension))).bounds(4, 90, panelW - 8, 18).build());
 		teleportButton = addRenderableWidget(Button.builder(Component.translatable("landmark.teleport"), b -> teleportToSelection())
 			.bounds(4, height - 22, panelW - 8, 18).build());
 		helpButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.button"),
@@ -249,7 +252,7 @@ public class MapScreen extends Screen {
 		rebuildEntries();
 	}
 
-	private static Component dimensionName(String dim) {
+	static Component dimensionName(String dim) {
 		String key = switch (dim) {
 			case "minecraft:overworld" -> "landmark.dimension.overworld";
 			case "minecraft:the_nether" -> "landmark.dimension.nether";
@@ -356,8 +359,13 @@ public class MapScreen extends Screen {
 		return x >= panelW && y < height - STATUS_H;
 	}
 
+	/** The Waypoints button only takes up room when there is a waypoint mod with something to choose from. */
+	private boolean waypointsButtonShown() {
+		return waypointsButton != null && waypointsButton.visible;
+	}
+
 	private int listTop() {
-		return 90;
+		return waypointsButtonShown() ? 112 : 90;
 	}
 
 	private int listBottom() {
@@ -412,6 +420,8 @@ public class MapScreen extends Screen {
 		refreshButton.active = !state.refreshing;
 		fitButton.active = map != null;
 		dimensionButton.setMessage(dimensionLabel());
+		waypointsButton.visible = state.config.showExternalWaypoints && state.external.hasWaypoints();
+		waypointsButton.setMessage(Component.translatable("landmark.waypointsets.button", Component.translatable(state.config.waypointMode().translationKey)));
 		claimsButton.active = map != null;
 		claimsButton.setMessage(Component.translatable(state.hideClaims ? "landmark.claims.show" : "landmark.claims.hide"));
 		String target = teleportTarget();
@@ -701,6 +711,10 @@ public class MapScreen extends Screen {
 		List<String> lines = new ArrayList<>();
 		lines.add(name);
 		lines.add(I18n.tr("landmark.tip.waypoint", wp.source().displayName));
+		if (!wp.group().isEmpty()) {
+			lines.add(I18n.tr(wp.source() == ExternalWaypoint.Source.XAERO ? "landmark.tip.waypoint.set" : "landmark.tip.waypoint.group",
+				ExternalWaypoints.displayName(wp.group())));
+		}
 		lines.add(wp.y() == null ? wp.x() + ", " + wp.z() : wp.x() + ", " + wp.y() + ", " + wp.z());
 		int w = 0;
 		for (String line : lines) {

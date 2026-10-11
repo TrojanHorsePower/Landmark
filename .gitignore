@@ -45,3 +45,7 @@ lands.json
 *:Zone.Identifier
 *.log
 landmark-export*.zip
+
+# Other people's waypoint folders sent for testing; personal data, never commit
+Multiplayer_*/
+Multiplayer_*.zip
