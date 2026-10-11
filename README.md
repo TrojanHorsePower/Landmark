@@ -3,7 +3,7 @@
 [![build](https://github.com/TrojanHorsePower/Landmark/actions/workflows/build.yml/badge.svg)](https://github.com/TrojanHorsePower/Landmark/actions/workflows/build.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-An in-game map of land claims for fast `/lands spawn <land>` teleporting. A client-side Fabric mod for Minecraft 26.2.
+An in-game map of land claims for fast `/lands spawn <land>` teleporting. A client-side Fabric mod for Minecraft 1.21 to 26.2.
 
 > Not affiliated with or endorsed by Chillzone or the Lands plugin.
 
@@ -39,10 +39,29 @@ The screenshots in this README use synthetic data (fake lands, fake owners, gene
 
 ## Install
 
-Requires Minecraft 26.2, [Fabric Loader](https://fabricmc.net/) 0.19.5 or newer,
-[Fabric API](https://modrinth.com/mod/fabric-api) and Java 25. Download the jar from the
-[releases page](https://github.com/TrojanHorsePower/Landmark/releases) and put it in your `mods` folder. It only loads on the
-client; nothing is needed on the server.
+You need [Fabric Loader](https://fabricmc.net/) and [Fabric API](https://modrinth.com/mod/fabric-api) for your Minecraft
+version. Download the jar for your version from the [releases page](https://github.com/TrojanHorsePower/Landmark/releases)
+and put it in your `mods` folder. It only loads on the client; nothing is needed on the server.
+
+Each release has one jar per range of Minecraft versions. The Minecraft version is in the file name:
+`landmark-<version>+mc<first>-<last>.jar`.
+
+| Jar | Minecraft | Java | Fabric Loader | Fabric API |
+|---|---|---|---|---|
+| `…+mc1.21-1.21.1.jar` | 1.21, 1.21.1 | 21 or newer | 0.15.11 or newer | any |
+| `…+mc1.21.2-1.21.4.jar` | 1.21.2, 1.21.3, 1.21.4 | 21 or newer | 0.16.9 or newer | any |
+| `…+mc1.21.5.jar` | 1.21.5 | 21 or newer | 0.16.10 or newer | any |
+| `…+mc1.21.6-1.21.8.jar` | 1.21.6, 1.21.7, 1.21.8 | 21 or newer | 0.16.13 or newer | any |
+| `…+mc1.21.9-1.21.10.jar` | 1.21.9, 1.21.10 | 21 or newer | 0.17.2 or newer | any |
+| `…+mc1.21.11.jar` | 1.21.11 | 21 or newer | 0.17.3 or newer | any |
+| `…+mc26.1-26.1.2.jar` | 26.1, 26.1.1, 26.1.2 | 25 or newer | 0.18.4 or newer | any |
+| `…+mc26.2.jar` | 26.2 | 25 or newer | 0.19.2 or newer | any |
+
+- Use **one** Landmark jar. If you update Minecraft, replace the jar with the one for the new version, and delete the old one.
+- Newer Fabric Loader and Fabric API versions are fine. The loader numbers are what Fabric API and the matching
+  [Mod Menu](https://modrinth.com/mod/modmenu) need, so a Mod Menu you have installed will not disagree with Landmark.
+- Mod Menu, JourneyMap and Xaero's Minimap are optional.
+- Snapshots, pre-releases and other mod loaders are not supported.
 
 ## Getting the map data
 
@@ -129,6 +148,8 @@ have it (it is optional). Everything applies immediately.
 If you use either mod, the waypoints you made there appear on Landmark's map. Nothing to set up:
 
 - **JourneyMap** is read through JourneyMap's own plugin API, so it needs no files and works with the version you have.
+  (On exactly Minecraft 1.21, JourneyMap's only build does not call plugins, so its waypoints are not shown there; 1.21.1
+  and newer are fine.)
 - **Xaero's Minimap** has no API, so Landmark reads its waypoint files from your game folder
   (`xaero/minimap/Multiplayer_<server>/`). Only the folder for the server you are connected to is read, and only waypoints
   that are switched on in Xaero's. The server folder is matched by address, so if you joined with an unusual address and no
@@ -158,10 +179,16 @@ server is the `/lands spawn` command you confirm, plus the same suggestion reque
 
 ## Building
 
-Requires Java 25.
+Requires Java 25 (the build tool needs it; the jars for 1.21.x still target Java 21).
 
-    ./gradlew build        # jar in build/libs, runs the JUnit tests
+    ./gradlew build                    # the default era (26.2): jar in build/libs, runs the JUnit tests
+    ./gradlew build -Pera=1.21.9       # another Minecraft version range; see eras/
     node --test tools/export.test.js
+
+Each file in [`eras/`](eras/) is one jar: the Minecraft version it is compiled against, the range it supports, the
+dependency versions and which per-version source folders it uses. `./gradlew runClient -Pera=<era>` starts a dev client for
+it (`-Prun_java=21` runs it on Java 21; `-Pminecraft_version=1.21.2 -Pfabric_api_version=...` tries another version inside
+the range).
 
 The pure logic (parsing, codec, import, search, map math) has no Minecraft dependency and is unit-tested; see `src/test`.
 How the export zip is laid out: [docs/export-format.md](docs/export-format.md).
@@ -172,11 +199,22 @@ How the export zip is laid out: [docs/export-format.md](docs/export-format.md).
   (keybind labels) and this README. The mod id `landmark` and the package name are internal; renaming them is optional.
 - **Server specifics.** The only server-specific values are the default `mapUrl` in `LandmarkConfig.java` and the
   `/lands spawn` command in `MapScreen.java` / `LiveSpawns.java`.
-- **CI and releases.** `.github/workflows/build.yml` builds and tests every push. `release.yml` runs when you push a tag
-  `vX.Y.Z` that matches `mod_version` in `gradle.properties`, and attaches the jar to a GitHub release. It uses only the
+- **CI and releases.** `.github/workflows/build.yml` builds and tests every era on every push. `release.yml` runs when you
+  push a tag `vX.Y.Z` that matches `mod_version` in `gradle.properties`, builds every era and attaches all the jars to a
+  GitHub release. It uses only the
   built-in `GITHUB_TOKEN`; no secrets or personal accounts are involved.
-- **Updating when Minecraft updates.** Bump the versions in `gradle.properties` (see https://fabricmc.net/develop) and fix
-  whatever the compiler reports; the client code uses Mojang's real names.
+- **Several Minecraft versions.** Everything that differs between versions sits behind `landmark.compat`: `Gfx` (drawing),
+  `LandmarkScreen` / `LandmarkListEntry` (screens, input and list rows), `LandmarkTexture`, `Pixels` and `Platform` (small
+  calls). The common code in `landmark.client` never names a class or method that changed between versions. Each era lists
+  its implementations in `era_sources` (folders under `src/era/`), so versions that share an implementation share a folder.
+  Versions up to 1.21.11 are obfuscated and build with the remapping Loom plugin (`build-remap.gradle`, picked by
+  `settings.gradle` from `loom_remap=true`); 26.x builds with the plain one (`build.gradle`). The shared build logic is in
+  `gradle/landmark.gradle`.
+- **Adding a Minecraft version.** If an existing era's range can include it, widen `minecraft_range` and run the dev client
+  on it (`-Pminecraft_version=...`). Otherwise copy the closest `eras/*.properties`, point `minecraft_version`,
+  `fabric_api_version`, `modmenu_version` and `journeymap_api_version` at the new version, set `loader_min` to the higher of
+  what Fabric API and Mod Menu require, and fix whatever the compiler reports by adding or changing a folder under
+  `src/era/`. The CI and release workflows pick the new file up by themselves.
 - **Waypoint integrations.** `XaeroWaypoints` (pure, tested) parses Xaero's files; `LandmarkJourneyMapPlugin` is loaded by
   JourneyMap through the `journeymap` entrypoint and `JourneyMapReader` uses its API. The JourneyMap API is a `compileOnly`
   dependency and is never bundled (its licence allows using it as a dependency, not shipping it). Neither mod is bundled or
