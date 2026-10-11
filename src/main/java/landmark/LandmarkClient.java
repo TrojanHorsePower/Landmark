@@ -5,10 +5,8 @@ import landmark.client.LandmarkState;
 import landmark.client.MapScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +24,12 @@ public class LandmarkClient implements ClientModInitializer {
 		LandmarkState.init(FabricLoader.getInstance().getGameDir(), FabricLoader.getInstance().getConfigDir());
 		landmark.client.LandmarkDev.install();
 
-		openKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.landmark.open", InputConstants.KEY_M,
-			KeyMapping.Category.register(Identifier.fromNamespaceAndPath(Branding.MOD_ID, "main"))));
+		openKey = landmark.compat.Platform.registerKey("key.landmark.open", InputConstants.KEY_M, "main");
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			LandmarkState.get().tickWatcher(mc);
 			while (openKey.consumeClick()) {
-				if (mc.level != null && mc.gui.screen() == null) {
-					mc.setScreenAndShow(new MapScreen());
+				if (mc.level != null && landmark.compat.Platform.screen(mc) == null) {
+					landmark.compat.Platform.show(mc, new MapScreen());
 				}
 			}
 		});

@@ -10,3 +10,10 @@ pluginManagement {
 }
 
 rootProject.name = 'landmark'
+
+// Minecraft versions up to 1.21.11 are obfuscated and need the remapping Loom plugin, which has its own build file.
+def era = providers.gradleProperty('era').orElse('26.2').get()
+def eraFile = new File(rootDir, "eras/${era}.properties")
+if (eraFile.exists() && eraFile.text.contains('loom_remap=true')) {
+	rootProject.buildFileName = 'build-remap.gradle'
+}

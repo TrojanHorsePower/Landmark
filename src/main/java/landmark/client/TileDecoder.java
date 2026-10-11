@@ -18,7 +18,8 @@ final class TileDecoder {
 
 	static NativeImage decode(byte[] data) throws IOException {
 		if (data.length > 8 && (data[0] & 0xFF) == 0x89 && data[1] == 'P') {
-			return NativeImage.read(data);
+			// via a stream: read(byte[]) copies the whole file onto the 64 KB native stack on some versions (1.21.1)
+			return NativeImage.read(new java.io.ByteArrayInputStream(data));
 		}
 		ByteBuffer in = MemoryUtil.memAlloc(data.length);
 		try {
@@ -38,7 +39,7 @@ final class TileDecoder {
 					pixels.order(ByteOrder.LITTLE_ENDIAN); // R,G,B,A in memory is 0xAABBGGRR as an int, i.e. ABGR
 					for (int y = 0; y < height; y++) {
 						for (int x = 0; x < width; x++) {
-							image.setPixelABGR(x, y, pixels.getInt((y * width + x) * 4));
+							landmark.compat.Pixels.setAbgr(image, x, y, pixels.getInt((y * width + x) * 4));
 						}
 					}
 					return image;

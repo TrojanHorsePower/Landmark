@@ -9,19 +9,20 @@ import landmark.data.WaypointSetMode;
 import landmark.waypoints.DimensionScale;
 import landmark.waypoints.ExternalWaypoint;
 import landmark.waypoints.WaypointSets;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import landmark.compat.Gfx;
+import landmark.compat.KeyPress;
+import landmark.compat.LandmarkScreen;
+import landmark.compat.Mouse;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 /**
  * Chooses which Xaero's Minimap sets and JourneyMap groups are drawn on the map. The default follows the other mod (only its
  * active set); ticking or unticking a set switches to a custom choice, which keeps new sets visible until they are unticked.
  */
-public class WaypointSetsScreen extends Screen {
+public class WaypointSetsScreen extends LandmarkScreen {
 	private static final int ROW_H = 14;
 
 	private record Row(boolean header, String text, WaypointSets.Group group) {}
@@ -63,7 +64,7 @@ public class WaypointSetsScreen extends Screen {
 		int w = contentWidth();
 		int x = contentLeft();
 		dimensionButton = addRenderableWidget(Button.builder(Component.empty(), b -> cycleDimension()).bounds(x, 24, w, 20).build());
-		modeButton = addRenderableWidget(CycleButton.<WaypointSetMode>builder(m -> Component.translatable(m.translationKey), state.config.waypointMode())
+		modeButton = addRenderableWidget(landmark.compat.Platform.<WaypointSetMode>cycleBuilder(m -> Component.translatable(m.translationKey), state.config.waypointMode())
 			.withValues(WaypointSetMode.values())
 			.create(x, 48, w, 20, Component.translatable("landmark.waypointsets.show"), (b, v) -> {
 				state.config.waypointSets = v.id;
@@ -202,13 +203,13 @@ public class WaypointSetsScreen extends Screen {
 	}
 
 	@Override
-	public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float partial) {
+	protected void drawBackground(Gfx g, int mx, int my, float partial) {
 		g.fill(0, 0, width, height, col(ColorKey.MAP_BACKGROUND));
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float partial) {
-		extractBackground(g, mx, my, partial);
+	protected void draw(Gfx g, int mx, int my, float partial) {
+		drawBackground(g, mx, my, partial);
 		int x = contentLeft();
 		int w = contentWidth();
 		g.text(font, title, x, 8, col(ColorKey.LIST_OPEN), false);
@@ -266,12 +267,12 @@ public class WaypointSetsScreen extends Screen {
 			g.fill(x + w + 4, listTop, x + w + 7, listBottom, 0x40FFFFFF);
 			g.fill(x + w + 4, barY, x + w + 7, barY + barH, col(ColorKey.TEXT_STATUS));
 		}
-		super.extractRenderState(g, mx, my, partial);
+		drawWidgets(g, mx, my, partial);
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
-		if (super.mouseClicked(e, doubleClick)) {
+	protected boolean onMouseClicked(Mouse e, boolean doubleClick) {
+		if (superMouseClicked(e, doubleClick)) {
 			return true;
 		}
 		int x = contentLeft();
@@ -295,12 +296,12 @@ public class WaypointSetsScreen extends Screen {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent e) {
+	protected boolean onKeyPressed(KeyPress e) {
 		if (maxScroll() > 0 && (e.isUp() || e.isDown())) {
 			scroll = Math.max(0, Math.min(maxScroll(), scroll + (e.isDown() ? 1 : -1)));
 			return true;
 		}
-		return super.keyPressed(e);
+		return superKeyPressed(e);
 	}
 
 	/** Dev harness: presses the dimension button. */
@@ -331,7 +332,7 @@ public class WaypointSetsScreen extends Screen {
 
 	@Override
 	public void onClose() {
-		minecraft.setScreenAndShow(parent);
+		landmark.compat.Platform.show(minecraft, parent);
 	}
 
 	@Override

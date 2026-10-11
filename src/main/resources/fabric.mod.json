@@ -21,9 +21,9 @@
 		"modmenu": "*"
 	},
 	"depends": {
-		"fabricloader": ">=0.19.5",
-		"minecraft": "~26.2",
-		"java": ">=25",
+		"fabricloader": ">=${loaderMin}",
+		"minecraft": "${minecraftRange}",
+		"java": ">=${javaVersion}",
 		"fabric-api": "*"
 	}
 }

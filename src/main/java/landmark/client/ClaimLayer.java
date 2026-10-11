@@ -10,15 +10,14 @@ import landmark.LandmarkClient;
 import landmark.map.ChunkOwnerGrid;
 import landmark.data.ColorKey;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.Identifier;
+import landmark.compat.LandmarkTexture;
 
 /**
  * One chunk-resolution texture per {@value ChunkOwnerGrid#TILE_CELLS}-chunk tile of the owner grid. The textures use
  * nearest-neighbour sampling (DynamicTexture's default), so each chunk stays a crisp square at any zoom.
  */
 public final class ClaimLayer implements AutoCloseable {
-	public record Tile(int tx, int tz, Identifier id, DynamicTexture texture, int[] cells) {}
+	public record Tile(int tx, int tz, LandmarkTexture texture, int[] cells) {}
 
 	private final Minecraft mc;
 	private final DimensionMap map;
@@ -30,10 +29,9 @@ public final class ClaimLayer implements AutoCloseable {
 		this.map = map;
 		map.grid.forEachTile((tx, tz, cells) -> {
 			NativeImage image = new NativeImage(ChunkOwnerGrid.TILE_CELLS, ChunkOwnerGrid.TILE_CELLS, true);
-			DynamicTexture texture = new DynamicTexture(() -> "landmark claims " + tx + "_" + tz, image);
-			Identifier id = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, idPrefix + "/" + tx + "_" + tz);
-			mc.getTextureManager().register(id, texture);
-			Tile t = new Tile(tx, tz, id, texture, cells);
+			LandmarkTexture texture = new LandmarkTexture(() -> "landmark claims " + tx + "_" + tz, image, idPrefix + "/" + tx + "_" + tz, false);
+			texture.register(mc);
+			Tile t = new Tile(tx, tz, texture, cells);
 			tiles.add(t);
 			byKey.put(((long) tx << 32) | (tz & 0xFFFFFFFFL), t);
 		});
@@ -53,7 +51,7 @@ public final class ClaimLayer implements AutoCloseable {
 				for (int x = 0; x < n; x++) {
 					int v = t.cells()[z * n + x];
 					int argb = v == 0 ? 0 : open.contains(v - 1) ? openFill : otherFill;
-					image.setPixel(x, z, argb);
+					landmark.compat.Pixels.setArgb(image, x, z, argb);
 				}
 			}
 			t.texture().upload();
@@ -63,7 +61,7 @@ public final class ClaimLayer implements AutoCloseable {
 	@Override
 	public void close() {
 		for (Tile t : tiles) {
-			mc.getTextureManager().release(t.id());
+			t.texture().release(mc);
 		}
 		tiles.clear();
 		byKey.clear();

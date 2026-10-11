@@ -5,21 +5,42 @@ on:
   pull_request:
 
 jobs:
-  build:
+  tools:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tools/export.test.js
+
+  eras:
+    # One build per file in eras/, so adding a Minecraft version needs no change here.
+    runs-on: ubuntu-latest
+    outputs:
+      eras: ${{ steps.list.outputs.eras }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: echo "eras=$(ls eras/*.properties | xargs -n1 basename | sed 's/\.properties$//' | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: eras
+    name: build (${{ matrix.era }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        era: ${{ fromJson(needs.eras.outputs.eras) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 25
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: node --test tools/export.test.js
+          java-version: 25 # the build needs it (Loom); the jars target the Java version in eras/<era>.properties
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew build
+      - run: ./gradlew build -Pera=${{ matrix.era }}
       - uses: actions/upload-artifact@v4
         with:
-          name: jar
+          name: jar-${{ matrix.era }}
           path: build/libs/*.jar

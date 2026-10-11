@@ -7,7 +7,6 @@ import landmark.data.Land;
 import landmark.data.OpenSpawns;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.TitleScreen;
 
 /**
@@ -45,10 +44,10 @@ final class DevHarness {
 
 	/** Exercises the settings screens, the hide-claims toggle, key rebinding and the help-page import; logs results as SCENARIO lines. */
 	private static void settingsScenario(net.minecraft.client.Minecraft mc, int f) {
-		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		var shot = (Runnable) () -> landmark.compat.Platform.screenshot(mc);
 		LandmarkState state = LandmarkState.get();
 		if (f == 100) {
-			mapScreen = mc.gui.screen();
+			mapScreen = landmark.compat.Platform.screen(mc);
 			shot.run();
 		} else if (f == 110 && mapScreen instanceof MapScreen ms) {
 			ms.devToggleClaims();
@@ -60,7 +59,7 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("SCENARIO claims hidden={}", state.hideClaims);
 		} else if (f == 150) {
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 		} else if (f == 175) {
 			shot.run();
 		} else if (f == 180) {
@@ -73,35 +72,35 @@ final class DevHarness {
 		} else if (f == 230) {
 			shot.run();
 		} else if (f == 235) {
-			mc.setScreenAndShow(new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL));
+			landmark.compat.Platform.show(mc, new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL));
 		} else if (f == 260) {
 			shot.run();
 		} else if (f == 265) {
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 		} else if (f == 270) {
 			var key = LandmarkClient.openKey;
 			String before = key.saveString();
 			int free = configScreen.devFreeKey();
 			LandmarkClient.LOGGER.info("SCENARIO free key chosen: {}", configScreen.devConflicts(free));
-			LandmarkClient.LOGGER.info("SCENARIO screen before rebind: {}", mc.gui.screen().getClass().getSimpleName());
+			LandmarkClient.LOGGER.info("SCENARIO screen before rebind: {}", landmark.compat.Platform.screen(mc).getClass().getSimpleName());
 			configScreen.devRebind(free);
-			LandmarkClient.LOGGER.info("SCENARIO screen after rebind: {}", mc.gui.screen().getClass().getSimpleName());
+			LandmarkClient.LOGGER.info("SCENARIO screen after rebind: {}", landmark.compat.Platform.screen(mc).getClass().getSimpleName());
 			LandmarkClient.LOGGER.info("SCENARIO rebind from M to a free key: before={} after={} sameObjectAsControlsScreen={}", before, key.saveString(),
 				java.util.Arrays.asList(mc.options.keyMappings).contains(key));
 		} else if (f == 275) {
 			configScreen.devRebind(org.lwjgl.glfw.GLFW.GLFW_KEY_W); // already used by "forward": must ask first
-			LandmarkClient.LOGGER.info("SCENARIO conflict dialog shown={} key still={}", mc.gui.screen() instanceof net.minecraft.client.gui.screens.ConfirmScreen, LandmarkClient.openKey.saveString());
+			LandmarkClient.LOGGER.info("SCENARIO conflict dialog shown={} key still={}", landmark.compat.Platform.screen(mc) instanceof net.minecraft.client.gui.screens.ConfirmScreen, LandmarkClient.openKey.saveString());
 		} else if (f == 290) {
 			shot.run();
 		} else if (f == 295) {
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 			LandmarkClient.openKey.setKey(LandmarkClient.openKey.getDefaultKey());
 			net.minecraft.client.KeyMapping.resetMapping();
 			LandmarkClient.LOGGER.info("SCENARIO key restored to {}", LandmarkClient.openKey.saveString());
 		} else if (f == 300) {
 			state.setNotice(null, false);
 			var help = new HelpScreen(mapScreen);
-			mc.setScreenAndShow(help);
+			landmark.compat.Platform.show(mc, help);
 			String clip = help.devCopy();
 			LandmarkClient.LOGGER.info("SCENARIO copied script ({} chars) has tileFolder: 2 = {}, tileMode: 'full' = {}, is the real script = {}", clip.length(),
 				clip.contains("tileFolder: 2"), clip.contains("tileMode: 'full'"), clip.contains("buildZip"));
@@ -113,7 +112,7 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("SCENARIO help-page import notice: {} (error={})", state.notice, state.noticeIsError);
 			shot.run();
 		} else if (f == 345) {
-			mc.setScreenAndShow(mapScreen); // back to the map: it must rebuild itself from the freshly imported data
+			landmark.compat.Platform.show(mc, mapScreen); // back to the map: it must rebuild itself from the freshly imported data
 		} else if (f == 385) {
 			shot.run();
 		} else if (f == 390 && mapScreen instanceof MapScreen ms) {
@@ -128,7 +127,7 @@ final class DevHarness {
 		} else if (f == 435) {
 			var factory = new LandmarkModMenu().getModConfigScreenFactory();
 			LandmarkClient.LOGGER.info("SCENARIO modmenu factory creates {}", factory.create(mapScreen).getClass().getSimpleName());
-			mc.setScreenAndShow(com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(mapScreen));
+			landmark.compat.Platform.show(mc, com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(mapScreen));
 		} else if (f == 460) {
 			state.config.setExportPreset(landmark.data.ExportPreset.LOW);
 			mc.stop();
@@ -138,7 +137,7 @@ final class DevHarness {
 	/** Waypoint sets: active set by default, picking sets, show all. All names and places are made up. */
 	private static void wpSetsScenario(net.minecraft.client.Minecraft mc, int f) {
 		LandmarkState state = LandmarkState.get();
-		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		var shot = (Runnable) () -> landmark.compat.Platform.screenshot(mc);
 		if (f == 60 && System.getProperty("landmark.dev.keepWaypointFiles") != null) {
 			state.config.waypointSets = "active";
 			state.reloadWaypoints(mc); // use the Xaero files that are already in the run folder
@@ -168,7 +167,7 @@ final class DevHarness {
 			}
 			state.config.waypointSets = "active";
 			state.reloadWaypoints(mc);
-		} else if (f == 95 && mc.gui.screen() instanceof MapScreen ms) {
+		} else if (f == 95 && landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
 			mapScreen = ms;
 			ms.view().setScale(0.12);
 			ms.view().centerOn(0, 0);
@@ -178,18 +177,18 @@ final class DevHarness {
 		} else if (f == 115) {
 			var screen = new WaypointSetsScreen(mapScreen);
 			configScreen = null;
-			mc.setScreenAndShow(screen);
+			landmark.compat.Platform.show(mc, screen);
 		} else if (f == 125) {
 			shot.run();
-		} else if (f == 126 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+		} else if (f == 126 && landmark.compat.Platform.screen(mc) instanceof WaypointSetsScreen s) {
 			s.devToggle(0); // Default (sorted first): ticking it turns the active-set view into a chosen set
 			LandmarkClient.LOGGER.info("WPSETS after ticking one: mode={} hidden={} drawn={}", state.config.waypointSets, state.config.hiddenWaypointSets, state.external.forDimension(DEMO_DIMENSION).size());
 		} else if (f == 135) {
 			shot.run();
-		} else if (f == 136 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+		} else if (f == 136 && landmark.compat.Platform.screen(mc) instanceof WaypointSetsScreen s) {
 			s.devToggle(1); // Farms: ticking another set
 			LandmarkClient.LOGGER.info("WPSETS after ticking two: hidden={} drawn={}", state.config.hiddenWaypointSets, state.external.forDimension(DEMO_DIMENSION).size());
-		} else if (f == 137 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+		} else if (f == 137 && landmark.compat.Platform.screen(mc) instanceof WaypointSetsScreen s) {
 			LandmarkClient.LOGGER.info("WPSETS picker Auto rows: {}", s.devRows());
 			s.devCycleDimension();
 			LandmarkClient.LOGGER.info("WPSETS picker {} rows: {}", state.config.viewDimension, s.devRows());
@@ -198,8 +197,8 @@ final class DevHarness {
 		} else if (f == 139) {
 			shot.run();
 		} else if (f == 140) {
-			mc.setScreenAndShow(mapScreen);
-		} else if (f == 142 && mc.gui.screen() instanceof MapScreen ms) {
+			landmark.compat.Platform.show(mc, mapScreen);
+		} else if (f == 142 && landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
 			LandmarkClient.LOGGER.info("WPSETS map button after picker change: {}", ms.devDimensionLabel());
 			ms.devCycleDimension(); // End
 			ms.devCycleDimension(); // back to Auto
@@ -216,17 +215,17 @@ final class DevHarness {
 			ms.view().centerOn(0, 0);
 			state.config.waypointSets = "active";
 		} else if (f == 144) {
-			mc.setScreenAndShow(new WaypointSetsScreen(mapScreen));
-		} else if (f == 146 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+			landmark.compat.Platform.show(mc, new WaypointSetsScreen(mapScreen));
+		} else if (f == 146 && landmark.compat.Platform.screen(mc) instanceof WaypointSetsScreen s) {
 			LandmarkClient.LOGGER.info("WPSETS cross picker rows: {}", s.devRows());
 			shot.run();
-		} else if (f == 147 && mc.gui.screen() instanceof WaypointSetsScreen s) {
+		} else if (f == 147 && landmark.compat.Platform.screen(mc) instanceof WaypointSetsScreen s) {
 			s.devSetAll(true);
 			LandmarkClient.LOGGER.info("WPSETS after hide all (overworld view): hidden={}", state.config.hiddenWaypointSets);
 		} else if (f == 148) {
 			shot.run();
 		} else if (f == 149) {
-			mc.setScreenAndShow(mapScreen);
+			landmark.compat.Platform.show(mc, mapScreen);
 			state.config.waypointSets = "active";
 			state.config.hiddenWaypointSets = new java.util.ArrayList<>();
 		} else if (f == 150) {
@@ -243,12 +242,12 @@ final class DevHarness {
 
 	/** Visits every screen at the current window size so overlaps and clipping can be checked in the screenshots. */
 	private static void layoutScenario(net.minecraft.client.Minecraft mc, int f) {
-		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		var shot = (Runnable) () -> landmark.compat.Platform.screenshot(mc);
 		LandmarkState state = LandmarkState.get();
 		var w = mc.getWindow();
 		if (f == 95) {
 			LandmarkClient.LOGGER.info("LAYOUT window {}x{} scale {} -> GUI {}x{}", w.getWidth(), w.getHeight(), w.getGuiScale(), w.getGuiScaledWidth(), w.getGuiScaledHeight());
-			mapScreen = mc.gui.screen();
+			mapScreen = landmark.compat.Platform.screen(mc);
 		} else if (f == 100 || f == 125) {
 			shot.run(); // 1: the map
 		} else if (f == 105) {
@@ -259,7 +258,7 @@ final class DevHarness {
 			state.setNotice("Imported 130 lands for minecraft:overworld with 4 map tiles (6 map shapes could not be read and were skipped)", false);
 			state.config.setExportPreset(landmark.data.ExportPreset.HIGH);
 			var help = new HelpScreen(mapScreen);
-			mc.setScreenAndShow(help);
+			landmark.compat.Platform.show(mc, help);
 			configScreen = null;
 			helpScreen = help;
 		} else if (f == 160) {
@@ -270,7 +269,7 @@ final class DevHarness {
 			shot.run(); // 4: help page scrolled to the end
 		} else if (f == 190) {
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 		} else if (f == 210) {
 			shot.run(); // 5: settings, top
 		} else if (f == 215) {
@@ -283,7 +282,7 @@ final class DevHarness {
 			shot.run(); // 7: settings, colours
 		} else if (f == 265) {
 			picker = new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL);
-			mc.setScreenAndShow(picker);
+			landmark.compat.Platform.show(mc, picker);
 		} else if (f == 285) {
 			shot.run(); // 8: colour picker
 		} else if (f == 290) {
@@ -299,11 +298,11 @@ final class DevHarness {
 
 	/** Saved spawn locations: hidden when saving is switched off, and removable from the settings. */
 	private static void spawnsScenario(net.minecraft.client.Minecraft mc, int f) {
-		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		var shot = (Runnable) () -> landmark.compat.Platform.screenshot(mc);
 		LandmarkState state = LandmarkState.get();
 		java.nio.file.Path file = mc.gameDirectory.toPath().resolve("landmark").resolve("learned-spawns.json");
 		if (f == 95) {
-			mapScreen = mc.gui.screen();
+			mapScreen = landmark.compat.Platform.screen(mc);
 			LandmarkClient.LOGGER.info("SPAWNS saved={} saveSpawns={} visibleOnMap={}", state.learned.size(), state.config.saveSpawns, state.visibleSpawns(DEMO_DIMENSION).size());
 		} else if (f == 100) {
 			shot.run(); // 1: pins visible
@@ -317,7 +316,7 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("SPAWNS after switching saving back ON: visibleOnMap={}", state.visibleSpawns(DEMO_DIMENSION).size());
 		} else if (f == 140) {
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 			configScreen.devScrollTo(70);
 		} else if (f == 165) {
 			shot.run(); // 3: settings row with the count and the Delete button
@@ -328,7 +327,7 @@ final class DevHarness {
 				java.nio.file.Files.exists(file) ? readSmall(file) : "(no file)");
 			shot.run(); // 4: count 0, button disabled
 		} else if (f == 200) {
-			mc.setScreenAndShow(mapScreen);
+			landmark.compat.Platform.show(mc, mapScreen);
 		} else if (f == 225) {
 			shot.run(); // 5: map without pins
 		} else if (f == 235) {
@@ -346,7 +345,7 @@ final class DevHarness {
 
 	/** Writes Xaero-format waypoint files for a made-up server, then checks they show on the map (and that decoys do not). */
 	private static void waypointsScenario(net.minecraft.client.Minecraft mc, int f) {
-		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		var shot = (Runnable) () -> landmark.compat.Platform.screenshot(mc);
 		LandmarkState state = LandmarkState.get();
 		if (f == 60) {
 			try {
@@ -371,7 +370,7 @@ final class DevHarness {
 			}
 			state.reloadWaypoints(mc); // the map was opened before these files existed, so read them now
 		} else if (f == 95) {
-			mapScreen = mc.gui.screen();
+			mapScreen = landmark.compat.Platform.screen(mc);
 		} else if (f == 120) {
 			var wps = state.external.forDimension(DEMO_DIMENSION);
 			LandmarkClient.LOGGER.info("WAYPOINTS loaded {} for the overworld: {}", wps.size(), wps.stream().map(w -> w.name()).sorted().toList());
@@ -397,7 +396,7 @@ final class DevHarness {
 		} else if (f == 180) {
 			state.config.showExternalWaypoints = true;
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 			configScreen.devScrollTo(140);
 		} else if (f == 205) {
 			shot.run(); // 4: settings toggle with the 'found' line
@@ -412,19 +411,18 @@ final class DevHarness {
 		worldTicks++;
 		switch (worldStage) {
 			case 0 -> {
-				if (mc.gui.screen() instanceof TitleScreen && ticks > 80) {
+				if (landmark.compat.Platform.screen(mc) instanceof TitleScreen && ticks > 80) {
 					LandmarkClient.LOGGER.info("JMWORLD creating a singleplayer world");
-					var settings = new net.minecraft.world.level.LevelSettings("landmark-dev", net.minecraft.world.level.GameType.CREATIVE,
-						net.minecraft.world.level.LevelSettings.DifficultySettings.DEFAULT, true, net.minecraft.world.level.WorldDataConfiguration.DEFAULT);
+					var settings = landmark.compat.Platform.devLevelSettings("landmark-dev");
 					mc.createWorldOpenFlows().createFreshLevel("landmark-dev", settings, net.minecraft.world.level.levelgen.WorldOptions.defaultWithRandomSeed(),
-						net.minecraft.world.level.levelgen.presets.WorldPresets::createNormalWorldDimensions, mc.gui.screen());
+						net.minecraft.world.level.levelgen.presets.WorldPresets::createNormalWorldDimensions, landmark.compat.Platform.screen(mc));
 					worldStage = 1;
 					worldTicks = 0;
 				}
 			}
 			case 1 -> {
 				if (mc.level != null && mc.player != null && worldTicks > 200) {
-					LandmarkClient.LOGGER.info("JMWORLD joined: dimension={} player at {},{}", mc.level.dimension().identifier(), (int) mc.player.getX(), (int) mc.player.getZ());
+					LandmarkClient.LOGGER.info("JMWORLD joined: dimension={} player at {},{}", landmark.compat.Platform.dimensionId(mc.level), (int) mc.player.getX(), (int) mc.player.getZ());
 					String zip = System.getProperty("landmark.dev.importzip");
 					if (zip != null) {
 						try {
@@ -453,18 +451,18 @@ final class DevHarness {
 				if (worldTicks == 100) {
 					var wps = state.external.forDimension("minecraft:overworld");
 					LandmarkClient.LOGGER.info("JMWORLD read {} waypoints: {}", wps.size(), wps.stream().map(w -> w.source() + ":" + w.name() + "@" + w.x() + "," + w.y() + "," + w.z() + " #" + Integer.toHexString(w.argb()) + " group='" + w.group() + "' active=" + w.active()).toList());
-					mc.setScreenAndShow(new MapScreen());
+					landmark.compat.Platform.show(mc, new MapScreen());
 					worldStage = 3;
 					worldTicks = 0;
 				}
 			}
 			case 3 -> {
-				if (worldTicks == 40 && mc.gui.screen() instanceof MapScreen ms) {
+				if (worldTicks == 40 && landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
 					ms.view().setScale(1.0 / 8);
 					ms.view().centerOn(-300, 150);
 				}
 				if (worldTicks == 80) {
-					Screenshot.grab(mc, false);
+					landmark.compat.Platform.screenshot(mc);
 				}
 				if (worldTicks == 110) {
 					mc.stop();
@@ -476,7 +474,7 @@ final class DevHarness {
 
 	/** JourneyMap integration: is the plugin initialised, and are waypoints created through its API read back? */
 	private static void jmScenario(net.minecraft.client.Minecraft mc, int f) {
-		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		var shot = (Runnable) () -> landmark.compat.Platform.screenshot(mc);
 		LandmarkState state = LandmarkState.get();
 		if (f == 60) {
 			Object api = ExternalWaypoints.journeyMapApi;
@@ -492,7 +490,7 @@ final class DevHarness {
 		} else if (f == 100) {
 			var wps = state.external.forDimension(DEMO_DIMENSION);
 			LandmarkClient.LOGGER.info("JMTEST read {} waypoints for the overworld: {}", wps.size(), wps.stream().map(w -> w.source() + ":" + w.name() + "@" + w.x() + "," + w.z() + " group=" + w.group() + " active=" + w.active()).toList());
-			mapScreen = mc.gui.screen();
+			mapScreen = landmark.compat.Platform.screen(mc);
 			shot.run();
 		} else if (f == 110) {
 			mc.stop();
@@ -501,24 +499,35 @@ final class DevHarness {
 
 	/** Captures a set of good-looking screenshots (synthetic data only) for showing the mod off. */
 	private static void showcaseScenario(net.minecraft.client.Minecraft mc, int f) {
-		var shot = (Runnable) () -> Screenshot.grab(mc, false);
+		var shot = (Runnable) () -> landmark.compat.Platform.screenshot(mc);
 		LandmarkState state = LandmarkState.get();
 		if (f == 60) {
 			try {
 				java.nio.file.Path mine = mc.gameDirectory.toPath().resolve("xaero/minimap/Multiplayer_play.example.invalid/dim%0");
 				java.nio.file.Files.createDirectories(mine);
 				java.nio.file.Files.write(mine.resolve("mw$default_1.txt"), java.util.List.of(
-					"sets:gui.xaero_default",
+					"sets:gui.xaero_default:Farms:Mining",
 					"waypoint:Home Base:H:0:70:0:12:false:0:gui.xaero_default:false:0:0:false",
 					"waypoint:Iron Mine:I:900:~:-700:6:false:0:gui.xaero_default:false:0:0:false",
 					"waypoint:Farm:F:-1500:64:1100:10:false:0:gui.xaero_default:false:0:0:false",
 					"waypoint:Harbour:A:1600:64:900:11:false:0:gui.xaero_default:false:0:0:false",
-					"waypoint:gui.xaero_deathpoint:D:-600:70:-900:0:false:1:gui.xaero_default:false:0:0:false"));
+					"waypoint:gui.xaero_deathpoint:D:-600:70:-900:0:false:1:gui.xaero_default:false:0:0:false",
+					"waypoint:Wheat:W:-400:64:300:10:false:0:Farms:false:0:0:false",
+					"waypoint:Sugar Cane:S:-450:64:380:10:false:0:Farms:false:0:0:false",
+					"waypoint:Quarry:Q:1200:40:-300:6:false:0:Mining:false:0:0:false",
+					"waypoint:Deep Shaft:D:1250:-20:-380:6:false:0:Mining:false:0:0:false"));
+				java.nio.file.Path nether = mine.resolveSibling("dim%-1");
+				java.nio.file.Files.createDirectories(nether);
+				java.nio.file.Files.write(nether.resolve("mw$default_1.txt"), java.util.List.of(
+					"sets:Portals:gui.xaero_default",
+					"waypoint:Home Gate:G:10:64:10:3:false:0:Portals:false:0:0:false",
+					"waypoint:Harbour Gate:G:200:64:110:3:false:0:Portals:false:0:0:false",
+					"waypoint:Fortress:F:-80:70:60:5:false:0:gui.xaero_default:false:0:0:false"));
 			} catch (java.io.IOException e) {
 				LandmarkClient.LOGGER.warn("fixture failed", e);
 			}
 			state.reloadWaypoints(mc);
-		} else if (f == 95 && mc.gui.screen() instanceof MapScreen ms) {
+		} else if (f == 95 && landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
 			mapScreen = ms;
 			ms.view().setScale(0.17);
 			ms.view().centerOn(100, 50);
@@ -570,12 +579,12 @@ final class DevHarness {
 		} else if (f == 230) {
 			state.hideClaims = false;
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 			configScreen.devScrollTo(95);
 		} else if (f == 255) {
 			shot.run(); // 5: settings
 		} else if (f == 260) {
-			mc.setScreenAndShow(mapScreen);
+			landmark.compat.Platform.show(mc, mapScreen);
 			state.config.setColor(landmark.data.ColorKey.OPEN_FILL, 0xB300E676);
 			state.config.setColor(landmark.data.ColorKey.OPEN_OUTLINE, 0xFFFFFFFF);
 			state.config.setColor(landmark.data.ColorKey.OTHER_LANDS, 0x663F51B5);
@@ -591,14 +600,20 @@ final class DevHarness {
 			state.config.resetAllColors();
 			Palette.reload(state.config);
 			picker = new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL);
-			mc.setScreenAndShow(picker);
+			landmark.compat.Platform.show(mc, picker);
 		} else if (f == 325) {
 			shot.run(); // 7: colour picker
 		} else if (f == 330) {
-			mc.setScreenAndShow(new HelpScreen(mapScreen));
+			landmark.compat.Platform.show(mc, new HelpScreen(mapScreen));
 		} else if (f == 355) {
 			shot.run(); // 8: in-game instructions
-		} else if (f == 365) {
+		} else if (f == 360) {
+			state.config.crossDimensionWaypoints = true; // in memory only: shows the other dimension's sets under their own heading
+			landmark.compat.Platform.show(mc, new WaypointSetsScreen(mapScreen));
+		} else if (f == 385) {
+			shot.run(); // 9: the waypoint sets screen
+		} else if (f == 395) {
+			state.config.crossDimensionWaypoints = false;
 			mc.stop();
 		}
 	}
@@ -609,7 +624,7 @@ final class DevHarness {
 
 	/** Zooms onto an open-spawn land with an owner and other members and parks the cursor over it. */
 	private static void hoverOpenLand(net.minecraft.client.Minecraft mc) {
-		if (!(mc.gui.screen() instanceof MapScreen ms)) {
+		if (!(landmark.compat.Platform.screen(mc) instanceof MapScreen ms)) {
 			return;
 		}
 		DimensionMap map = LandmarkState.get().map(DEMO_DIMENSION);
@@ -642,7 +657,7 @@ final class DevHarness {
 				int pw = Math.max(150, Math.min(190, w.getGuiScaledWidth() / 3 + 24));
 				double gx = pw + (w.getGuiScaledWidth() - pw) / 2.0;
 				double gy = (w.getGuiScaledHeight() - 34) / 2.0;
-				org.lwjgl.glfw.GLFW.glfwSetCursorPos(w.handle(), gx * w.getGuiScale(), gy * w.getGuiScale());
+				org.lwjgl.glfw.GLFW.glfwSetCursorPos(landmark.compat.Platform.windowHandle(w), gx * w.getGuiScale(), gy * w.getGuiScale());
 				return;
 			}
 		}
@@ -659,7 +674,7 @@ final class DevHarness {
 				jmWorldTick(mc);
 				return;
 			}
-			if (framesOpen < 0 && mc.gui.screen() instanceof TitleScreen && ticks > 60) {
+			if (framesOpen < 0 && landmark.compat.Platform.screen(mc) instanceof TitleScreen && ticks > 60) {
 				devDimension = DEMO_DIMENSION;
 				LandmarkState state = LandmarkState.get();
 				String importZip = System.getProperty("landmark.dev.importzip");
@@ -686,11 +701,11 @@ final class DevHarness {
 					}
 					state.spawnsVersion++;
 				}
-				mc.setScreenAndShow(new MapScreen());
+				landmark.compat.Platform.show(mc, new MapScreen());
 				framesOpen = 0;
 			} else if (framesOpen >= 0) {
 				framesOpen++;
-				if (PERF && mc.gui.screen() instanceof MapScreen ms) {
+				if (PERF && landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
 					// 30-frame windows at different zoom levels: average CPU time spent building the frame
 					int[] marks = {100, 130, 160, 190, 220};
 					double[] scales = {1.0 / 128, 1.0 / 48, 1.0 / 24, 1.0 / 8, 1.0 / 3};
@@ -731,19 +746,19 @@ final class DevHarness {
 					return;
 				}
 				if (DIMENSIONS) {
-					if (mc.gui.screen() instanceof MapScreen ms) {
+					if (landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
 						if (framesOpen == 100 || framesOpen == 130 || framesOpen == 160) {
-							Screenshot.grab(mc, false);
+							landmark.compat.Platform.screenshot(mc);
 						}
 						if (framesOpen == 105 || framesOpen == 135 || framesOpen == 165 || framesOpen == 192) {
 							LandmarkClient.LOGGER.info("DIMENSIONS pressed, now: {}", ms.devCycleDimension());
 						}
 						if (framesOpen == 170) {
-							mc.setScreenAndShow(new MapScreen()); // closing and reopening the map must keep The End
+							landmark.compat.Platform.show(mc, new MapScreen()); // closing and reopening the map must keep The End
 						}
 						if (framesOpen == 185) {
 							LandmarkClient.LOGGER.info("DIMENSIONS reopened, config={}", LandmarkState.get().config.viewDimension);
-							Screenshot.grab(mc, false);
+							landmark.compat.Platform.screenshot(mc);
 						}
 						if (framesOpen == 200) {
 							mc.stop();
@@ -767,26 +782,26 @@ final class DevHarness {
 				}
 				// Screenshot script (saved in order to run/screenshots): overview, hover tooltip, search by owner, help.
 				if (framesOpen == 100) {
-					Screenshot.grab(mc, false);
+					landmark.compat.Platform.screenshot(mc);
 				}
 				if (framesOpen == 110) {
 					hoverOpenLand(mc);
 				}
 				if (framesOpen == 140) {
-					Screenshot.grab(mc, false);
+					landmark.compat.Platform.screenshot(mc);
 				}
-				if (framesOpen == 150 && mc.gui.screen() instanceof MapScreen ms) {
+				if (framesOpen == 150 && landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
 					ms.devSearch(searchQuery);
 					ms.devSelectFirst();
 				}
 				if (framesOpen == 180) {
-					Screenshot.grab(mc, false);
+					landmark.compat.Platform.screenshot(mc);
 				}
 				if (framesOpen == 190) {
-					mc.setScreenAndShow(new HelpScreen(mc.gui.screen()));
+					landmark.compat.Platform.show(mc, new HelpScreen(landmark.compat.Platform.screen(mc)));
 				}
 				if (framesOpen == 215) {
-					Screenshot.grab(mc, false);
+					landmark.compat.Platform.screenshot(mc);
 				}
 				if (framesOpen == 235) {
 					mc.stop();

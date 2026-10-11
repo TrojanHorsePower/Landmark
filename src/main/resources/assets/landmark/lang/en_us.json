@@ -1,6 +1,7 @@
 {
 	"key.landmark.open": "Open Landmark spawn map",
 	"key.category.landmark.main": "Landmark",
+	"key.categories.landmark.main": "Landmark",
 	"landmark.screen.title": "Spawn map",
 	"landmark.search": "Search",
 	"landmark.search.hint": "Search land or player",

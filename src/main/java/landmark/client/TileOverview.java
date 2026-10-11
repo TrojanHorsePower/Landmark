@@ -17,8 +17,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import landmark.LandmarkClient;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.Identifier;
+import landmark.compat.LandmarkTexture;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -34,13 +33,11 @@ public final class TileOverview implements AutoCloseable {
 
 	private record Ready(int tx, int tz, int[] abgr) {}
 
-	private record Entry(Identifier id, DynamicTexture texture) {}
-
 	private final Minecraft mc;
 	private final Path dir;
 	private final String idPrefix;
 	private final Queue<Ready> done = new ConcurrentLinkedQueue<>();
-	private final Map<Long, Entry> textures = new HashMap<>();
+	private final Map<Long, LandmarkTexture> textures = new HashMap<>();
 	private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
 		Thread t = new Thread(r, "landmark-overview");
 		t.setDaemon(true);
@@ -98,7 +95,7 @@ public final class TileOverview implements AutoCloseable {
 	static int[] downscale(NativeImage image, int size) {
 		int w = image.getWidth();
 		int h = image.getHeight();
-		int[] src = image.getPixelsABGR();
+		int[] src = landmark.compat.Pixels.abgr(image);
 		int[] out = new int[size * size];
 		for (int y = 0; y < size; y++) {
 			int y0 = y * h / size;
@@ -138,20 +135,19 @@ public final class TileOverview implements AutoCloseable {
 			NativeImage image = new NativeImage(n, n, false);
 			for (int y = 0; y < n; y++) {
 				for (int x = 0; x < n; x++) {
-					image.setPixelABGR(x, y, r.abgr()[y * n + x]);
+					landmark.compat.Pixels.setAbgr(image, x, y, r.abgr()[y * n + x]);
 				}
 			}
-			Identifier id = Identifier.fromNamespaceAndPath(LandmarkClient.MOD_ID_FOR_ASSETS, idPrefix + "/" + r.tx() + "_" + r.tz());
-			DynamicTexture t = new DynamicTexture(() -> "landmark overview " + r.tx() + "_" + r.tz(), image);
-			mc.getTextureManager().register(id, t);
+			LandmarkTexture t = new LandmarkTexture(() -> "landmark overview " + r.tx() + "_" + r.tz(), image,
+				idPrefix + "/" + r.tx() + "_" + r.tz(), true);
+			t.register(mc);
 			t.upload();
-			textures.put(key(r.tx(), r.tz()), new Entry(id, t));
+			textures.put(key(r.tx(), r.tz()), t);
 		}
 	}
 
-	public @Nullable DynamicTexture get(int tx, int tz) {
-		Entry e = textures.get(key(tx, tz));
-		return e == null ? null : e.texture();
+	public @Nullable LandmarkTexture get(int tx, int tz) {
+		return textures.get(key(tx, tz));
 	}
 
 	public boolean complete() {
@@ -166,8 +162,8 @@ public final class TileOverview implements AutoCloseable {
 	public void close() {
 		closed = true;
 		worker.shutdownNow();
-		for (Entry e : textures.values()) {
-			mc.getTextureManager().release(e.id());
+		for (LandmarkTexture t : textures.values()) {
+			t.release(mc);
 		}
 		textures.clear();
 		done.clear();
