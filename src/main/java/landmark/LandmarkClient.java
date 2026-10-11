@@ -29,7 +29,7 @@ public class LandmarkClient implements ClientModInitializer {
 			LandmarkState.get().tickWatcher(mc);
 			while (openKey.consumeClick()) {
 				if (mc.level != null && landmark.compat.Platform.screen(mc) == null) {
-					mc.setScreenAndShow(new MapScreen());
+					landmark.compat.Platform.show(mc, new MapScreen());
 				}
 			}
 		});

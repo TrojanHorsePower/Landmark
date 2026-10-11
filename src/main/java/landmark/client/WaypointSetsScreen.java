@@ -10,12 +10,12 @@ import landmark.waypoints.DimensionScale;
 import landmark.waypoints.ExternalWaypoint;
 import landmark.waypoints.WaypointSets;
 import landmark.compat.Gfx;
+import landmark.compat.KeyPress;
 import landmark.compat.LandmarkScreen;
+import landmark.compat.Mouse;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -271,8 +271,8 @@ public class WaypointSetsScreen extends LandmarkScreen {
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
-		if (super.mouseClicked(e, doubleClick)) {
+	protected boolean onMouseClicked(Mouse e, boolean doubleClick) {
+		if (superMouseClicked(e, doubleClick)) {
 			return true;
 		}
 		int x = contentLeft();
@@ -296,12 +296,12 @@ public class WaypointSetsScreen extends LandmarkScreen {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent e) {
+	protected boolean onKeyPressed(KeyPress e) {
 		if (maxScroll() > 0 && (e.isUp() || e.isDown())) {
 			scroll = Math.max(0, Math.min(maxScroll(), scroll + (e.isDown() ? 1 : -1)));
 			return true;
 		}
-		return super.keyPressed(e);
+		return superKeyPressed(e);
 	}
 
 	/** Dev harness: presses the dimension button. */
@@ -332,7 +332,7 @@ public class WaypointSetsScreen extends LandmarkScreen {
 
 	@Override
 	public void onClose() {
-		minecraft.setScreenAndShow(parent);
+		landmark.compat.Platform.show(minecraft, parent);
 	}
 
 	@Override

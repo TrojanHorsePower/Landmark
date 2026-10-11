@@ -9,7 +9,9 @@ import landmark.LandmarkClient;
 import landmark.data.ColorKey;
 import landmark.data.ExportPreset;
 import landmark.compat.Gfx;
+import landmark.compat.KeyPress;
 import landmark.compat.LandmarkScreen;
+import landmark.compat.Mouse;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -48,7 +50,7 @@ public class HelpScreen extends LandmarkScreen {
 		copyButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.copy"), b -> copyScript())
 			.bounds(x + half + 4, row1, half, 20).build());
 		addRenderableWidget(Button.builder(Component.translatable("landmark.settings"),
-			b -> minecraft.setScreenAndShow(new ConfigScreen(this))).bounds(x, row2, half, 20).build());
+			b -> landmark.compat.Platform.show(minecraft, new ConfigScreen(this))).bounds(x, row2, half, 20).build());
 		addRenderableWidget(Button.builder(Component.translatable("landmark.help.back"), b -> onClose())
 			.bounds(x + half + 4, row2, half, 20).build());
 	}
@@ -190,7 +192,7 @@ public class HelpScreen extends LandmarkScreen {
 	}
 
 	@Override
-	public boolean keyPressed(net.minecraft.client.input.KeyEvent e) {
+	protected boolean onKeyPressed(KeyPress e) {
 		if (maxScroll() > 0) {
 			int step = e.isUp() ? -14 : e.isDown() ? 14 : e.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP ? -(viewBottom - viewTop)
 				: e.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN ? viewBottom - viewTop : 0;
@@ -199,33 +201,33 @@ public class HelpScreen extends LandmarkScreen {
 				return true;
 			}
 		}
-		return super.keyPressed(e);
+		return superKeyPressed(e);
 	}
 
 	@Override
-	public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent e, boolean doubleClick) {
+	protected boolean onMouseClicked(Mouse e, boolean doubleClick) {
 		if (maxScroll() > 0 && e.button() == 0 && e.x() >= contentLeft() + contentWidth() && e.x() <= contentLeft() + contentWidth() + 12
 			&& e.y() >= viewTop && e.y() <= viewBottom) {
 			draggingBar = true;
 			dragBar(e.y());
 			return true;
 		}
-		return super.mouseClicked(e, doubleClick);
+		return superMouseClicked(e, doubleClick);
 	}
 
 	@Override
-	public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent e, double dx, double dy) {
+	protected boolean onMouseDragged(Mouse e, double dx, double dy) {
 		if (draggingBar) {
 			dragBar(e.y());
 			return true;
 		}
-		return super.mouseDragged(e, dx, dy);
+		return superMouseDragged(e, dx, dy);
 	}
 
 	@Override
-	public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent e) {
+	protected boolean onMouseReleased(Mouse e) {
 		draggingBar = false;
-		return super.mouseReleased(e);
+		return superMouseReleased(e);
 	}
 
 	private void dragBar(double my) {
@@ -243,7 +245,7 @@ public class HelpScreen extends LandmarkScreen {
 
 	@Override
 	public void onClose() {
-		minecraft.setScreenAndShow(parent);
+		landmark.compat.Platform.show(minecraft, parent);
 	}
 
 	@Override

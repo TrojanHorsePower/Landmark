@@ -22,6 +22,11 @@ public final class Platform {
 		return mapping.saveString().equals(key.getName());
 	}
 
+	/** Opens a screen. */
+	public static void show(Minecraft mc, Screen screen) {
+		mc.setScreenAndShow(screen);
+	}
+
 	/** Registers a key binding in the mod's own category (it then shows up in Options > Controls). */
 	public static KeyMapping registerKey(String name, int keyCode, String categoryPath) {
 		return net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.registerKeyBinding(new KeyMapping(name, keyCode,
@@ -55,5 +60,10 @@ public final class Platform {
 	/** Dev harness: the dimension key for an identifier string. */
 	public static net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimensionKey(String id) {
 		return net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, net.minecraft.resources.Identifier.parse(id));
+	}
+
+	/** Dev harness: the GLFW handle of the game window. */
+	public static long windowHandle(com.mojang.blaze3d.platform.Window w) {
+		return w.handle();
 	}
 }

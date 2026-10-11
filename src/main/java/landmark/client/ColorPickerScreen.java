@@ -5,11 +5,12 @@ import landmark.data.ColorKey;
 import landmark.data.ColorMath;
 import landmark.LandmarkClient;
 import landmark.compat.Gfx;
+import landmark.compat.KeyPress;
 import landmark.compat.LandmarkScreen;
+import landmark.compat.Mouse;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import landmark.compat.LandmarkTexture;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
@@ -130,12 +131,12 @@ public class ColorPickerScreen extends LandmarkScreen {
 		state.config.setColor(key, current());
 		Palette.reload(state.config);
 		state.saveConfig();
-		minecraft.setScreenAndShow(parent);
+		landmark.compat.Platform.show(minecraft, parent);
 	}
 
 	@Override
 	public void onClose() {
-		minecraft.setScreenAndShow(parent);
+		landmark.compat.Platform.show(minecraft, parent);
 	}
 
 	@Override
@@ -241,8 +242,8 @@ public class ColorPickerScreen extends LandmarkScreen {
 	// ---- input ----
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
-		if (super.mouseClicked(e, doubleClick)) {
+	protected boolean onMouseClicked(Mouse e, boolean doubleClick) {
+		if (superMouseClicked(e, doubleClick)) {
 			return true;
 		}
 		if (e.button() != 0) {
@@ -265,18 +266,18 @@ public class ColorPickerScreen extends LandmarkScreen {
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
+	protected boolean onMouseDragged(Mouse e, double dx, double dy) {
 		if (drag != Drag.NONE) {
 			dragTo(e.x(), e.y());
 			return true;
 		}
-		return super.mouseDragged(e, dx, dy);
+		return superMouseDragged(e, dx, dy);
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent e) {
+	protected boolean onMouseReleased(Mouse e) {
 		drag = Drag.NONE;
-		return super.mouseReleased(e);
+		return superMouseReleased(e);
 	}
 
 	private void dragTo(double mx, double my) {

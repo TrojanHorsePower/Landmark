@@ -59,7 +59,7 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("SCENARIO claims hidden={}", state.hideClaims);
 		} else if (f == 150) {
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 		} else if (f == 175) {
 			shot.run();
 		} else if (f == 180) {
@@ -72,11 +72,11 @@ final class DevHarness {
 		} else if (f == 230) {
 			shot.run();
 		} else if (f == 235) {
-			mc.setScreenAndShow(new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL));
+			landmark.compat.Platform.show(mc, new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL));
 		} else if (f == 260) {
 			shot.run();
 		} else if (f == 265) {
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 		} else if (f == 270) {
 			var key = LandmarkClient.openKey;
 			String before = key.saveString();
@@ -93,14 +93,14 @@ final class DevHarness {
 		} else if (f == 290) {
 			shot.run();
 		} else if (f == 295) {
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 			LandmarkClient.openKey.setKey(LandmarkClient.openKey.getDefaultKey());
 			net.minecraft.client.KeyMapping.resetMapping();
 			LandmarkClient.LOGGER.info("SCENARIO key restored to {}", LandmarkClient.openKey.saveString());
 		} else if (f == 300) {
 			state.setNotice(null, false);
 			var help = new HelpScreen(mapScreen);
-			mc.setScreenAndShow(help);
+			landmark.compat.Platform.show(mc, help);
 			String clip = help.devCopy();
 			LandmarkClient.LOGGER.info("SCENARIO copied script ({} chars) has tileFolder: 2 = {}, tileMode: 'full' = {}, is the real script = {}", clip.length(),
 				clip.contains("tileFolder: 2"), clip.contains("tileMode: 'full'"), clip.contains("buildZip"));
@@ -112,7 +112,7 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("SCENARIO help-page import notice: {} (error={})", state.notice, state.noticeIsError);
 			shot.run();
 		} else if (f == 345) {
-			mc.setScreenAndShow(mapScreen); // back to the map: it must rebuild itself from the freshly imported data
+			landmark.compat.Platform.show(mc, mapScreen); // back to the map: it must rebuild itself from the freshly imported data
 		} else if (f == 385) {
 			shot.run();
 		} else if (f == 390 && mapScreen instanceof MapScreen ms) {
@@ -127,7 +127,7 @@ final class DevHarness {
 		} else if (f == 435) {
 			var factory = new LandmarkModMenu().getModConfigScreenFactory();
 			LandmarkClient.LOGGER.info("SCENARIO modmenu factory creates {}", factory.create(mapScreen).getClass().getSimpleName());
-			mc.setScreenAndShow(com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(mapScreen));
+			landmark.compat.Platform.show(mc, com.terraformersmc.modmenu.api.ModMenuApi.createModsScreen(mapScreen));
 		} else if (f == 460) {
 			state.config.setExportPreset(landmark.data.ExportPreset.LOW);
 			mc.stop();
@@ -177,7 +177,7 @@ final class DevHarness {
 		} else if (f == 115) {
 			var screen = new WaypointSetsScreen(mapScreen);
 			configScreen = null;
-			mc.setScreenAndShow(screen);
+			landmark.compat.Platform.show(mc, screen);
 		} else if (f == 125) {
 			shot.run();
 		} else if (f == 126 && landmark.compat.Platform.screen(mc) instanceof WaypointSetsScreen s) {
@@ -197,7 +197,7 @@ final class DevHarness {
 		} else if (f == 139) {
 			shot.run();
 		} else if (f == 140) {
-			mc.setScreenAndShow(mapScreen);
+			landmark.compat.Platform.show(mc, mapScreen);
 		} else if (f == 142 && landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
 			LandmarkClient.LOGGER.info("WPSETS map button after picker change: {}", ms.devDimensionLabel());
 			ms.devCycleDimension(); // End
@@ -215,7 +215,7 @@ final class DevHarness {
 			ms.view().centerOn(0, 0);
 			state.config.waypointSets = "active";
 		} else if (f == 144) {
-			mc.setScreenAndShow(new WaypointSetsScreen(mapScreen));
+			landmark.compat.Platform.show(mc, new WaypointSetsScreen(mapScreen));
 		} else if (f == 146 && landmark.compat.Platform.screen(mc) instanceof WaypointSetsScreen s) {
 			LandmarkClient.LOGGER.info("WPSETS cross picker rows: {}", s.devRows());
 			shot.run();
@@ -225,7 +225,7 @@ final class DevHarness {
 		} else if (f == 148) {
 			shot.run();
 		} else if (f == 149) {
-			mc.setScreenAndShow(mapScreen);
+			landmark.compat.Platform.show(mc, mapScreen);
 			state.config.waypointSets = "active";
 			state.config.hiddenWaypointSets = new java.util.ArrayList<>();
 		} else if (f == 150) {
@@ -258,7 +258,7 @@ final class DevHarness {
 			state.setNotice("Imported 130 lands for minecraft:overworld with 4 map tiles (6 map shapes could not be read and were skipped)", false);
 			state.config.setExportPreset(landmark.data.ExportPreset.HIGH);
 			var help = new HelpScreen(mapScreen);
-			mc.setScreenAndShow(help);
+			landmark.compat.Platform.show(mc, help);
 			configScreen = null;
 			helpScreen = help;
 		} else if (f == 160) {
@@ -269,7 +269,7 @@ final class DevHarness {
 			shot.run(); // 4: help page scrolled to the end
 		} else if (f == 190) {
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 		} else if (f == 210) {
 			shot.run(); // 5: settings, top
 		} else if (f == 215) {
@@ -282,7 +282,7 @@ final class DevHarness {
 			shot.run(); // 7: settings, colours
 		} else if (f == 265) {
 			picker = new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL);
-			mc.setScreenAndShow(picker);
+			landmark.compat.Platform.show(mc, picker);
 		} else if (f == 285) {
 			shot.run(); // 8: colour picker
 		} else if (f == 290) {
@@ -316,7 +316,7 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("SPAWNS after switching saving back ON: visibleOnMap={}", state.visibleSpawns(DEMO_DIMENSION).size());
 		} else if (f == 140) {
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 			configScreen.devScrollTo(70);
 		} else if (f == 165) {
 			shot.run(); // 3: settings row with the count and the Delete button
@@ -327,7 +327,7 @@ final class DevHarness {
 				java.nio.file.Files.exists(file) ? readSmall(file) : "(no file)");
 			shot.run(); // 4: count 0, button disabled
 		} else if (f == 200) {
-			mc.setScreenAndShow(mapScreen);
+			landmark.compat.Platform.show(mc, mapScreen);
 		} else if (f == 225) {
 			shot.run(); // 5: map without pins
 		} else if (f == 235) {
@@ -396,7 +396,7 @@ final class DevHarness {
 		} else if (f == 180) {
 			state.config.showExternalWaypoints = true;
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 			configScreen.devScrollTo(140);
 		} else if (f == 205) {
 			shot.run(); // 4: settings toggle with the 'found' line
@@ -451,7 +451,7 @@ final class DevHarness {
 				if (worldTicks == 100) {
 					var wps = state.external.forDimension("minecraft:overworld");
 					LandmarkClient.LOGGER.info("JMWORLD read {} waypoints: {}", wps.size(), wps.stream().map(w -> w.source() + ":" + w.name() + "@" + w.x() + "," + w.y() + "," + w.z() + " #" + Integer.toHexString(w.argb()) + " group='" + w.group() + "' active=" + w.active()).toList());
-					mc.setScreenAndShow(new MapScreen());
+					landmark.compat.Platform.show(mc, new MapScreen());
 					worldStage = 3;
 					worldTicks = 0;
 				}
@@ -568,12 +568,12 @@ final class DevHarness {
 		} else if (f == 230) {
 			state.hideClaims = false;
 			configScreen = new ConfigScreen(mapScreen);
-			mc.setScreenAndShow(configScreen);
+			landmark.compat.Platform.show(mc, configScreen);
 			configScreen.devScrollTo(95);
 		} else if (f == 255) {
 			shot.run(); // 5: settings
 		} else if (f == 260) {
-			mc.setScreenAndShow(mapScreen);
+			landmark.compat.Platform.show(mc, mapScreen);
 			state.config.setColor(landmark.data.ColorKey.OPEN_FILL, 0xB300E676);
 			state.config.setColor(landmark.data.ColorKey.OPEN_OUTLINE, 0xFFFFFFFF);
 			state.config.setColor(landmark.data.ColorKey.OTHER_LANDS, 0x663F51B5);
@@ -589,11 +589,11 @@ final class DevHarness {
 			state.config.resetAllColors();
 			Palette.reload(state.config);
 			picker = new ColorPickerScreen(configScreen, landmark.data.ColorKey.OPEN_FILL);
-			mc.setScreenAndShow(picker);
+			landmark.compat.Platform.show(mc, picker);
 		} else if (f == 325) {
 			shot.run(); // 7: colour picker
 		} else if (f == 330) {
-			mc.setScreenAndShow(new HelpScreen(mapScreen));
+			landmark.compat.Platform.show(mc, new HelpScreen(mapScreen));
 		} else if (f == 355) {
 			shot.run(); // 8: in-game instructions
 		} else if (f == 365) {
@@ -640,7 +640,7 @@ final class DevHarness {
 				int pw = Math.max(150, Math.min(190, w.getGuiScaledWidth() / 3 + 24));
 				double gx = pw + (w.getGuiScaledWidth() - pw) / 2.0;
 				double gy = (w.getGuiScaledHeight() - 34) / 2.0;
-				org.lwjgl.glfw.GLFW.glfwSetCursorPos(w.handle(), gx * w.getGuiScale(), gy * w.getGuiScale());
+				org.lwjgl.glfw.GLFW.glfwSetCursorPos(landmark.compat.Platform.windowHandle(w), gx * w.getGuiScale(), gy * w.getGuiScale());
 				return;
 			}
 		}
@@ -684,7 +684,7 @@ final class DevHarness {
 					}
 					state.spawnsVersion++;
 				}
-				mc.setScreenAndShow(new MapScreen());
+				landmark.compat.Platform.show(mc, new MapScreen());
 				framesOpen = 0;
 			} else if (framesOpen >= 0) {
 				framesOpen++;
@@ -737,7 +737,7 @@ final class DevHarness {
 							LandmarkClient.LOGGER.info("DIMENSIONS pressed, now: {}", ms.devCycleDimension());
 						}
 						if (framesOpen == 170) {
-							mc.setScreenAndShow(new MapScreen()); // closing and reopening the map must keep The End
+							landmark.compat.Platform.show(mc, new MapScreen()); // closing and reopening the map must keep The End
 						}
 						if (framesOpen == 185) {
 							LandmarkClient.LOGGER.info("DIMENSIONS reopened, config={}", LandmarkState.get().config.viewDimension);
@@ -781,7 +781,7 @@ final class DevHarness {
 					landmark.compat.Platform.screenshot(mc);
 				}
 				if (framesOpen == 190) {
-					mc.setScreenAndShow(new HelpScreen(landmark.compat.Platform.screen(mc)));
+					landmark.compat.Platform.show(mc, new HelpScreen(landmark.compat.Platform.screen(mc)));
 				}
 				if (framesOpen == 215) {
 					landmark.compat.Platform.screenshot(mc);

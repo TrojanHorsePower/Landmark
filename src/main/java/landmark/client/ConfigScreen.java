@@ -12,7 +12,9 @@ import landmark.data.ExportPreset;
 import net.minecraft.client.KeyMapping;
 import landmark.compat.Gfx;
 import landmark.compat.LandmarkListEntry;
+import landmark.compat.KeyPress;
 import landmark.compat.LandmarkScreen;
+import landmark.compat.Mouse;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.CycleButton;
@@ -21,8 +23,6 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
@@ -144,7 +144,7 @@ public class ConfigScreen extends LandmarkScreen {
 	/** Starts listening on the open-map key and presses {@code glfwKey}, like a player would. */
 	void devRebind(int glfwKey) {
 		listening = LandmarkClient.openKey;
-		keyPressed(new KeyEvent(glfwKey, 0, 0));
+		onKeyPressed(new KeyPress(glfwKey, 0, 0));
 	}
 
 	/** Adds explanatory text as rows of up to two lines, wrapped to the list's real width so none of it is cut off. */
@@ -169,23 +169,23 @@ public class ConfigScreen extends LandmarkScreen {
 	}
 
 	private void confirmDeleteSaved() {
-		minecraft.setScreenAndShow(new ConfirmScreen(yes -> {
+		landmark.compat.Platform.show(minecraft, new ConfirmScreen(yes -> {
 			if (yes) {
 				state.deleteSavedSpawns();
 			}
-			minecraft.setScreenAndShow(this);
+			landmark.compat.Platform.show(minecraft, this);
 			rebuild();
 		}, Component.translatable("landmark.config.savedspawns.confirm.title"),
 			Component.translatable("landmark.config.savedspawns.confirm.message", state.learned.size())));
 	}
 
 	private void confirmResetAll() {
-		minecraft.setScreenAndShow(new ConfirmScreen(yes -> {
+		landmark.compat.Platform.show(minecraft, new ConfirmScreen(yes -> {
 			if (yes) {
 				state.config.resetAllColors();
 				Palette.reload(state.config);
 			}
-			minecraft.setScreenAndShow(this);
+			landmark.compat.Platform.show(minecraft, this);
 		}, Component.translatable("landmark.colors.resetall.title"), Component.translatable("landmark.colors.resetall.message")));
 	}
 
@@ -203,7 +203,7 @@ public class ConfigScreen extends LandmarkScreen {
 
 	@Override
 	public void onClose() {
-		minecraft.setScreenAndShow(parent);
+		landmark.compat.Platform.show(minecraft, parent);
 	}
 
 	@Override
@@ -215,26 +215,26 @@ public class ConfigScreen extends LandmarkScreen {
 	// ---- key capture ----
 
 	@Override
-	public boolean keyPressed(KeyEvent e) {
+	protected boolean onKeyPressed(KeyPress e) {
 		if (listening != null) {
 			if (!e.isEscape()) {
-				bind(listening, InputConstants.getKey(e));
+				bind(listening, e.toKey());
 			}
 			listening = null;
 			return true;
 		}
-		return super.keyPressed(e);
+		return superKeyPressed(e);
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
+	protected boolean onMouseClicked(Mouse e, boolean doubleClick) {
 		if (listening != null) {
 			KeyMapping target = listening;
 			listening = null;
 			bind(target, InputConstants.Type.MOUSE.getOrCreate(e.button()));
 			return true;
 		}
-		return super.mouseClicked(e, doubleClick);
+		return superMouseClicked(e, doubleClick);
 	}
 
 	private List<KeyMapping> conflicts(KeyMapping target, InputConstants.Key key) {
@@ -263,11 +263,11 @@ public class ConfigScreen extends LandmarkScreen {
 			return;
 		}
 		String names = String.join(", ", clash.stream().map(k -> Component.translatable(k.getName()).getString()).toList());
-		minecraft.setScreenAndShow(new ConfirmScreen(yes -> {
+		landmark.compat.Platform.show(minecraft, new ConfirmScreen(yes -> {
 			if (yes) {
 				apply(target, key);
 			}
-			minecraft.setScreenAndShow(this);
+			landmark.compat.Platform.show(minecraft, this);
 		}, Component.translatable("landmark.config.conflict.title"),
 			Component.translatable("landmark.config.conflict.message", key.getDisplayName(), names)));
 	}
@@ -481,7 +481,7 @@ public class ConfigScreen extends LandmarkScreen {
 			this.key = key;
 			swatch = add(Button.builder(Component.empty(), b -> {
 				savedScroll = list.scrollAmount();
-				minecraft.setScreenAndShow(new ColorPickerScreen(ConfigScreen.this, key));
+				landmark.compat.Platform.show(minecraft, new ColorPickerScreen(ConfigScreen.this, key));
 			}).bounds(0, 0, 26, 20).build());
 			hex = add(new EditBox(font, 0, 0, 72, 18, Component.translatable(key.translationKey())));
 			hex.setMaxLength(9);

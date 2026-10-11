@@ -14,13 +14,13 @@ import landmark.waypoints.ExternalWaypoint;
 import landmark.map.ChunkOwnerGrid;
 import landmark.map.MapView;
 import landmark.compat.Gfx;
+import landmark.compat.KeyPress;
 import landmark.compat.LandmarkScreen;
+import landmark.compat.Mouse;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import landmark.compat.LandmarkTexture;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
@@ -155,15 +155,15 @@ public class MapScreen extends LandmarkScreen {
 		claimsButton = addRenderableWidget(Button.builder(Component.translatable("landmark.claims.hide"), b -> toggleClaims())
 			.bounds(4, 46, bw, 18).build());
 		settingsButton = addRenderableWidget(Button.builder(Component.translatable("landmark.settings"),
-			b -> minecraft.setScreenAndShow(new ConfigScreen(this))).bounds(8 + bw, 46, bw2, 18).build());
+			b -> landmark.compat.Platform.show(minecraft, new ConfigScreen(this))).bounds(8 + bw, 46, bw2, 18).build());
 		dimensionButton = addRenderableWidget(Button.builder(Component.empty(), b -> cycleDimension())
 			.bounds(4, 68, panelW - 8, 18).build());
 		waypointsButton = addRenderableWidget(Button.builder(Component.empty(),
-			b -> minecraft.setScreenAndShow(new WaypointSetsScreen(this))).bounds(4, 90, panelW - 8, 18).build());
+			b -> landmark.compat.Platform.show(minecraft, new WaypointSetsScreen(this))).bounds(4, 90, panelW - 8, 18).build());
 		teleportButton = addRenderableWidget(Button.builder(Component.translatable("landmark.teleport"), b -> teleportToSelection())
 			.bounds(4, height - 22, panelW - 8, 18).build());
 		helpButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.button"),
-			b -> minecraft.setScreenAndShow(new HelpScreen(this)))
+			b -> landmark.compat.Platform.show(minecraft, new HelpScreen(this)))
 			.bounds(Math.max(panelW + 4, width - 102), 4, Math.min(98, width - Math.max(panelW + 4, width - 102) - 4), 16).build());
 		setInitialFocus(search);
 		if (state.config.refreshOnOpen && state.openSpawns == null) {
@@ -761,8 +761,8 @@ public class MapScreen extends LandmarkScreen {
 	// ---- input ----
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
-		if (super.mouseClicked(e, doubleClick)) {
+	protected boolean onMouseClicked(Mouse e, boolean doubleClick) {
+		if (superMouseClicked(e, doubleClick)) {
 			return true;
 		}
 		if (e.button() != 0) {
@@ -790,17 +790,17 @@ public class MapScreen extends LandmarkScreen {
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
+	protected boolean onMouseDragged(Mouse e, double dx, double dy) {
 		if (pressedInMap) {
 			dragged += Math.abs(dx) + Math.abs(dy);
 			view.panByPixels(dx, dy);
 			return true;
 		}
-		return super.mouseDragged(e, dx, dy);
+		return superMouseDragged(e, dx, dy);
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent e) {
+	protected boolean onMouseReleased(Mouse e) {
 		if (pressedInMap) {
 			pressedInMap = false;
 			if (dragged < 4 && map != null) {
@@ -816,7 +816,7 @@ public class MapScreen extends LandmarkScreen {
 			}
 			return true;
 		}
-		return super.mouseReleased(e);
+		return superMouseReleased(e);
 	}
 
 	@Override
@@ -833,14 +833,14 @@ public class MapScreen extends LandmarkScreen {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent e) {
+	protected boolean onKeyPressed(KeyPress e) {
 		if (e.isConfirmation() && search.isFocused()) {
 			if (!entries.isEmpty()) {
 				select(entries.get(0));
 			}
 			return true;
 		}
-		return super.keyPressed(e);
+		return superKeyPressed(e);
 	}
 
 	@Override
@@ -932,18 +932,18 @@ public class MapScreen extends LandmarkScreen {
 			go(target);
 			return;
 		}
-		minecraft.setScreenAndShow(new ConfirmScreen(yes -> {
+		landmark.compat.Platform.show(minecraft, new ConfirmScreen(yes -> {
 			if (yes) {
 				go(target);
 			} else {
-				minecraft.setScreenAndShow(this);
+				landmark.compat.Platform.show(minecraft, this);
 			}
 		}, Component.translatable("landmark.confirm.title"), Component.translatable("landmark.confirm.message", target)));
 	}
 
 	private void go(String name) {
 		state.beginWatching(name);
-		minecraft.setScreenAndShow(null);
+		landmark.compat.Platform.show(minecraft, null);
 		var connection = minecraft.getConnection();
 		if (connection != null) {
 			connection.sendCommand("lands spawn " + name);
