@@ -2,6 +2,9 @@
 def eraProps = new Properties()
 file("eras/${project.era}.properties").withInputStream { eraProps.load(it) }
 eraProps.each { k, v ->
+	if (gradle.startParameter.projectProperties.containsKey(k)) {
+		return // given on the command line (for example -Pminecraft_version=1.21.9 to test another version in the range)
+	}
 	if (project.hasProperty(k)) {
 		project.setProperty(k, v)
 	} else {
@@ -10,8 +13,9 @@ eraProps.each { k, v ->
 }
 project.era_sources.split(",").each { sourceSets.main.java.srcDir "src/era/${it.trim()}/java" }
 
-// Every jar names the Minecraft version it is for, e.g. landmark-0.2.1+mc26.2.jar
-version = "${project.mod_version}+mc${project.era}"
+// Every jar names the Minecraft version it is for, e.g. landmark-0.2.1+mc26.2.jar,
+// A jar that covers several Minecraft versions names the first and the last: landmark-0.2.1+mc1.21.9-1.21.10.jar
+version = "${project.mod_version}+mc${project.mc_label}"
 group = project.maven_group
 base.archivesName = project.archives_base_name
 
@@ -74,9 +78,11 @@ processResources {
 	def v = project.version
 	inputs.property "version", v
 	def range = project.minecraft_range
+	def javaV = project.java_version
 	inputs.property "minecraftRange", range
+	inputs.property "javaVersion", javaV
 	filesMatching("fabric.mod.json") {
-		expand "version": v, "minecraftRange": range
+		expand "version": v, "minecraftRange": range, "javaVersion": javaV
 	}
 }
 
@@ -99,4 +105,14 @@ jar {
 
 test {
 	useJUnitPlatform()
+}
+
+// ./gradlew runClient -Prun_java=21 starts the dev client on that Java version, to check the oldest supported one
+// (the build itself still runs on the newer JDK that Loom needs).
+if (project.hasProperty('run_java')) {
+	tasks.withType(JavaExec).configureEach {
+		javaLauncher = javaToolchains.launcherFor {
+			languageVersion = JavaLanguageVersion.of(Integer.parseInt(project.run_java))
+		}
+	}
 }
