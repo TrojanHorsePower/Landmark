@@ -2,6 +2,16 @@
 
 [![build](https://github.com/TrojanHorsePower/Landmark/actions/workflows/build.yml/badge.svg)](https://github.com/TrojanHorsePower/Landmark/actions/workflows/build.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+<!-- Placeholders: uncomment and fill in when the project pages exist.
+[![Modrinth](https://img.shields.io/modrinth/dt/PROJECT-SLUG?logo=modrinth&label=Modrinth)](https://modrinth.com/mod/PROJECT-SLUG)
+[![CurseForge](https://img.shields.io/curseforge/dt/PROJECT-ID?logo=curseforge&label=CurseForge)](https://www.curseforge.com/minecraft/mc-mods/PROJECT-SLUG)
+-->
+
+[Website](https://trojanhorsepower.github.io/Landmark/) · [Wiki](https://github.com/TrojanHorsePower/Landmark/wiki) ·
+[Releases](https://github.com/TrojanHorsePower/Landmark/releases) · [Changelog](CHANGELOG.md)
+<!-- Placeholders: uncomment and fill in when the project pages exist.
+· [Modrinth](https://modrinth.com/mod/PROJECT-SLUG) · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/PROJECT-SLUG)
+-->
 
 An in-game map of land claims for fast `/lands spawn <land>` teleporting. A client-side Fabric mod for Minecraft 1.21 to 26.2.
 
@@ -41,6 +51,7 @@ The screenshots in this README use synthetic data (fake lands, fake owners, gene
 
 You need [Fabric Loader](https://fabricmc.net/) and [Fabric API](https://modrinth.com/mod/fabric-api) for your Minecraft
 version. Download the jar for your version from the [releases page](https://github.com/TrojanHorsePower/Landmark/releases)
+<!-- (or, once listed, from Modrinth / CurseForge) -->
 and put it in your `mods` folder. It only loads on the client; nothing is needed on the server.
 
 Each release has one jar per range of Minecraft versions. The Minecraft version is in the file name:

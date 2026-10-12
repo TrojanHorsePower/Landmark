@@ -1,17 +1,21 @@
 name: build
 on:
-  # Skip changes that cannot affect the jars. LICENSE and tools/export.js are packaged into the jar, so they still build.
+  # Skip changes that cannot affect the jars (docs, website, wiki). LICENSE and tools/export.js are packaged into the jar, so they still build.
   push:
     branches: [main]
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'site/**'
+      - 'wiki/**'
       - '.gitignore'
       - 'tools/make-*.js'
   pull_request:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'site/**'
+      - 'wiki/**'
       - '.gitignore'
       - 'tools/make-*.js'
 

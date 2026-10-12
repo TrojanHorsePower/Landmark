@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Landmark: a Lands claims map for Minecraft</title>
+<meta name="description" content="A client-side Fabric mod that shows an in-game map of land claims, so you can find open-spawn lands and teleport with /lands spawn. Minecraft 1.21 to 26.2.">
+<link rel="icon" href="icon.png">
+<style>
+	:root {
+		--bg: #f7f6f2; --panel: #ffffff; --text: #1d1b16; --muted: #5d594f; --line: #dcd8cc;
+		--accent: #b36b00; --accent-text: #ffffff; --code: #efece3;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--bg: #16150f; --panel: #201f17; --text: #eeeadb; --muted: #aaa591; --line: #36342a;
+			--accent: #f0a63a; --accent-text: #1b1300; --code: #2a281e;
+		}
+	}
+	:root[data-theme="dark"] {
+		--bg: #16150f; --panel: #201f17; --text: #eeeadb; --muted: #aaa591; --line: #36342a;
+		--accent: #f0a63a; --accent-text: #1b1300; --code: #2a281e;
+	}
+	* { box-sizing: border-box; }
+	html { scroll-behavior: smooth; }
+	body {
+		margin: 0; background: var(--bg); color: var(--text);
+		font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	}
+	a { color: var(--accent); }
+	.wrap { max-width: 920px; margin: 0 auto; padding: 0 16px; }
+	header.top { border-bottom: 1px solid var(--line); background: var(--panel); }
+	header.top .wrap { display: flex; align-items: center; gap: 16px; min-height: 56px; flex-wrap: wrap; }
+	.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); text-decoration: none; }
+	.brand img { width: 28px; height: 28px; image-rendering: pixelated; border-radius: 4px; }
+	nav { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; font-size: 15px; }
+	nav a { color: var(--muted); text-decoration: none; }
+	nav a:hover { color: var(--text); }
+	.hero { padding: 48px 0 24px; }
+	.hero h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.15; margin: 0 0 12px; }
+	.hero p.lead { font-size: 19px; color: var(--muted); margin: 0 0 24px; max-width: 640px; }
+	.buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+	.btn {
+		display: inline-block; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--line);
+		background: var(--panel); color: var(--text); text-decoration: none; font-weight: 600;
+	}
+	.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+	.shot { margin: 32px 0 8px; }
+	.shot img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 10px; }
+	.shot figcaption, .note { color: var(--muted); font-size: 14px; }
+	section { padding: 28px 0; border-top: 1px solid var(--line); }
+	h2 { font-size: 24px; margin: 0 0 12px; }
+	h3 { font-size: 18px; margin: 20px 0 6px; }
+	ul.features { padding-left: 20px; }
+	ul.features li { margin: 6px 0; }
+	.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+	.grid figure { margin: 0; }
+	.grid img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; display: block; }
+	.grid figcaption { font-size: 14px; color: var(--muted); margin-top: 6px; }
+	.table-scroll { overflow-x: auto; }
+	table { border-collapse: collapse; width: 100%; background: var(--panel); border: 1px solid var(--line); }
+	th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+	th { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+	code { background: var(--code); padding: 1px 6px; border-radius: 4px; font-size: .92em; }
+	ol li { margin: 6px 0; }
+	.callout {
+		background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+		border-radius: 8px; padding: 12px 16px; margin: 16px 0;
+	}
+	footer { border-top: 1px solid var(--line); padding: 24px 0 48px; color: var(--muted); font-size: 14px; }
+	@media (max-width: 520px) { .hero { padding-top: 28px; } nav { margin-left: 0; } }
+</style>
+</head>
+<body>
+<header class="top">
+	<div class="wrap">
+		<a class="brand" href="#"><img src="icon.png" alt="" width="28" height="28">Landmark</a>
+		<nav>
+			<a href="#download">Download</a>
+			<a href="#how">How it works</a>
+			<a href="#faq">FAQ</a>
+			<a href="https://github.com/TrojanHorsePower/Landmark/wiki">Wiki</a>
+			<a href="https://github.com/TrojanHorsePower/Landmark">Source</a>
+		</nav>
+	</div>
+</header>
+
+<main class="wrap">
+	<div class="hero">
+		<h1>Find a land. Click. You're there.</h1>
+		<p class="lead">Landmark is a client-side Fabric mod that shows an in-game map of land claims, highlights the lands with
+			an open spawn, and runs <code>/lands spawn &lt;land&gt;</code> for you. Minecraft 1.21 to 26.2.</p>
+		<div class="buttons">
+			<a class="btn primary" href="#download">Download</a>
+			<a class="btn" href="https://github.com/TrojanHorsePower/Landmark/wiki">Read the wiki</a>
+			<!-- Placeholders: uncomment and fill in when the project pages exist.
+			<a class="btn" href="https://modrinth.com/mod/PROJECT-SLUG">Modrinth</a>
+			<a class="btn" href="https://www.curseforge.com/minecraft/mc-mods/PROJECT-SLUG">CurseForge</a>
+			-->
+		</div>
+		<figure class="shot">
+			<img src="images/overview.png" alt="The map with open-spawn lands highlighted in amber">
+			<figcaption>Screenshots use made-up demo data: fake lands, fake owners, generated terrain.</figcaption>
+		</figure>
+	</div>
+
+	<section id="features">
+		<h2>What it does</h2>
+		<ul class="features">
+			<li>A full-screen map you can pan and zoom, with claims drawn over a terrain background.</li>
+			<li>Lands with an open spawn are highlighted. Click one, confirm, and the mod runs the teleport command.</li>
+			<li>Search by land name, owner or member. Hover a land for its owner, members and size.</li>
+			<li>Your <strong>Xaero's Minimap</strong> and <strong>JourneyMap</strong> waypoints on the map, with a choice of
+				which sets or groups are shown, per dimension.</li>
+			<li>Optional Overworld and Nether waypoints on both maps, with the coordinates scaled by 8.</li>
+			<li>Every colour and setting is customisable, in game or through Mod Menu.</li>
+			<li>It always tells you where its data comes from and how old it is.</li>
+		</ul>
+		<div class="grid">
+			<figure><img src="images/tooltip.png" alt="Hovering a land shows its owner, members and size" loading="lazy"><figcaption>Hover a land for details.</figcaption></figure>
+			<figure><img src="images/search.png" alt="Searching by player name" loading="lazy"><figcaption>Search by land, owner or member.</figcaption></figure>
+			<figure><img src="images/waypoint-sets.png" alt="The waypoint sets screen" loading="lazy"><figcaption>Choose which waypoint sets are shown.</figcaption></figure>
+			<figure><img src="images/settings.png" alt="The settings screen" loading="lazy"><figcaption>Settings and colours.</figcaption></figure>
+		</div>
+	</section>
+
+	<section id="download">
+		<h2>Download</h2>
+		<p>Pick the jar for your Minecraft version and put it in your <code>mods</code> folder, with
+			<a href="https://fabricmc.net/">Fabric Loader</a> and <a href="https://modrinth.com/mod/fabric-api">Fabric API</a>.
+			Use <strong>one</strong> Landmark jar; when you update Minecraft, swap it for the one for the new version.</p>
+		<p id="release-line" class="note">Latest release: <a href="https://github.com/TrojanHorsePower/Landmark/releases/latest">see the releases page</a>.</p>
+		<div class="table-scroll">
+			<table id="jars">
+				<thead><tr><th>Minecraft</th><th>Java</th><th>Fabric Loader</th><th>Jar</th></tr></thead>
+				<tbody>
+					<tr data-mc="1.21-1.21.1"><td>1.21, 1.21.1</td><td>21+</td><td>0.15.11+</td><td><a class="dl" href="https://github.com/TrojanHorsePower/Landmark/releases/latest">Download</a></td></tr>
+					<tr data-mc="1.21.2-1.21.4"><td>1.21.2 &ndash; 1.21.4</td><td>21+</td><td>0.16.9+</td><td><a class="dl" href="https://github.com/TrojanHorsePower/Landmark/releases/latest">Download</a></td></tr>
+					<tr data-mc="1.21.5"><td>1.21.5</td><td>21+</td><td>0.16.10+</td><td><a class="dl" href="https://github.com/TrojanHorsePower/Landmark/releases/latest">Download</a></td></tr>
+					<tr data-mc="1.21.6-1.21.8"><td>1.21.6 &ndash; 1.21.8</td><td>21+</td><td>0.16.13+</td><td><a class="dl" href="https://github.com/TrojanHorsePower/Landmark/releases/latest">Download</a></td></tr>
+					<tr data-mc="1.21.9-1.21.10"><td>1.21.9, 1.21.10</td><td>21+</td><td>0.17.2+</td><td><a class="dl" href="https://github.com/TrojanHorsePower/Landmark/releases/latest">Download</a></td></tr>
+					<tr data-mc="1.21.11"><td>1.21.11</td><td>21+</td><td>0.17.3+</td><td><a class="dl" href="https://github.com/TrojanHorsePower/Landmark/releases/latest">Download</a></td></tr>
+					<tr data-mc="26.1-26.1.2"><td>26.1 &ndash; 26.1.2</td><td>25+</td><td>0.18.4+</td><td><a class="dl" href="https://github.com/TrojanHorsePower/Landmark/releases/latest">Download</a></td></tr>
+					<tr data-mc="26.2"><td>26.2</td><td>25+</td><td>0.19.2+</td><td><a class="dl" href="https://github.com/TrojanHorsePower/Landmark/releases/latest">Download</a></td></tr>
+				</tbody>
+			</table>
+		</div>
+		<p class="note">Newer Fabric Loader and Fabric API versions are fine. Mod Menu, JourneyMap and Xaero's Minimap are
+			optional. Snapshots, pre-releases and other mod loaders are not supported.</p>
+		<!-- Placeholders: uncomment and fill in when the project pages exist.
+		<p>Also on <a href="https://modrinth.com/mod/PROJECT-SLUG">Modrinth</a> and
+			<a href="https://www.curseforge.com/minecraft/mc-mods/PROJECT-SLUG">CurseForge</a>.</p>
+		-->
+	</section>
+
+	<section id="how">
+		<h2>Getting the map data</h2>
+		<p>The server's own command suggestions give the mod the list of open spawns live, with no setup. The claim shapes,
+			names and terrain come from the server's web map, which a program cannot read directly, so you export it once
+			from your own browser:</p>
+		<ol>
+			<li>In the mod, open the map and press <strong>Get map data</strong>. It has buttons to open the web map and to copy the export script.</li>
+			<li>Run the script in the browser console on the map page. It saves <code>landmark-export.zip</code>.</li>
+			<li>Drag the zip onto the Minecraft window. The data is stored in your game folder and reused next time.</li>
+		</ol>
+		<div class="callout">Nothing is uploaded. The script only reads the page you have open and saves a file on your computer.
+			The mod makes no network requests of its own and needs no account, key or token.</div>
+		<p>More detail: <a href="https://github.com/TrojanHorsePower/Landmark/wiki/Getting-the-map-data">the wiki</a>.</p>
+	</section>
+
+	<section id="faq">
+		<h2>FAQ</h2>
+		<h3>What does it send to the server?</h3>
+		<p>Only the <code>/lands spawn</code> command you confirm, plus the same suggestion request the chat box makes when you
+			type <code>/lands spawn </code>. It is client-side and not affiliated with or endorsed by Chillzone or the Lands plugin.</p>
+		<h3>Does it work without the export?</h3>
+		<p>Yes, in a reduced way: you get a searchable list of open-spawn lands and you can type an exact land name and
+			teleport. Teleporting never depends on map data.</p>
+		<h3>Why is the Nether empty?</h3>
+		<p>The web map only exports the Overworld, so the Nether and The End show "No claim data" unless you import data for them.</p>
+		<h3>Was it written by AI?</h3>
+		<p>Yes. Landmark was written with Claude Code, an AI coding assistant, and is tested and reviewed by its maintainer.
+			It is verified by unit tests, CI builds on every supported Minecraft version range, and runs in a real game client.</p>
+		<h3>Something is wrong with my version</h3>
+		<p>Please <a href="https://github.com/TrojanHorsePower/Landmark/issues">open an issue</a> with your Minecraft version,
+			the jar you used and your <code>latest.log</code>.</p>
+	</section>
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>Landmark is open source under the <a href="https://github.com/TrojanHorsePower/Landmark/blob/main/LICENSE">MIT license</a>.
+			Not affiliated with or endorsed by Chillzone or the Lands plugin. No game assets, server data or third-party code is bundled.</p>
+		<p><a href="https://github.com/TrojanHorsePower/Landmark">Source</a> &middot;
+			<a href="https://github.com/TrojanHorsePower/Landmark/releases">Releases</a> &middot;
+			<a href="https://github.com/TrojanHorsePower/Landmark/blob/main/CHANGELOG.md">Changelog</a> &middot;
+			<a href="https://github.com/TrojanHorsePower/Landmark/wiki">Wiki</a></p>
+	</div>
+</footer>
+
+<script>
+// Points each row's button at the matching jar of the latest release. Without JavaScript, or if the GitHub API cannot be
+// reached, the buttons stay as plain links to the releases page.
+(function () {
+	var line = document.getElementById('release-line');
+	fetch('https://api.github.com/repos/TrojanHorsePower/Landmark/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+		.then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+		.then(function (rel) {
+			var assets = (rel.assets || []).filter(function (a) { return /\.jar$/.test(a.name) && !/-sources\.jar$/.test(a.name); });
+			var matched = 0;
+			document.querySelectorAll('#jars tr[data-mc]').forEach(function (row) {
+				var mc = row.getAttribute('data-mc');
+				var asset = assets.find(function (a) { return a.name.endsWith('+mc' + mc + '.jar'); });
+				if (!asset) return;
+				var link = row.querySelector('a.dl');
+				link.href = asset.browser_download_url;
+				link.textContent = asset.name;
+				matched++;
+			});
+			if (matched && line) {
+				line.textContent = '';
+				line.appendChild(document.createTextNode('Latest release: '));
+				var a = document.createElement('a');
+				a.href = rel.html_url;
+				a.textContent = rel.name || rel.tag_name;
+				line.appendChild(a);
+				line.appendChild(document.createTextNode('.'));
+			}
+		})
+		.catch(function () { /* keep the static links */ });
+})();
+</script>
+</body>
+</html>
