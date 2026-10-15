@@ -1,6 +1,6 @@
 # Landmark
 
-An in-game map of land claims for fast `/lands spawn <land>` teleporting. A client-side Fabric mod for Minecraft 1.21 to 26.2.
+An in-game map of land claims for fast `/lands spawn <land>` teleporting. A client-side Fabric mod for Minecraft 1.21 to 26.3.
 
 > Not affiliated with or endorsed by Chillzone or the Lands plugin.
 

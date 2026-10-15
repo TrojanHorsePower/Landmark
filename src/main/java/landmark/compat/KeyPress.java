@@ -1,29 +1,31 @@
 package landmark.compat;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import org.lwjgl.glfw.GLFW;
 
-/** A key press, with GLFW key codes; the same shape in every Minecraft version. */
+/**
+ * A key press. {@code key} is in the key space of the running Minecraft version, so compare it with the
+ * {@code InputConstants.KEY_*} constants, never with GLFW or SDL ones (Minecraft 26.3 moved from GLFW to SDL).
+ */
 public record KeyPress(int key, int scancode, int modifiers) {
 	public boolean isEscape() {
-		return key == GLFW.GLFW_KEY_ESCAPE;
+		return key == InputConstants.KEY_ESCAPE;
 	}
 
 	public boolean isUp() {
-		return key == GLFW.GLFW_KEY_UP;
+		return key == InputConstants.KEY_UP;
 	}
 
 	public boolean isDown() {
-		return key == GLFW.GLFW_KEY_DOWN;
+		return key == InputConstants.KEY_DOWN;
 	}
 
 	/** Enter on the main keyboard or the keypad. */
 	public boolean isConfirmation() {
-		return key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER;
+		return key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER;
 	}
 
 	/** The key this press stands for, as a key binding stores it. */
 	public InputConstants.Key toKey() {
-		return key == GLFW.GLFW_KEY_UNKNOWN ? InputConstants.Type.SCANCODE.getOrCreate(scancode) : InputConstants.Type.KEYSYM.getOrCreate(key);
+		return Platform.keyOf(key, scancode);
 	}
 }

@@ -95,6 +95,6 @@ public abstract class LandmarkScreen extends Screen {
 
 	@Override
 	public final boolean keyPressed(KeyEvent e) {
-		return onKeyPressed(new KeyPress(e.key(), e.scancode(), e.modifiers()));
+		return onKeyPressed(new KeyPress(e.key(), Platform.scancode(e), e.modifiers()));
 	}
 }

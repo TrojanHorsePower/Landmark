@@ -13,7 +13,7 @@
 · [Modrinth](https://modrinth.com/mod/PROJECT-SLUG) · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/PROJECT-SLUG)
 -->
 
-An in-game map of land claims for fast `/lands spawn <land>` teleporting. A client-side Fabric mod for Minecraft 1.21 to 26.2.
+An in-game map of land claims for fast `/lands spawn <land>` teleporting. A client-side Fabric mod for Minecraft 1.21 to 26.3.
 
 > Not affiliated with or endorsed by Chillzone or the Lands plugin.
 
@@ -67,6 +67,7 @@ Each release has one jar per range of Minecraft versions. The Minecraft version 
 | `…+mc1.21.11.jar` | 1.21.11 | 21 or newer | 0.17.3 or newer | any |
 | `…+mc26.1-26.1.2.jar` | 26.1, 26.1.1, 26.1.2 | 25 or newer | 0.18.4 or newer | any |
 | `…+mc26.2.jar` | 26.2 | 25 or newer | 0.19.2 or newer | any |
+| `…+mc26.3.jar` | 26.3 | 25 or newer | 0.19.3 or newer | any |
 
 - Use **one** Landmark jar. If you update Minecraft, replace the jar with the one for the new version, and delete the old one.
 - Newer Fabric Loader and Fabric API versions are fine. The loader numbers are what Fabric API and the matching

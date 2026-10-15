@@ -88,7 +88,7 @@ final class DevHarness {
 			LandmarkClient.LOGGER.info("SCENARIO rebind from M to a free key: before={} after={} sameObjectAsControlsScreen={}", before, key.saveString(),
 				java.util.Arrays.asList(mc.options.keyMappings).contains(key));
 		} else if (f == 275) {
-			configScreen.devRebind(org.lwjgl.glfw.GLFW.GLFW_KEY_W); // already used by "forward": must ask first
+			configScreen.devRebind(com.mojang.blaze3d.platform.InputConstants.KEY_W); // already used by "forward": must ask first
 			LandmarkClient.LOGGER.info("SCENARIO conflict dialog shown={} key still={}", landmark.compat.Platform.screen(mc) instanceof net.minecraft.client.gui.screens.ConfirmScreen, LandmarkClient.openKey.saveString());
 		} else if (f == 290) {
 			shot.run();
@@ -657,7 +657,7 @@ final class DevHarness {
 				int pw = Math.max(150, Math.min(190, w.getGuiScaledWidth() / 3 + 24));
 				double gx = pw + (w.getGuiScaledWidth() - pw) / 2.0;
 				double gy = (w.getGuiScaledHeight() - 34) / 2.0;
-				org.lwjgl.glfw.GLFW.glfwSetCursorPos(landmark.compat.Platform.windowHandle(w), gx * w.getGuiScale(), gy * w.getGuiScale());
+				landmark.compat.Platform.devWarpCursor(w, gx * w.getGuiScale(), gy * w.getGuiScale());
 				return;
 			}
 		}

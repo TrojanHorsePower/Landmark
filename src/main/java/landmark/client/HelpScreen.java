@@ -46,7 +46,7 @@ public class HelpScreen extends LandmarkScreen {
 		int row1 = height - 52;
 		int row2 = height - 28;
 		addRenderableWidget(Button.builder(Component.translatable("landmark.help.open"),
-			ConfirmLinkScreen.confirmLink(this, state.config.mapUrl)).bounds(x, row1, half, 20).build());
+			landmark.compat.Platform.openLink(this, state.config.mapUrl)).bounds(x, row1, half, 20).build());
 		copyButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.copy"), b -> copyScript())
 			.bounds(x + half + 4, row1, half, 20).build());
 		addRenderableWidget(Button.builder(Component.translatable("landmark.settings"),
@@ -194,8 +194,8 @@ public class HelpScreen extends LandmarkScreen {
 	@Override
 	protected boolean onKeyPressed(KeyPress e) {
 		if (maxScroll() > 0) {
-			int step = e.isUp() ? -14 : e.isDown() ? 14 : e.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP ? -(viewBottom - viewTop)
-				: e.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN ? viewBottom - viewTop : 0;
+			int step = e.isUp() ? -14 : e.isDown() ? 14 : e.key() == com.mojang.blaze3d.platform.InputConstants.KEY_PAGEUP ? -(viewBottom - viewTop)
+				: e.key() == com.mojang.blaze3d.platform.InputConstants.KEY_PAGEDOWN ? viewBottom - viewTop : 0;
 			if (step != 0) {
 				scroll = Math.max(0, Math.min(maxScroll(), scroll + step));
 				return true;

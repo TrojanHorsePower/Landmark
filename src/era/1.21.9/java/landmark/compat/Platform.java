@@ -67,4 +67,20 @@ public final class Platform {
 		return w.handle();
 	}
 
+	/** The key binding value for a key press: a key code, or a scancode for keys without one. */
+	public static com.mojang.blaze3d.platform.InputConstants.Key keyOf(int key, int scancode) {
+		return key == org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN
+			? com.mojang.blaze3d.platform.InputConstants.Type.SCANCODE.getOrCreate(scancode)
+			: com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM.getOrCreate(key);
+	}
+
+	/** A button action that asks to open the link, then opens it in the browser. */
+	public static net.minecraft.client.gui.components.Button.OnPress openLink(Screen parent, String url) {
+		return net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLink(parent, url);
+	}
+
+	/** Dev harness: moves the mouse pointer to a position in window pixels. */
+	public static void devWarpCursor(com.mojang.blaze3d.platform.Window w, double x, double y) {
+		org.lwjgl.glfw.GLFW.glfwSetCursorPos(windowHandle(w), x, y);
+	}
 }

@@ -123,17 +123,17 @@ public class ConfigScreen extends LandmarkScreen {
 
 	/** First key from a few candidates that no other binding uses, or -1. */
 	int devFreeKey() {
-		for (int k : new int[] {org.lwjgl.glfw.GLFW.GLFW_KEY_J, org.lwjgl.glfw.GLFW.GLFW_KEY_K, org.lwjgl.glfw.GLFW.GLFW_KEY_B,
-			org.lwjgl.glfw.GLFW.GLFW_KEY_V, org.lwjgl.glfw.GLFW.GLFW_KEY_Y, org.lwjgl.glfw.GLFW.GLFW_KEY_COMMA}) {
-			if (conflicts(LandmarkClient.openKey, InputConstants.Type.KEYSYM.getOrCreate(k)).isEmpty()) {
+		for (int k : new int[] {InputConstants.KEY_J, InputConstants.KEY_K, InputConstants.KEY_B,
+			InputConstants.KEY_V, InputConstants.KEY_Y, InputConstants.KEY_COMMA}) {
+			if (conflicts(LandmarkClient.openKey, landmark.compat.Platform.keyOf(k, 0)).isEmpty()) {
 				return k;
 			}
 		}
 		return -1;
 	}
 
-	String devConflicts(int glfwKey) {
-		var key = InputConstants.Type.KEYSYM.getOrCreate(glfwKey);
+	String devConflicts(int keyCode) {
+		var key = landmark.compat.Platform.keyOf(keyCode, 0);
 		return key.getName() + " conflicts with " + conflicts(LandmarkClient.openKey, key).stream().map(KeyMapping::getName).toList();
 	}
 
@@ -141,10 +141,10 @@ public class ConfigScreen extends LandmarkScreen {
 		list.setScrollAmount(y);
 	}
 
-	/** Starts listening on the open-map key and presses {@code glfwKey}, like a player would. */
-	void devRebind(int glfwKey) {
+	/** Starts listening on the open-map key and presses {@code keyCode}, like a player would (a key code of the running Minecraft version, see KeyPress). */
+	void devRebind(int keyCode) {
 		listening = LandmarkClient.openKey;
-		onKeyPressed(new KeyPress(glfwKey, 0, 0));
+		onKeyPressed(new KeyPress(keyCode, 0, 0));
 	}
 
 	/** Adds explanatory text as rows of up to two lines, wrapped to the list's real width so none of it is cut off. */
