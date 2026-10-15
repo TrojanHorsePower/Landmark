@@ -3,11 +3,15 @@
 All notable changes to Landmark. Dates are the release dates (UTC). Each version has a
 [GitHub release](https://github.com/TrojanHorsePower/Landmark/releases) with the jars.
 
-## [Unreleased]
+## [0.3.1] - 2026-10-15
 
 ### Added
 - **Minecraft 26.3.** A new jar, `landmark-<version>+mc26.3.jar` (Java 25, Fabric Loader 0.19.3 or newer). Minecraft 26.3
   moved from GLFW to SDL for windowing and input and renamed some rendering classes, so the 26.2 jar does not load on it.
+
+### Fixed
+- Mouse input on Minecraft 26.3: its mouse buttons start at 1 instead of 0, so left clicks were ignored (no panning,
+  no selecting or teleporting). Left-click checks now use Minecraft's own constant on every version.
 
 ### Changed
 - Key handling in the common code uses Minecraft's own key constants instead of GLFW's, so it follows the key space of
@@ -108,7 +112,7 @@ First release. A client-side Fabric mod for Minecraft 26.2.
 ### Fixed
 - Empty map after returning from child screens, lag when zoomed far out, and missing members in tooltips.
 
-[Unreleased]: https://github.com/TrojanHorsePower/Landmark/compare/v0.3.0...HEAD
+[0.3.1]: https://github.com/TrojanHorsePower/Landmark/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/TrojanHorsePower/Landmark/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/TrojanHorsePower/Landmark/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/TrojanHorsePower/Landmark/compare/v0.1.1...v0.2.0
