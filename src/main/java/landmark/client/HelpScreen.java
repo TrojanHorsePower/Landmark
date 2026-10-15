@@ -206,7 +206,7 @@ public class HelpScreen extends LandmarkScreen {
 
 	@Override
 	protected boolean onMouseClicked(Mouse e, boolean doubleClick) {
-		if (maxScroll() > 0 && e.button() == 0 && e.x() >= contentLeft() + contentWidth() && e.x() <= contentLeft() + contentWidth() + 12
+		if (maxScroll() > 0 && e.isLeft() && e.x() >= contentLeft() + contentWidth() && e.x() <= contentLeft() + contentWidth() + 12
 			&& e.y() >= viewTop && e.y() <= viewBottom) {
 			draggingBar = true;
 			dragBar(e.y());

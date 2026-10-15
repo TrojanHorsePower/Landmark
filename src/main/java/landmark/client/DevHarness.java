@@ -30,6 +30,8 @@ final class DevHarness {
 	private static final boolean WAYPOINTS = System.getProperty("landmark.dev.waypoints") != null;
 	private static final boolean JM_TEST = System.getProperty("landmark.dev.jmtest") != null;
 	private static final boolean JM_WORLD = System.getProperty("landmark.dev.jmworld") != null;
+	/** Keeps the map open for {@code landmark.dev.input} seconds so real mouse and key input can be driven from outside, and logs it. */
+	static final boolean INPUT = System.getProperty("landmark.dev.input") != null;
 	private static int worldStage;
 	private static int worldTicks;
 	/** Every Nth land is pretended to have an open spawn (the real server has roughly 1 in 12). */
@@ -705,6 +707,15 @@ final class DevHarness {
 				framesOpen = 0;
 			} else if (framesOpen >= 0) {
 				framesOpen++;
+				if (INPUT) {
+					if (framesOpen == 100) {
+						LandmarkClient.LOGGER.info("INPUT ready: window {}x{} gui scale {}", mc.getWindow().getWidth(), mc.getWindow().getHeight(), mc.getWindow().getGuiScale());
+					}
+					if (framesOpen >= Integer.getInteger("landmark.dev.input", 60) * 20) {
+						mc.stop();
+					}
+					return;
+				}
 				if (PERF && landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
 					// 30-frame windows at different zoom levels: average CPU time spent building the frame
 					int[] marks = {100, 130, 160, 190, 220};

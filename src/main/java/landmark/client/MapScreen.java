@@ -762,10 +762,14 @@ public class MapScreen extends LandmarkScreen {
 
 	@Override
 	protected boolean onMouseClicked(Mouse e, boolean doubleClick) {
+		if (DevHarness.INPUT) {
+			landmark.LandmarkClient.LOGGER.info("INPUT click button={} left={} at {},{} inMap={} list={} selected={}", e.button(), e.isLeft(), (int) e.x(), (int) e.y(),
+				inMap(e.x(), e.y()), e.x() < panelW, selectedName);
+		}
 		if (superMouseClicked(e, doubleClick)) {
 			return true;
 		}
-		if (e.button() != 0) {
+		if (!e.isLeft()) {
 			return false;
 		}
 		if (inMap(e.x(), e.y()) && map != null) {
@@ -791,6 +795,9 @@ public class MapScreen extends LandmarkScreen {
 
 	@Override
 	protected boolean onMouseDragged(Mouse e, double dx, double dy) {
+		if (DevHarness.INPUT) {
+			landmark.LandmarkClient.LOGGER.info("INPUT drag button={} d={},{} pressedInMap={}", e.button(), (int) dx, (int) dy, pressedInMap);
+		}
 		if (pressedInMap) {
 			dragged += Math.abs(dx) + Math.abs(dy);
 			view.panByPixels(dx, dy);
@@ -801,6 +808,10 @@ public class MapScreen extends LandmarkScreen {
 
 	@Override
 	protected boolean onMouseReleased(Mouse e) {
+		if (DevHarness.INPUT) {
+			landmark.LandmarkClient.LOGGER.info("INPUT release at {},{} pressedInMap={} dragged={} landAt={}", (int) e.x(), (int) e.y(), pressedInMap, dragged,
+				map == null ? -2 : landAt(e.x(), e.y()));
+		}
 		if (pressedInMap) {
 			pressedInMap = false;
 			if (dragged < 4 && map != null) {

@@ -276,7 +276,7 @@ public class WaypointSetsScreen extends LandmarkScreen {
 			return true;
 		}
 		int x = contentLeft();
-		if (e.button() == 0 && e.x() >= x && e.x() < x + contentWidth() && e.y() >= listTop && e.y() < listBottom) {
+		if (e.isLeft() && e.x() >= x && e.x() < x + contentWidth() && e.y() >= listTop && e.y() < listBottom) {
 			int idx = scroll + (int) ((e.y() - listTop) / ROW_H);
 			if (idx < rows.size() && !rows.get(idx).header()) {
 				toggle(rows.get(idx).group());

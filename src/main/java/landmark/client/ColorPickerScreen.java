@@ -246,7 +246,7 @@ public class ColorPickerScreen extends LandmarkScreen {
 		if (superMouseClicked(e, doubleClick)) {
 			return true;
 		}
-		if (e.button() != 0) {
+		if (!e.isLeft()) {
 			return false;
 		}
 		int x0 = left();
