@@ -195,7 +195,7 @@ server is the `/lands spawn` command you confirm, plus the same suggestion reque
 
 Requires Java 25 (the build tool needs it; the jars for 1.21.x still target Java 21).
 
-    ./gradlew build                    # the default era (26.2): jar in build/libs, runs the JUnit tests
+    ./gradlew build                    # the default era (26.3): jar in build/libs, runs the JUnit tests
     ./gradlew build -Pera=1.21.9       # another Minecraft version range; see eras/
     node --test tools/export.test.js
 
