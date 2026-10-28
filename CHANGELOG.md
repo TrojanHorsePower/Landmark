@@ -3,6 +3,13 @@
 All notable changes to Landmark. Dates are the release dates (UTC). Each version has a
 [GitHub release](https://github.com/TrojanHorsePower/Landmark/releases) with the jars.
 
+## [Unreleased]
+
+### Fixed
+- Importing an export from a Pl3xMap that formats claim tooltips differently ("The export contains no lands"). The
+  tooltip reader now accepts the newer style (`<v:land_color>` placeholder, plain newline after the name) as well as the
+  older one.
+
 ## [0.3.1] - 2026-10-15
 
 ### Added
@@ -112,6 +119,7 @@ First release. A client-side Fabric mod for Minecraft 26.2.
 ### Fixed
 - Empty map after returning from child screens, lag when zoomed far out, and missing members in tooltips.
 
+[Unreleased]: https://github.com/TrojanHorsePower/Landmark/compare/v0.3.1...HEAD
 [0.3.1]: https://github.com/TrojanHorsePower/Landmark/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/TrojanHorsePower/Landmark/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/TrojanHorsePower/Landmark/compare/v0.2.0...v0.2.1

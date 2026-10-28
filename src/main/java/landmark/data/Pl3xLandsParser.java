@@ -14,11 +14,12 @@ import java.util.regex.Pattern;
 /**
  * Parses a Pl3xMap marker layer ({@code tiles/<world>/markers/lands.json}) into {@link Land}s.
  * Land details only exist inside tooltip HTML, so that is parsed defensively: a marker that cannot be
- * understood is skipped, never fatal.
+ * understood is skipped, never fatal. Both tooltip styles seen so far are accepted: the older one with a {land_color}
+ * placeholder and a line break tag after the name, and the newer one with <v:land_color> and a plain newline.
  */
 public final class Pl3xLandsParser {
-	private static final Pattern NAME = Pattern.compile("\\{land_color\\};\">(.*?)</span>", Pattern.DOTALL);
-	private static final Pattern DESCRIPTION = Pattern.compile("<br\\s*/></span>(.*?)</div>", Pattern.DOTALL);
+	private static final Pattern NAME = Pattern.compile("land_color[}>];\">(.*?)</span>", Pattern.DOTALL);
+	private static final Pattern DESCRIPTION = Pattern.compile("</span>\\s*(?:<br\\s*/>\\s*)?</span>(.*?)</div>", Pattern.DOTALL);
 	private static final Pattern OWNER = Pattern.compile("^of (.+)\\.$", Pattern.DOTALL);
 	private static final Pattern CHUNKS = Pattern.compile("Chunks: (\\d+)");
 	private static final Pattern PLAYERS = Pattern.compile("Players \\(\\d+\\): ?(.*?)</li>", Pattern.DOTALL);

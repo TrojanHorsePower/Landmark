@@ -42,6 +42,21 @@ public class Pl3xLandsParserTest {
 	}
 
 	@Test
+	void readsTheNewerTooltipStyle() {
+		String json = "[{\"type\":\"poly\",\"data\":{\"key\":\"ID1_world_0\",\"polylines\":[{\"points\":"
+				+ "[{\"x\":0,\"z\":0},{\"x\":16,\"z\":0},{\"x\":16,\"z\":16},{\"x\":0,\"z\":16}]}]},\"options\":{\"tooltip\":"
+				+ "{\"content\":\"<div><span style=\\\"font-size: 200%;\\\"><span style=\\\"color: <v:land_color>;\\\">Sample Land</span>\\n</span>"
+				+ "of ExampleOwner.</div><ul><li>Chunks: 5</li><li>Players (2): ExampleOwner, ExampleFriend</li></ul>\\n\"}}}]";
+		var result = Pl3xLandsParser.parse(json);
+		assertEquals(0, result.skippedMarkers());
+		Land land = result.lands().get(0);
+		assertEquals("Sample Land", land.name());
+		assertEquals("ExampleOwner", land.owner());
+		assertEquals(5, land.chunks());
+		assertEquals(java.util.List.of("ExampleOwner", "ExampleFriend"), land.members());
+	}
+
+	@Test
 	void unescapesHtmlEntitiesInNames() throws IOException {
 		assertEquals("Tom's & Co", Pl3xLandsParser.parse(sample()).lands().get(2).name());
 	}
