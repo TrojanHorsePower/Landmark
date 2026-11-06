@@ -3,7 +3,7 @@
 All notable changes to Landmark. Dates are the release dates (UTC). Each version has a
 [GitHub release](https://github.com/TrojanHorsePower/Landmark/releases) with the jars.
 
-## [Unreleased]
+## [0.3.2] - 2026-11-06
 
 ### Added
 - Landmark is on CurseForge; the README, website and wiki link to it. Releases are uploaded there automatically once the
@@ -126,7 +126,7 @@ First release. A client-side Fabric mod for Minecraft 26.2.
 ### Fixed
 - Empty map after returning from child screens, lag when zoomed far out, and missing members in tooltips.
 
-[Unreleased]: https://github.com/TrojanHorsePower/Landmark/compare/v0.3.1...HEAD
+[0.3.2]: https://github.com/TrojanHorsePower/Landmark/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/TrojanHorsePower/Landmark/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/TrojanHorsePower/Landmark/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/TrojanHorsePower/Landmark/compare/v0.2.0...v0.2.1
