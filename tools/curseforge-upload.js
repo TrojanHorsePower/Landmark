@@ -27,6 +27,15 @@ const JARS = {
 	'26.3': { mc: ['26.3'], java: 25 }
 };
 
+// Related CurseForge projects (by slug; the numeric IDs are in the comments). Fabric API is needed; the rest are optional.
+const RELATIONS = [
+	{ slug: 'fabric-api', type: 'requiredDependency' }, // 306612
+	{ slug: 'modmenu', type: 'optionalDependency' }, // 308702
+	{ slug: 'xaeros-minimap', type: 'optionalDependency' }, // 263420
+	{ slug: 'xaeros-world-map', type: 'optionalDependency' }, // 317780
+	{ slug: 'journeymap', type: 'optionalDependency' } // 32274
+];
+
 function parseJarName(file) {
 	const m = /^landmark-(.+?)\+mc(.+)\.jar$/.exec(file);
 	return m ? { version: m[1], label: m[2] } : null;
@@ -56,7 +65,7 @@ function metadataFor(jar, changelog, ids) {
 		displayName: 'Landmark ' + jar.version + ' (Minecraft ' + jar.label + ')',
 		releaseType: 'release',
 		gameVersions: ids,
-		relations: { projects: [{ slug: 'fabric-api', type: 'requiredDependency' }] }
+		relations: { projects: RELATIONS }
 	};
 }
 
@@ -111,7 +120,7 @@ async function main(argv) {
 	}
 }
 
-module.exports = { parseJarName, changelogFor, versionNames, metadataFor, JARS };
+module.exports = { parseJarName, changelogFor, versionNames, metadataFor, JARS, RELATIONS };
 
 if (require.main === module) {
 	main(process.argv.slice(2)).catch((e) => {

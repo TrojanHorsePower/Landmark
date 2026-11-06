@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
-const { parseJarName, changelogFor, versionNames, JARS } = require('./curseforge-upload.js');
+const { parseJarName, changelogFor, versionNames, metadataFor, JARS, RELATIONS } = require('./curseforge-upload.js');
 
 test('parses jar names', () => {
 	assert.deepStrictEqual(parseJarName('landmark-0.3.1+mc26.1-26.1.2.jar'), { version: '0.3.1', label: '26.1-26.1.2' });
@@ -35,4 +35,17 @@ test('the real changelog has a section for the current version', () => {
 	const props = fs.readFileSync(path.join(__dirname, '..', 'gradle.properties'), 'utf8');
 	const v = /^mod_version=(.+)$/m.exec(props)[1].trim();
 	assert.ok(changelogFor(fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8'), v).length > 0);
+});
+
+test('Fabric API is required and the optional integrations are listed', () => {
+	const meta = metadataFor({ version: '1.0.0', label: '26.3' }, 'x', [1]);
+	const by = Object.fromEntries(meta.relations.projects.map((p) => [p.slug, p.type]));
+	assert.deepStrictEqual(by, {
+		'fabric-api': 'requiredDependency',
+		modmenu: 'optionalDependency',
+		'xaeros-minimap': 'optionalDependency',
+		'xaeros-world-map': 'optionalDependency',
+		journeymap: 'optionalDependency'
+	});
+	assert.strictEqual(RELATIONS.length, 5);
 });
