@@ -35,6 +35,13 @@ and release workflows pick the new file up by themselves.
 `release.yml` runs when you push a tag `vX.Y.Z` that matches `mod_version` in `gradle.properties`, builds every era and attaches
 all the jars to a GitHub release. It uses only the built-in `GITHUB_TOKEN`.
 
+After the release, `curseforge.yml` uploads the same jars to CurseForge with `tools/curseforge-upload.js` (each jar is tagged
+with the Minecraft versions it covers, Fabric, Client and its Java version). It needs a `CURSEFORGE_TOKEN` repository secret
+(an API token from your CurseForge account) and a `CURSEFORGE_PROJECT_ID` repository variable (the project's numeric ID, shown
+on its CurseForge page), and does nothing without them. Run it by hand from the Actions tab to retry or to upload an older tag.
+`node tools/curseforge-upload.js <tag> <jar folder> --dry-run` prints what would be uploaded. To support a new Minecraft
+version range, add its label to `JARS` in that script (a test fails until you do).
+
 ## This wiki and the website
 
 Both live in the repository so changes are reviewed with the code: the wiki pages are in `wiki/` and the website in `site/`.

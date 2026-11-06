@@ -25,9 +25,9 @@ mod runs `/lands spawn <name>` for you.
 - Releases (the jars): <https://github.com/TrojanHorsePower/Landmark/releases>
 - Changelog: <https://github.com/TrojanHorsePower/Landmark/blob/main/CHANGELOG.md>
 - Website: <https://trojanhorsepower.github.io/Landmark/>
-<!-- Placeholders: uncomment and fill in when the project pages exist.
+- CurseForge: <https://www.curseforge.com/minecraft/mc-mods/landmark-map>
+<!-- Placeholder: uncomment and fill in when the Modrinth page exists.
 - Modrinth: https://modrinth.com/mod/PROJECT-SLUG
-- CurseForge: https://www.curseforge.com/minecraft/mc-mods/PROJECT-SLUG
 -->
 
 ## About

@@ -2,7 +2,7 @@
 
 You need [Fabric Loader](https://fabricmc.net/) and [Fabric API](https://modrinth.com/mod/fabric-api) for your Minecraft
 version. Download the jar for your version from the [releases page](https://github.com/TrojanHorsePower/Landmark/releases)
-and put it in your `mods` folder. It only loads on the client; nothing is needed on the server.
+or from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/landmark-map) and put it in your `mods` folder. It only loads on the client; nothing is needed on the server.
 
 Each release has one jar per range of Minecraft versions. The Minecraft version is in the file name:
 `landmark-<version>+mc<first>-<last>.jar`.

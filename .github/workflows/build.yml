@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tools/export.test.js
+      - run: node --test tools/export.test.js tools/curseforge-upload.test.js
 
   eras:
     # One build per file in eras/, so adding a Minecraft version needs no change here.

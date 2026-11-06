@@ -2,15 +2,16 @@
 
 [![build](https://github.com/TrojanHorsePower/Landmark/actions/workflows/build.yml/badge.svg)](https://github.com/TrojanHorsePower/Landmark/actions/workflows/build.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-<!-- Placeholders: uncomment and fill in when the project pages exist.
+[![CurseForge](https://img.shields.io/badge/CurseForge-Landmark-F16436?logo=curseforge)](https://www.curseforge.com/minecraft/mc-mods/landmark-map)
+<!-- Placeholder: uncomment and fill in when the Modrinth page exists.
 [![Modrinth](https://img.shields.io/modrinth/dt/PROJECT-SLUG?logo=modrinth&label=Modrinth)](https://modrinth.com/mod/PROJECT-SLUG)
-[![CurseForge](https://img.shields.io/curseforge/dt/PROJECT-ID?logo=curseforge&label=CurseForge)](https://www.curseforge.com/minecraft/mc-mods/PROJECT-SLUG)
 -->
 
 [Website](https://trojanhorsepower.github.io/Landmark/) · [Wiki](https://github.com/TrojanHorsePower/Landmark/wiki) ·
 [Releases](https://github.com/TrojanHorsePower/Landmark/releases) · [Changelog](CHANGELOG.md)
-<!-- Placeholders: uncomment and fill in when the project pages exist.
-· [Modrinth](https://modrinth.com/mod/PROJECT-SLUG) · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/PROJECT-SLUG)
+· [CurseForge](https://www.curseforge.com/minecraft/mc-mods/landmark-map)
+<!-- Placeholder: uncomment and fill in when the Modrinth page exists.
+· [Modrinth](https://modrinth.com/mod/PROJECT-SLUG)
 -->
 
 An in-game map of land claims for fast `/lands spawn <land>` teleporting. A client-side Fabric mod for Minecraft 1.21 to 26.3.
@@ -53,7 +54,7 @@ The screenshots in this README use synthetic data (fake lands, fake owners, gene
 
 You need [Fabric Loader](https://fabricmc.net/) and [Fabric API](https://modrinth.com/mod/fabric-api) for your Minecraft
 version. Download the jar for your version from the [releases page](https://github.com/TrojanHorsePower/Landmark/releases)
-<!-- (or, once listed, from Modrinth / CurseForge) -->
+or from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/landmark-map) <!-- (and Modrinth, once listed) -->
 and put it in your `mods` folder. It only loads on the client; nothing is needed on the server.
 
 Each release has one jar per range of Minecraft versions. The Minecraft version is in the file name:
@@ -217,8 +218,10 @@ How the export zip is laid out: [docs/export-format.md](docs/export-format.md).
   `/lands spawn` command in `MapScreen.java` / `LiveSpawns.java`.
 - **CI and releases.** `.github/workflows/build.yml` builds and tests every era on every push. `release.yml` runs when you
   push a tag `vX.Y.Z` that matches `mod_version` in `gradle.properties`, builds every era and attaches all the jars to a
-  GitHub release. It uses only the
-  built-in `GITHUB_TOKEN`; no secrets or personal accounts are involved.
+  GitHub release. It uses only the built-in `GITHUB_TOKEN`. After the release, `curseforge.yml` uploads the same jars to
+  CurseForge (`tools/curseforge-upload.js`); it needs a `CURSEFORGE_TOKEN` repository secret and a `CURSEFORGE_PROJECT_ID`
+  repository variable and quietly does nothing without them. Run it by hand from the Actions tab to retry or to upload an
+  older tag.
 - **Several Minecraft versions.** Everything that differs between versions sits behind `landmark.compat`: `Gfx` (drawing),
   `LandmarkScreen` / `LandmarkListEntry` (screens, input and list rows), `LandmarkTexture`, `Pixels` and `Platform` (small
   calls). The common code in `landmark.client` never names a class or method that changed between versions. Each era lists

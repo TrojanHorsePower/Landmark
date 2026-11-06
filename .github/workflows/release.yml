@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tools/export.test.js
+      - run: node --test tools/export.test.js tools/curseforge-upload.test.js
       - uses: gradle/actions/setup-gradle@v4
       - name: Build a jar for every Minecraft version range (eras/*.properties)
         run: |
@@ -52,3 +52,10 @@ jobs:
             --title "${GITHUB_REF_NAME}" \
             --generate-notes \
             $jars
+
+  curseforge:
+    needs: release
+    uses: ./.github/workflows/curseforge.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets: inherit

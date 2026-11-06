@@ -5,6 +5,10 @@ All notable changes to Landmark. Dates are the release dates (UTC). Each version
 
 ## [Unreleased]
 
+### Added
+- Landmark is on CurseForge; the README, website and wiki link to it. Releases are uploaded there automatically once the
+  maintainer has added the CurseForge token (`curseforge.yml`).
+
 ### Changed
 - Searching for or selecting a land made of several separate sections no longer zooms out to the whole map. The map opens
   on one section (the one with the land's known spawn, otherwise the biggest). A row of buttons in the side panel
