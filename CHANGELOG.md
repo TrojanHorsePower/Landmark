@@ -3,6 +3,13 @@
 All notable changes to Landmark. Dates are the release dates (UTC). Each version has a
 [GitHub release](https://github.com/TrojanHorsePower/Landmark/releases) with the jars.
 
+## [Unreleased]
+
+### Changed
+- Searching for or selecting a land made of several separate sections no longer zooms out to the whole map. The map opens
+  on one section (the one with the land's known spawn, otherwise the biggest). A row of buttons in the side panel
+  (**<**, the section number, **>**) steps through the other sections, and **Whole land** shows them all.
+
 ## [0.3.1] - 2026-10-28
 
 ### Added
@@ -115,6 +122,7 @@ First release. A client-side Fabric mod for Minecraft 26.2.
 ### Fixed
 - Empty map after returning from child screens, lag when zoomed far out, and missing members in tooltips.
 
+[Unreleased]: https://github.com/TrojanHorsePower/Landmark/compare/v0.3.1...HEAD
 [0.3.1]: https://github.com/TrojanHorsePower/Landmark/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/TrojanHorsePower/Landmark/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/TrojanHorsePower/Landmark/compare/v0.2.0...v0.2.1

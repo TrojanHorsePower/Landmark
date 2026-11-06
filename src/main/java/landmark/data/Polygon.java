@@ -28,6 +28,54 @@ public final class Polygon {
 		return bounds;
 	}
 
+	/** Area of the outline minus the holes, in square blocks. */
+	public double area() {
+		double a = 0;
+		for (int r = 0; r < rings.size(); r++) {
+			double ra = Math.abs(ringArea(rings.get(r)));
+			a += r == 0 ? ra : -ra;
+		}
+		return Math.max(0, a);
+	}
+
+	/** Whether the block position is inside the outline and not inside a hole. */
+	public boolean contains(double x, double z) {
+		boolean in = false;
+		for (int r = 0; r < rings.size(); r++) {
+			if (inRing(rings.get(r), x, z)) {
+				in = r == 0;
+				if (r > 0) {
+					return false;
+				}
+			} else if (r == 0) {
+				return false;
+			}
+		}
+		return in;
+	}
+
+	private static double ringArea(int[] ring) {
+		double sum = 0;
+		int n = ring.length / 2;
+		for (int i = 0; i < n; i++) {
+			int j = (i + 1) % n;
+			sum += (double) ring[2 * i] * ring[2 * j + 1] - (double) ring[2 * j] * ring[2 * i + 1];
+		}
+		return sum / 2;
+	}
+
+	private static boolean inRing(int[] ring, double x, double z) {
+		boolean in = false;
+		int n = ring.length / 2;
+		for (int i = 0, j = n - 1; i < n; j = i++) {
+			double xi = ring[2 * i], zi = ring[2 * i + 1], xj = ring[2 * j], zj = ring[2 * j + 1];
+			if ((zi > z) != (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) {
+				in = !in;
+			}
+		}
+		return in;
+	}
+
 	private static int[] boundsOf(int[] ring) {
 		if (ring.length < 2) {
 			return new int[] {0, 0, 0, 0};

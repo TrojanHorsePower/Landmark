@@ -65,9 +65,17 @@ public class MapScreen extends LandmarkScreen {
 	private Button settingsButton;
 	private Button dimensionButton;
 	private Button waypointsButton;
+	private Button sectionPrev;
+	private Button sectionLabel;
+	private Button sectionNext;
+	private Button sectionWhole;
 	private List<Entry> entries = List.of();
 	private int listScroll;
 	private @Nullable String selectedName;
+	/** The selected land's sections in the order to step through them (see Land.sectionOrder); empty for lands in one piece. */
+	private int[] sectionOrder = new int[0];
+	/** Position in {@link #sectionOrder} of the section the view was last fitted to; -1 = the whole land or none. */
+	private int sectionPos = -1;
 
 	private String dimension = "";
 	private @Nullable DimensionMap map;
@@ -99,7 +107,7 @@ public class MapScreen extends LandmarkScreen {
 
 	/** Dev harness: clears the selected land. */
 	void devClearSelection() {
-		selectedName = null;
+		setSelected(null);
 	}
 
 	/** Dev harness: presses the dimension button; returns the label it then shows. */
@@ -117,6 +125,16 @@ public class MapScreen extends LandmarkScreen {
 	/** Dev harness: presses the Hide claims button. */
 	void devToggleClaims() {
 		toggleClaims();
+	}
+
+	/** Dev harness: presses the section buttons ({@code 0} = Whole land); returns what the row then shows. */
+	String devSection(int delta) {
+		if (delta == 0) {
+			showWholeLand();
+		} else {
+			stepSection(delta);
+		}
+		return sectionPos + "/" + sectionOrder.length + " scale=" + String.format("%.3f", view.scale());
 	}
 
 	/** Dev harness: selects the first list entry, as a click would. */
@@ -160,6 +178,16 @@ public class MapScreen extends LandmarkScreen {
 			.bounds(4, 68, panelW - 8, 18).build());
 		waypointsButton = addRenderableWidget(Button.builder(Component.empty(),
 			b -> landmark.compat.Platform.show(minecraft, new WaypointSetsScreen(this))).bounds(4, 90, panelW - 8, 18).build());
+		int sw = 18;
+		sectionPrev = addRenderableWidget(Button.builder(Component.translatable("landmark.section.prev"), b -> stepSection(-1))
+			.bounds(4, height - 44, sw, 18).build());
+		sectionLabel = addRenderableWidget(Button.builder(Component.empty(), b -> stepSection(1))
+			.bounds(4 + sw + 2, height - 44, 38, 18).build());
+		sectionNext = addRenderableWidget(Button.builder(Component.translatable("landmark.section.next"), b -> stepSection(1))
+			.bounds(4 + sw + 2 + 38 + 2, height - 44, sw, 18).build());
+		int wx = 4 + 2 * sw + 38 + 6;
+		sectionWhole = addRenderableWidget(Button.builder(Component.translatable("landmark.section.whole"), b -> showWholeLand())
+			.bounds(wx, height - 44, panelW - 4 - wx, 18).build());
 		teleportButton = addRenderableWidget(Button.builder(Component.translatable("landmark.teleport"), b -> teleportToSelection())
 			.bounds(4, height - 22, panelW - 8, 18).build());
 		helpButton = addRenderableWidget(Button.builder(Component.translatable("landmark.help.button"),
@@ -202,7 +230,7 @@ public class MapScreen extends LandmarkScreen {
 				}
 			}
 			if (dimChanged || dataChanged) {
-				selectedName = null; // also covers a dimension changed on the waypoint sets screen
+				setSelected(null); // also covers a dimension changed on the waypoint sets screen
 				viewInitialised = false;
 			}
 		}
@@ -240,7 +268,7 @@ public class MapScreen extends LandmarkScreen {
 		ViewDimension.cycle(state.config);
 		state.saveConfig();
 		search.setValue("");
-		selectedName = null;
+		setSelected(null);
 		syncData();
 		rebuildEntries();
 	}
@@ -351,8 +379,13 @@ public class MapScreen extends LandmarkScreen {
 		return waypointsButtonShown() ? 112 : 90;
 	}
 
+	/** The row of buttons for stepping through the sections only shows while a land made of several sections is selected. */
+	private boolean sectionRowShown() {
+		return sectionOrder.length > 1;
+	}
+
 	private int listBottom() {
-		return height - 48;
+		return height - 48 - (sectionRowShown() ? 20 : 0);
 	}
 
 	private int visibleRows() {
@@ -407,6 +440,13 @@ public class MapScreen extends LandmarkScreen {
 		waypointsButton.setMessage(Component.translatable("landmark.waypointsets.button", Component.translatable(state.config.waypointMode().translationKey)));
 		claimsButton.active = map != null;
 		claimsButton.setMessage(Component.translatable(state.hideClaims ? "landmark.claims.show" : "landmark.claims.hide"));
+		boolean row = sectionRowShown();
+		sectionPrev.visible = row;
+		sectionLabel.visible = row;
+		sectionNext.visible = row;
+		sectionWhole.visible = row;
+		sectionWhole.active = sectionPos >= 0;
+		sectionLabel.setMessage(Component.literal(sectionPos < 0 ? "-/" + sectionOrder.length : (sectionPos + 1) + "/" + sectionOrder.length));
 		String target = teleportTarget();
 		teleportButton.active = target != null;
 		teleportButton.setMessage(target == null ? Component.translatable("landmark.teleport")
@@ -819,7 +859,7 @@ public class MapScreen extends LandmarkScreen {
 				if (hi >= 0) {
 					Land l = map.land(hi);
 					boolean open = openIdx.contains(hi);
-					selectedName = l.name();
+					setSelected(l);
 					if (open) {
 						teleportToSelection();
 					}
@@ -878,7 +918,48 @@ public class MapScreen extends LandmarkScreen {
 		return map.grid.landIndexAt((int) Math.floor(view.screenToWorldX(sx - panelW)), (int) Math.floor(view.screenToWorldZ(sy)));
 	}
 
+	/** Remembers which land is selected and, when it is made of several sections, the order to visit them in. */
+	private void setSelected(@Nullable Land l) {
+		selectedName = l == null ? null : l.name();
+		sectionPos = -1;
+		sectionOrder = l == null || l.polygons().size() < 2 ? new int[0] : l.sectionOrder(spawnOf(l));
+	}
+
+	private double @Nullable [] spawnOf(Land l) {
+		return state.visibleSpawn(l.name(), dimension).map(sp -> new double[] {sp.x(), sp.z()}).orElse(null);
+	}
+
+	private @Nullable Land selectedLand() {
+		return map == null || selectedName == null ? null : map.index.byName(selectedName).orElse(null);
+	}
+
+	/** Fits the view to one section of the selected land (position in the visiting order). */
+	private void goToSection(int pos) {
+		Land l = selectedLand();
+		if (l == null || sectionOrder.length == 0) {
+			return;
+		}
+		sectionPos = Math.floorMod(pos, sectionOrder.length);
+		int[] b = l.polygons().get(sectionOrder[sectionPos]).bounds();
+		view.fit(b[0], b[1], b[2], b[3], 0.55);
+		view.setScale(Math.min(view.scale(), 0.5));
+	}
+
+	private void stepSection(int delta) {
+		goToSection(sectionPos < 0 ? (delta > 0 ? 0 : -1) : sectionPos + delta);
+	}
+
+	private void showWholeLand() {
+		Land l = selectedLand();
+		int[] b = l == null ? null : l.bounds();
+		if (b != null) {
+			view.fit(b[0], b[1], b[2], b[3], 0.1);
+		}
+		sectionPos = -1;
+	}
+
 	private void select(Entry en) {
+		setSelected(en.land());
 		selectedName = en.name();
 		if (en.land() == null) {
 			state.visibleSpawn(en.name(), dimension).ifPresent(sp -> {
@@ -887,10 +968,14 @@ public class MapScreen extends LandmarkScreen {
 			});
 		}
 		if (en.land() != null && map != null) {
-			int[] b = en.land().bounds();
-			if (b != null) {
-				view.fit(b[0], b[1], b[2], b[3], 0.55);
-				view.setScale(Math.min(view.scale(), 0.5));
+			if (sectionOrder.length > 1) {
+				goToSection(0);
+			} else {
+				int[] b = en.land().bounds();
+				if (b != null) {
+					view.fit(b[0], b[1], b[2], b[3], 0.55);
+					view.setScale(Math.min(view.scale(), 0.5));
+				}
 			}
 		}
 	}

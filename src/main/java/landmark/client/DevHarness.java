@@ -30,6 +30,7 @@ final class DevHarness {
 	private static final boolean WAYPOINTS = System.getProperty("landmark.dev.waypoints") != null;
 	private static final boolean JM_TEST = System.getProperty("landmark.dev.jmtest") != null;
 	private static final boolean JM_WORLD = System.getProperty("landmark.dev.jmworld") != null;
+	private static final String SECTIONS = System.getProperty("landmark.dev.sections");
 	/** Keeps the map open for {@code landmark.dev.input} seconds so real mouse and key input can be driven from outside, and logs it. */
 	static final boolean INPUT = System.getProperty("landmark.dev.input") != null;
 	private static int worldStage;
@@ -735,6 +736,30 @@ final class DevHarness {
 							LandmarkClient.LOGGER.info("PERF scale=1/{} avg extract {} ms", Math.round(1 / scales[k]), String.format("%.2f", perfSum / 1e6 / perfN));
 						}
 					}
+				}
+				if (SECTIONS != null) {
+					if (landmark.compat.Platform.screen(mc) instanceof MapScreen ms) {
+						int f = framesOpen;
+						if (f == 100) {
+							ms.devSearch(SECTIONS);
+							ms.devSelectFirst();
+							LandmarkClient.LOGGER.info("SECTIONS selected: {}", ms.devSection(1) + " (after one step)");
+							ms.devSection(-1);
+						}
+						if (f == 130 || f == 160 || f == 190 || f == 220) {
+							landmark.compat.Platform.screenshot(mc);
+						}
+						if (f == 135 || f == 165) {
+							LandmarkClient.LOGGER.info("SECTIONS step: {}", ms.devSection(1));
+						}
+						if (f == 195) {
+							LandmarkClient.LOGGER.info("SECTIONS whole: {}", ms.devSection(0));
+						}
+						if (f == 230) {
+							mc.stop();
+						}
+					}
+					return;
 				}
 				if (SETTINGS) {
 					settingsScenario(mc, framesOpen);

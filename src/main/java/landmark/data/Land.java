@@ -26,4 +26,38 @@ public record Land(String name, @Nullable String owner, List<String> members, in
 		}
 		return b;
 	}
+
+	/**
+	 * The order to visit the separate sections of a land in: first the one containing the given position (a known spawn),
+	 * or the largest if there is none or it is not inside any section; then the rest, largest first. Entries are indexes into
+	 * {@link #polygons()}.
+	 */
+	public int[] sectionOrder(double @Nullable [] near) {
+		int n = polygons.size();
+		List<Integer> rest = new java.util.ArrayList<>();
+		for (int i = 0; i < n; i++) {
+			rest.add(i);
+		}
+		rest.sort(java.util.Comparator.comparingDouble((Integer i) -> -polygons.get(i).area()));
+		int first = rest.isEmpty() ? -1 : rest.get(0);
+		if (near != null) {
+			for (int i : rest) {
+				if (polygons.get(i).contains(near[0], near[1])) {
+					first = i;
+					break;
+				}
+			}
+		}
+		int[] out = new int[n];
+		int k = 0;
+		if (first >= 0) {
+			out[k++] = first;
+		}
+		for (int i : rest) {
+			if (i != first) {
+				out[k++] = i;
+			}
+		}
+		return out;
+	}
 }
