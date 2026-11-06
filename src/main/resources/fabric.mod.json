@@ -6,6 +6,7 @@
 	"description": "In-game map for fast /lands spawn teleporting.",
 	"authors": ["TrojanHorsePower"],
 	"contact": {
+		"homepage": "https://trojanhorsepower.github.io/Landmark/",
 		"sources": "https://github.com/TrojanHorsePower/Landmark",
 		"issues": "https://github.com/TrojanHorsePower/Landmark/issues"
 	},
@@ -16,6 +17,15 @@
 		"client": ["landmark.LandmarkClient"],
 		"modmenu": ["landmark.client.LandmarkModMenu"],
 		"journeymap": ["landmark.client.LandmarkJourneyMapPlugin"]
+	},
+	"custom": {
+		"modmenu": {
+			"links": {
+				"modmenu.curseforge": "https://www.curseforge.com/minecraft/mc-mods/landmark-map",
+				"modmenu.wiki": "https://github.com/TrojanHorsePower/Landmark/wiki",
+				"modmenu.github_releases": "https://github.com/TrojanHorsePower/Landmark/releases"
+			}
+		}
 	},
 	"suggests": {
 		"modmenu": "*"
