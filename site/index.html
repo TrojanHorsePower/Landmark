@@ -56,6 +56,11 @@
 	.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
 	.grid figure { margin: 0; }
 	.grid img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; display: block; }
+	a.zoom { display: block; cursor: zoom-in; }
+	dialog.lightbox { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 96vh; overflow: visible; }
+	dialog.lightbox::backdrop { background: rgba(0, 0, 0, .82); }
+	dialog.lightbox img { display: block; max-width: 96vw; max-height: 92vh; width: auto; height: auto; border-radius: 6px; cursor: zoom-out; }
+	dialog.lightbox p { margin: 6px 0 0; color: #ddd; font-size: 14px; text-align: center; }
 	.grid figcaption { font-size: 14px; color: var(--muted); margin-top: 6px; }
 	.table-scroll { overflow-x: auto; }
 	table { border-collapse: collapse; width: 100%; background: var(--panel); border: 1px solid var(--line); }
@@ -99,7 +104,7 @@
 			-->
 		</div>
 		<figure class="shot">
-			<img src="images/overview.png" alt="The map with open-spawn lands highlighted in amber">
+			<a class="zoom" href="images/overview.png"><img src="images/overview.png" alt="The map with open-spawn lands highlighted in amber"></a>
 			<figcaption>Screenshots use made-up demo data: fake lands, fake owners, generated terrain.</figcaption>
 		</figure>
 	</div>
@@ -118,11 +123,11 @@
 			<li>It always tells you where its data comes from and how old it is.</li>
 		</ul>
 		<div class="grid">
-			<figure><img src="images/tooltip.png" alt="Hovering a land shows its owner, members and size" loading="lazy"><figcaption>Hover a land for details.</figcaption></figure>
-			<figure><img src="images/search.png" alt="Searching by player name" loading="lazy"><figcaption>Search by land, owner or member.</figcaption></figure>
-			<figure><img src="images/sections.png" alt="A land made of several sections opens on one of them, with buttons to step through the others" loading="lazy"><figcaption>Lands in several sections: step through them.</figcaption></figure>
-			<figure><img src="images/waypoint-sets.png" alt="The waypoint sets screen" loading="lazy"><figcaption>Choose which waypoint sets are shown.</figcaption></figure>
-			<figure><img src="images/settings.png" alt="The settings screen" loading="lazy"><figcaption>Settings and colours.</figcaption></figure>
+			<figure><a class="zoom" href="images/tooltip.png"><img src="images/tooltip.png" alt="Hovering a land shows its owner, members and size" loading="lazy"></a><figcaption>Hover a land for details.</figcaption></figure>
+			<figure><a class="zoom" href="images/search.png"><img src="images/search.png" alt="Searching by player name" loading="lazy"></a><figcaption>Search by land, owner or member.</figcaption></figure>
+			<figure><a class="zoom" href="images/sections.png"><img src="images/sections.png" alt="A land made of several sections opens on one of them, with buttons to step through the others" loading="lazy"></a><figcaption>Lands in several sections: step through them.</figcaption></figure>
+			<figure><a class="zoom" href="images/waypoint-sets.png"><img src="images/waypoint-sets.png" alt="The waypoint sets screen" loading="lazy"></a><figcaption>Choose which waypoint sets are shown.</figcaption></figure>
+			<figure><a class="zoom" href="images/settings.png"><img src="images/settings.png" alt="The settings screen" loading="lazy"></a><figcaption>Settings and colours.</figcaption></figure>
 		</div>
 	</section>
 
@@ -231,6 +236,28 @@
 			}
 		})
 		.catch(function () { /* keep the static links */ });
+})();
+</script>
+<dialog class="lightbox" id="lightbox" aria-label="Enlarged screenshot"><img alt=""><p></p></dialog>
+<script>
+// Clicking a screenshot shows it full size over the page; click, or press Escape, to close. Without JavaScript (or when the
+// browser has no dialog element) the link simply opens the image file.
+(function () {
+	var box = document.getElementById('lightbox');
+	if (!box || typeof box.showModal !== 'function') return;
+	var big = box.querySelector('img'), cap = box.querySelector('p');
+	document.querySelectorAll('a.zoom').forEach(function (a) {
+		a.addEventListener('click', function (e) {
+			if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+			e.preventDefault();
+			var img = a.querySelector('img');
+			big.src = a.getAttribute('href');
+			big.alt = img ? img.alt : '';
+			cap.textContent = img ? img.alt : '';
+			box.showModal();
+		});
+	});
+	box.addEventListener('click', function () { box.close(); });
 })();
 </script>
 </body>
