@@ -19,6 +19,8 @@ The screenshots on this page use synthetic data (fake lands, fake owners, genera
   selected lands get their own outline.
 - Hover a land for its owner, members, size and whether it has an open spawn.
 - Search by land name, owner or member. Press **Refresh** to re-request the live open-spawn list.
+- A land made of several separate sections opens on its biggest section (or the one with its known spawn). Step through the
+  others with the **<** and **>** buttons, or press **Whole land** to see them all.
 - Click an amber land (or select one in the list and press Teleport), confirm, and you are on your way.
 - **Dimension button** cycles Auto (follows the dimension you are in), Overworld, Nether, The End, so you can view a dimension you are not in.
 - **Hide claims** (button in the side panel) shows the bare terrain; it hides the claims and their spawn pins, and brings both back when you click it again.
@@ -31,6 +33,10 @@ The screenshots on this page use synthetic data (fake lands, fake owners, genera
 ![Hovering a land shows its owner, members, size and spawn status](https://raw.githubusercontent.com/TrojanHorsePower/Landmark/main/docs/images/tooltip.png)
 
 ![Searching by player name](https://raw.githubusercontent.com/TrojanHorsePower/Landmark/main/docs/images/search.png)
+
+![A land made of several sections opens on one of them; the buttons step through the others](https://raw.githubusercontent.com/TrojanHorsePower/Landmark/main/docs/images/sections.png)
+
+![Whole land shows all the sections of the selected land](https://raw.githubusercontent.com/TrojanHorsePower/Landmark/main/docs/images/whole-land.png)
 
 ![Hide claims shows the plain map](https://raw.githubusercontent.com/TrojanHorsePower/Landmark/main/docs/images/hide-claims.png)
 

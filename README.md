@@ -48,6 +48,10 @@ The screenshots in this README use synthetic data (fake lands, fake owners, gene
 
 ![Searching by player name](docs/images/search.png)
 
+![A land made of several sections opens on one of them; the buttons step through the others](docs/images/sections.png)
+
+![Whole land shows all the sections of the selected land](docs/images/whole-land.png)
+
 ![Hide claims shows the plain map](docs/images/hide-claims.png)
 
 ## Install

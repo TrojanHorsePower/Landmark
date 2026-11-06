@@ -9,6 +9,16 @@ An in-game map of land claims for fast `/lands spawn <land>` teleporting. A clie
 Press `M` (rebindable) in a world to open the map. Lands with a public spawn are highlighted. Click one, confirm, and the
 mod runs `/lands spawn <name>` for you.
 
+## Lands in several sections
+
+A land can be made of sections far apart. Searching for or selecting one opens the map on a single section: the one with the
+land's known spawn, otherwise the biggest. The row of buttons at the bottom of the side panel steps through the rest (**<**,
+the section number, **>**), and **Whole land** fits them all.
+
+![A land made of several sections opens on one of them](https://raw.githubusercontent.com/TrojanHorsePower/Landmark/main/docs/images/sections.png)
+
+![Whole land shows every section](https://raw.githubusercontent.com/TrojanHorsePower/Landmark/main/docs/images/whole-land.png)
+
 ## Start here
 
 - [[Installation]]: which jar, which Java and Fabric Loader.

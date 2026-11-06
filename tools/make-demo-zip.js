@@ -119,6 +119,7 @@ function tooltip(name, owner, members, chunks) {
 }
 
 const markers = [];
+const made = [];
 let lands = 0, guard = 0;
 while (lands < LAND_COUNT && guard++ < LAND_COUNT * 300) {
 	const cx = Math.floor((rand() * 2 - 1) * (HALF / 16 - 14)), cz = Math.floor((rand() * 2 - 1) * (HALF / 16 - 14));
@@ -134,12 +135,37 @@ while (lands < LAND_COUNT && guard++ < LAND_COUNT * 300) {
 	const chunks = s.area;
 	const id = '01DEMO' + String(lands).padStart(20, '0');
 	const tip = tooltip(name, owner, [...new Set(members)], chunks);
+	made.push({ id, name, tip });
 	markers.push({
 		type: 'poly',
 		data: { key: `${id}_world_0`, polylines: s.rings.map((r, i) => ({ key: `${id}_world_0_${i === 0 ? 'outer' : 'hole' + (i - 1)}`, points: r.map(([x, z]) => ({ x, z })) })) },
 		options: { stroke: { weight: 2, color: -1 }, fill: { type: 1, color: -1 }, tooltip: { content: tip }, popup: { content: tip } }
 	});
 }
+
+// Some lands are made of several sections far apart, as on the real map: one marker per section, sharing the land's id.
+// A separate random sequence, so the lands above do not change.
+const rand2 = rng(4242);
+const multi = [];
+made.forEach((m, i) => {
+	if (i % 9 !== 4) return;
+	let parts = 1, tries = 0;
+	while (parts < 3 && tries++ < 400) {
+		const cx = Math.floor((rand2() * 2 - 1) * (HALF / 16 - 14)), cz = Math.floor((rand2() * 2 - 1) * (HALF / 16 - 14));
+		if (height(cx * 16, cz * 16) < 0.47 || height(cx * 16, cz * 16) > 0.8) continue;
+		const w = 2 + Math.floor(rand2() * 6), h = 2 + Math.floor(rand2() * 6);
+		const cells = [[cx, cz, w, h]];
+		if (!free(cells)) continue;
+		occupy(cells);
+		markers.push({
+			type: 'poly',
+			data: { key: `${m.id}_world_${parts}`, polylines: [{ key: `${m.id}_world_${parts}_outer`, points: sq(cx, cz, w, h).map(([x, z]) => ({ x, z })) }] },
+			options: { stroke: { weight: 2, color: -1 }, fill: { type: 1, color: -1 }, tooltip: { content: m.tip }, popup: { content: m.tip } }
+		});
+		parts++;
+	}
+	if (parts > 1) multi.push(m.name + ' (' + parts + ' sections)');
+});
 
 const enc = new TextEncoder();
 const manifest = {
@@ -152,4 +178,5 @@ fs.writeFileSync(out, buildZip([
 	{ name: 'lands.json', data: enc.encode(JSON.stringify(markers)) },
 	...files
 ]));
-console.log(`wrote ${out}: ${markers.length} lands, ${tileCount} tiles`);
+console.log(`wrote ${out}: ${markers.length} markers, ${tileCount} tiles`);
+console.log('lands with several sections: ' + multi.join(', '));
